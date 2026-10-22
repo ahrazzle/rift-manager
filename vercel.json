@@ -1,0 +1,1 @@
+{"rewrites":[{"destination":"https://lck-manager-staging.vercel.app/$1","source":"/staging/(.*)"}]}
