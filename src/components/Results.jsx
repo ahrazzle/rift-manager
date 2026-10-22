@@ -27,9 +27,7 @@ function CampaignResults({ state }) {
         const { node, index } = nodeById[r.nodeId] || {}
         const key = `${r.nodeId}-${r.slot}`
         const isOpen = openKey === key
-        const games = r.detail
-          ? recomputeGames({ detail: r.detail, homeId: r.homeId, awayId: r.awayId })
-          : null
+        const games = recomputeGames(r)
         return (
           <div className="card result" key={key}>
             <div className="result-head">
@@ -51,7 +49,7 @@ function CampaignResults({ state }) {
               </span>
               <span>{node ? node.opponentLabel : r.awayId}</span>
             </div>
-            {r.detail && (
+            {games && (
               <div className="md-toggle-row">
                 <button
                   type="button"
@@ -63,7 +61,7 @@ function CampaignResults({ state }) {
                 </button>
               </div>
             )}
-            {isOpen && r.detail && (
+            {isOpen && games && (
               <MatchDetail
                 round={(index ?? 0) + 1}
                 homeId={r.homeId}

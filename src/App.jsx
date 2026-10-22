@@ -3,6 +3,8 @@ import { useGameState } from './game/useGameState.js'
 import NewGame from './components/NewGame.jsx'
 import Campaign from './components/Campaign.jsx'
 import Dashboard from './components/Dashboard.jsx'
+import Gauntlet from './components/Gauntlet.jsx'
+import MatchExperience from './components/MatchExperience.jsx'
 import Tournament from './components/Tournament.jsx'
 import Lineup from './components/Lineup.jsx'
 import Tactics from './components/Tactics.jsx'
@@ -15,6 +17,17 @@ import Guide from './components/Guide.jsx'
 import { exportPng } from './utils/exportPng.js'
 import { streakOf } from './game/hype.js'
 import { EventModal, PromotionModal } from './components/CareerModals.jsx'
+import PressModal from './components/PressModal.jsx'
+import { fmtMoney } from './game/economy.js'
+import ConfirmDialog from './components/ConfirmDialog.jsx'
+
+function SaveError({ error, retrySave }) {
+  if (!error) return null
+  return <div className="card" role="alert">
+    <p>{error}</p>
+    <button type="button" className="primary" onClick={retrySave}>Retry saving</button>
+  </div>
+}
 
 function CareerEpitaph({ state, dispatch }) {
   const shotRef = useRef(null)
@@ -26,7 +39,7 @@ function CareerEpitaph({ state, dispatch }) {
     : null
   return (
     <div className="card" ref={shotRef}>
-      <h2>{state.managerName} — Career Retired 🏁</h2>
+      <h2>{state.managerName} : Career Retired 🏁</h2>
       <p>
         {history.length} season{history.length === 1 ? '' : 's'} with {state.teamId} ·{' '}
         {titles} title{titles === 1 ? '' : 's'}
@@ -69,7 +82,7 @@ function CareerEpitaph({ state, dispatch }) {
       <button className="ghost" onClick={async () => {
         setShotErr(null)
         try { await exportPng(shotRef, 'lck-career-history.png') }
-        catch { setShotErr('Export failed — try again.') }
+        catch { setShotErr('Export failed. Try again.') }
       }}>Download PNG ⬇</button>
       {shotErr && <p className="hint">{shotErr}</p>}
       <button className="primary big" onClick={() => dispatch({ type: 'RESET' })}>
@@ -90,9 +103,18 @@ function SiteFooter() {
 }
 
 export default function App() {
-  const { state, dispatch, TOTAL_ROUNDS } = useGameState()
+  const { state, dispatch: gameDispatch, TOTAL_ROUNDS, storageError, retrySave } = useGameState()
   const [tab, setTab] = useState('dashboard')
   const [guideOpen, setGuideOpen] = useState(false)
+  const [resetPending, setResetPending] = useState(false)
+  const dispatch = (action) => {
+    if (action.type === 'RESET' && (state.teamId || state.campaign)) {
+      setResetPending(true)
+      return
+    }
+    if (action.type === 'RESET') setTab('dashboard')
+    gameDispatch(action)
+  }
 
   // Season-replay campaigns carry no managed team — they still get the shell.
   const isSeasonReplay = state.mode === 'campaign' && !state.teamId
@@ -102,7 +124,7 @@ export default function App() {
       <div className="app">
         <header className="topbar">
           <div className="brand">
-            <span className="logo">LCK</span> Manager
+            <span className="logo">RIFT</span> Manager
           </div>
           <div className="who">New coach? Read the guide first.</div>
           <button className="ghost" onClick={() => setGuideOpen(true)}>
@@ -110,10 +132,11 @@ export default function App() {
           </button>
         </header>
 
+        <SaveError error={storageError} retrySave={retrySave} />
         <NewGame state={state} dispatch={dispatch} />
 
         <div className="card guide-cta">
-          <h3>New to LCK Manager?</h3>
+          <h3>New to Rift Manager?</h3>
           <p className="tag">
             A quick read of the How to Play guide saves you a lost week. It walks
             through the season loop, tactics, and how to read a match.
@@ -165,7 +188,7 @@ export default function App() {
           ['market', 'Market'],
         ]
   // International bracket tab appears once MSI/Worlds exists this season.
-  if (!isCampaign && state.tournament) nav.push(['tournament', 'MSI/Worlds'])
+  if (!isCampaign && state.tournament) nav.push(['tournament', state.tournament.kind === 'playoffs' ? 'Playoffs' : 'MSI/Worlds'])
   const activeTab = nav.some(([id]) => id === tab) ? tab : nav[0][0]
 
   const team = state.teams[state.teamId]
@@ -180,7 +203,7 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <span className="logo">LCK</span> Manager
+          <span className="logo">RIFT</span> Manager
         </div>
         {st && st.n >= 2 && (
           <span className={`streak-pill ${st.dir === 'L' ? 'cold' : ''}`} title={st.dir === 'W' ? 'Win streak' : 'Losing streak'}>
@@ -189,7 +212,7 @@ export default function App() {
         )}
         <div className="who">
           {isSeasonReplay ? (
-            <><strong>{state.managerName || 'Coach'}</strong> · Season replay — history, unchangeable</>
+            <><strong>{state.managerName || 'Coach'}</strong> · Season replay: history, unchangeable</>
           ) : (
             <>
               <strong>{state.managerName}</strong> · managing{' '}
@@ -205,6 +228,18 @@ export default function App() {
             </>
           )}
         </div>
+        <select
+          className="year-select"
+          value={state.simSpeed ?? 'normal'}
+          onChange={(e) => dispatch({ type: 'SET_SIM_SPEED', speed: e.target.value })}
+          title="Sim speed — how fast games reveal"
+          style={{ fontSize: 12, padding: '6px 10px' }}
+        >
+          <option value="slow">🐢 Slow</option>
+          <option value="normal">▶️ Normal</option>
+          <option value="fast">⏩ Fast</option>
+          <option value="instant">⚡ Instant</option>
+        </select>
         <button className="ghost" onClick={() => setGuideOpen(true)}>
           How to Play
         </button>
@@ -212,9 +247,20 @@ export default function App() {
           New Game
         </button>
       </header>
+      <SaveError error={storageError} retrySave={retrySave} />
       {!isCampaign && state.teamId && (
         <div className="top-progress" aria-hidden>
           <span style={{ width: `${progress}%` }} />
+        </div>
+      )}
+      {!isCampaign && !isSeasonReplay && state.board && (
+        <div className="manager-strip">
+          <span>🎯 <strong>{state.board.expectation}</strong></span>
+          <span className={state.board.confidence >= 70 ? 'ok' : state.board.confidence >= 40 ? 'warn' : 'bad'}>
+            Board {state.board.confidence}
+          </span>
+          {state.finance && <span>💰 {fmtMoney(state.finance.budget)}</span>}
+          {state.sacked && <span className="bad">SACKED</span>}
         </div>
       )}
 
@@ -223,7 +269,7 @@ export default function App() {
           <button
             key={id}
             className={activeTab === id ? 'tab active' : 'tab'}
-            onClick={() => setTab(id)}
+            disabled={!!state.matchSession} onClick={() => setTab(id)}
           >
             {label}
           </button>
@@ -231,7 +277,7 @@ export default function App() {
       </nav>
 
       <main className="content">
-        {isRetired ? (
+        {state.matchSession ? <MatchExperience state={state} dispatch={dispatch} /> : isRetired ? (
           <CareerEpitaph state={state} dispatch={dispatch} />
         ) : (
           <>
@@ -239,7 +285,9 @@ export default function App() {
               <Campaign state={state} dispatch={dispatch} />
             )}
             {activeTab === 'dashboard' && !isCampaign && (
-              <Dashboard state={state} dispatch={dispatch} setTab={setTab} totalRounds={seasonRounds} />
+              state.mode === 'gauntlet'
+                ? <Gauntlet state={state} dispatch={dispatch} />
+                : <Dashboard state={state} dispatch={dispatch} setTab={setTab} totalRounds={seasonRounds} />
             )}
             {activeTab === 'lineup' && <Lineup state={state} dispatch={dispatch} />}
             {activeTab === 'tactics' && <Tactics state={state} dispatch={dispatch} />}
@@ -257,10 +305,22 @@ export default function App() {
 
       {/* Career modals render globally — a pending dilemma/promotion blocks
           ADVANCE_SEASON, and that button lives on the Dashboard. */}
-      {state.pendingEvent && <EventModal state={state} dispatch={dispatch} />}
-      {state.pendingPromotion && <PromotionModal state={state} dispatch={dispatch} />}
+      {!state.matchSession && state.pendingEvent && <EventModal state={state} dispatch={dispatch} />}
+      {!state.matchSession && state.pendingPromotion && <PromotionModal state={state} dispatch={dispatch} />}
+      {!state.matchSession && state.press?.pending && !isSeasonReplay && (
+        <PressModal state={state} dispatch={dispatch} onClose={() => dispatch({ type: 'PRESS_SKIP' })} />
+      )}
 
       <SiteFooter />
+      {resetPending && <ConfirmDialog title="Start a new game?" confirmLabel="Start new game"
+        onCancel={() => setResetPending(false)}
+        onConfirm={() => {
+          setResetPending(false)
+          setTab('dashboard')
+          gameDispatch({ type: 'RESET' })
+        }}>
+        This replaces your current saved session. Your progress will be lost.
+      </ConfirmDialog>}
       {guideOpen && <Guide onClose={() => setGuideOpen(false)} />}
     </div>
   )

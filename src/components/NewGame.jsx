@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { SEASONS, SEASON_ORDER, LEAGUES, PRESENT_BY_LEAGUE, seasonsForLeague } from '../data/seasons.js'
+import MatchOptions from './MatchOptions.jsx'
+import { matchOptions } from '../game/matchSession.js'
 import { CAMPAIGNS } from '../data/campaigns.js'
 
 export default function NewGame({ state, dispatch }) {
+  const [options, setOptions] = useState(() => matchOptions(state?.matchOptions))
   const [mode, setMode] = useState('career')
   const [league, setLeague] = useState('LCK')
   const [seasonYear, setSeasonYear] = useState(PRESENT_BY_LEAGUE.LCK)
@@ -14,11 +17,14 @@ export default function NewGame({ state, dispatch }) {
   const yearTeams = (SEASONS[seasonYear] ?? SEASONS.present).teams
   const careerTeams = (SEASONS[careerYear] ?? SEASONS.present).teams
   const leagueYears = seasonsForLeague(league)
+  // Draft/IGL/Gauntlet are season-structured modes sharing the season picker.
+  const isSeasonLike = mode === 'season' || mode === 'gauntlet'
+  const MODE_START_LABEL = { season: 'Start Season →', gauntlet: 'Start Gauntlet →' }
 
   function pickMode(next) {
     setMode(next)
     // Ensure the shared teamId is valid for the newly shown year grid.
-    if (next === 'season') {
+    if (next === 'season' || next === 'gauntlet') {
       setTeamId((SEASONS[seasonYear] ?? SEASONS.present).teams[0].id)
     } else if (next === 'career') {
       setTeamId((SEASONS[careerYear] ?? SEASONS.present).teams[0].id)
@@ -49,13 +55,13 @@ export default function NewGame({ state, dispatch }) {
   return (
     <div className="newgame">
       <div className="card hero">
-        <span className="eyebrow"><span className="hot">●</span> Live from the LCK arena</span>
+        <span className="eyebrow"><span className="hot">●</span> Live from the arena</span>
         <h1>
-          <span className="logo">LCK</span> Manager
+          <span className="logo">RIFT</span> Manager
         </h1>
         <p className="tag">
           The dugout is yours. Draft the roster, set the tactics, train your
-          five — then take on the split, the playoffs, MSI and Worlds.
+          five, then take on the split, the playoffs, MSI and Worlds.
           No mechanics, no grinding: <strong>pure head-coach craft</strong>.
         </p>
       </div>
@@ -71,7 +77,7 @@ export default function NewGame({ state, dispatch }) {
         </label>
 
         <div className="field">
-          <span>Mode</span>
+          <span>Story mode</span>
           <div className="team-grid">
             <button
               className={mode === 'season' ? 'team-pick active mode-card' : 'team-pick mode-card'}
@@ -97,10 +103,20 @@ export default function NewGame({ state, dispatch }) {
               <span className="tp-tier">Relive legendary runs, series by series.</span>
               {mode === 'campaign' && <span className="tp-selected">✓</span>}
             </button>
+            <button
+              className={mode === 'gauntlet' ? 'team-pick active mode-card' : 'team-pick mode-card'}
+              onClick={() => pickMode('gauntlet')}
+            >
+              <span className="tp-name">🔥 Gauntlet</span>
+              <span className="tp-tier">Five escalating series. One loss ends the run.</span>
+              {mode === 'gauntlet' && <span className="tp-selected">✓</span>}
+            </button>
           </div>
         </div>
 
-        {(mode === 'season' || mode === 'career') && (
+        <MatchOptions options={options} onChange={(key, value) => setOptions((o) => ({ ...o, [key]: value }))} />
+
+        {(mode === 'career' || isSeasonLike) && (
           <div className="field">
             <span>League</span>
             <div className="team-grid">
@@ -122,7 +138,7 @@ export default function NewGame({ state, dispatch }) {
           </div>
         )}
 
-        {mode === 'season' ? (
+        {isSeasonLike ? (
           <>
             <div className="field">
               <span>Season year</span>
@@ -138,7 +154,7 @@ export default function NewGame({ state, dispatch }) {
                 ))}
               </select>
               <p className="hint">
-                Rosters evoke that year's {league}; ratings are game-balanced fictional values.
+                Rosters evoke that year's {league}. Ratings are game-balanced fictional values.
               </p>
             </div>
 
@@ -163,9 +179,9 @@ export default function NewGame({ state, dispatch }) {
 
             <button
               className="primary big"
-              onClick={() => dispatch({ type: 'NEW_GAME', teamId, managerName, seasonYear })}
+              onClick={() => dispatch({ type: 'NEW_GAME', teamId, managerName, seasonYear, mode, matchOptions: options })}
             >
-              Start Season →
+              {MODE_START_LABEL[mode] ?? 'Start Season →'}
             </button>
           </>
         ) : mode === 'career' ? (
@@ -184,7 +200,7 @@ export default function NewGame({ state, dispatch }) {
                 ))}
               </select>
               <p className="hint">
-                Rosters evoke that year's {league}; ratings are game-balanced fictional values.
+                Start with that year’s {league} roster, then build your own timeline. Ratings are fictional; league and tournament formats are simplified.
               </p>
             </div>
 
@@ -213,7 +229,7 @@ export default function NewGame({ state, dispatch }) {
 
             <button
               className="primary big"
-              onClick={() => dispatch({ type: 'START_CAREER', teamId, managerName, seasonYear: careerYear })}
+              onClick={() => dispatch({ type: 'START_CAREER', teamId, managerName, seasonYear: careerYear, matchOptions: options })}
             >
               Start Career →
             </button>
@@ -246,7 +262,7 @@ export default function NewGame({ state, dispatch }) {
 
             <button
               className="primary big"
-              onClick={() => dispatch({ type: 'START_CAMPAIGN', campaignId, managerName })}
+              onClick={() => dispatch({ type: 'START_CAMPAIGN', campaignId, managerName, matchOptions: options })}
             >
               Start Scenario →
             </button>

@@ -175,10 +175,10 @@ export function headlines(state, userGames = null) {
       else if (m === 2 && t === 0) sub = `a clean sweep, never in doubt`
       else if (st && st.dir === 'W' && st.n >= 2) sub = `a <b>${st.n}-series win streak</b> and counting`
       if (mvp && (mvp.rating ?? 0) >= 7.5)
-        sub += `${sub ? ' — ' : ''}<b>${mvp.name}</b> runs the show (${fmtKDA(mvp)}, ${mvp.rating.toFixed(1)})`
+        sub += `${sub ? '. ' : ''}<b>${mvp.name}</b> runs the show (${fmtKDA(mvp)}, ${mvp.rating.toFixed(1)})`
       lines.push({
         icon: '✅', cls: 'win',
-        text: `${pick(lead, lastRound)}${sub ? ` — <span class="hl-dim">${sub}</span>` : ''}.`,
+        text: `${pick(lead, lastRound)}${sub ? ` <span class="hl-dim">${sub}</span>` : ''}.`,
       })
     } else {
       const lead = [
@@ -362,7 +362,7 @@ export function coachNote(state, result, games) {
     tone: 'loss',
     head: 'Coach’s read',
     body: bits.length
-      ? 'What beat us: ' + bits.join('; ') + '. One training block on early-game plans, then we go again.'
+      ? 'What beat us: ' + bits.join('. ') + '. One training block on early-game plans, then we go again.'
       : 'Fine margins. Review the draft, reset, and take it out on next week’s opponent.',
   }
 }

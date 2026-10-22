@@ -1,34 +1,32 @@
-# LCK Manager (MVP)
+# Rift Manager
 
-> **New here? Read [`HANDOFF.md`](HANDOFF.md)** — overview, current live/staging state, architecture,
-> features shipped, and how to continue. Ops runbook: [`docs/DEPLOY-AND-CONTINUE.md`](docs/DEPLOY-AND-CONTINUE.md).
+A League of Legends esports management simulation: build your roster, prepare your
+five, make tactical calls, and chase regional and international titles.
 
-A League of Legends esports **team-management simulation**. You are the head coach/GM of an
-LCK team: set your starting roster, pick tactics, train players, and sim a season. No
-in-game playing — matches are auto-resolved by a rating + form + tactics model.
+Play [staging](https://lck-manager-staging.vercel.app/) or read the
+[guide](docs/GUIDE.md). Project context: [HANDOFF.md](HANDOFF.md).
 
-## Stack
-- React 18 + Vite (pure client-side SPA, no backend)
-- State persisted to `localStorage`
-- Deployable as a static site (Vercel / Netlify / any static host)
+## Run and verify
 
-## Run locally
-```
-npm install
-npm run dev      # http://localhost:5173
-npm run build    # outputs ./dist
-npm run preview  # serve the build
+```sh
+npm ci
+npm run dev
+npm test
+npm run build
+npm run preview
 ```
 
-## Project layout
-- `src/data/lck.js` — teams, rosters, ratings, free agents (EDIT HERE to change the league)
-- `src/engine/sim.js` — match simulation engine (pure JS, also runs under node for tests)
-- `src/engine/season.js` — schedule (round-robin) generation
-- `src/game/useGameState.js` — game state + localStorage persistence
-- `src/components/*` — UI views
-- `src/App.jsx` — shell, navigation, view routing
+React 18 + Vite, entirely client-side. Four story modes: Season, Career, Scenario
+and Gauntlet. Draft and IGL are optional match add-ons; Show simulation enables
+an animated map with moving player and objective icons in any story mode. Rosters span 2013–2026 across LCK, LPL, LEC and LCS.
+Historical careers create alternate timelines. Ratings are fictional and formats
+are simplified; these are not official esports statistics.
 
-## Notes on data
-Team names and player names reference the LCK for flavor. All ratings (ovr / mech / macro /
-consist / form) are **game-balanced fictional values** for the simulation, not official stats.
-Everything lives in `src/data/lck.js` and is easy to edit or replace with real data later.
+Season and Career include weekly preparation and post-match coaching reviews.
+Choose add-ons when starting a story or before each match, including playoffs,
+MSI and Worlds. IGL always uses the map and pauses for your macro call.
+Progress saves locally in your browser. Staging has a separate save from live.
+
+Deploy from a clean commit with `bash scripts/deploy-staging.sh`, then follow the
+[deployment verification steps](docs/DEPLOY-AND-CONTINUE.md). The script is pinned
+to the staging project and deploys from a git-free copy.

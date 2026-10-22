@@ -115,13 +115,17 @@ for (const tid of Object.keys(s.teams)) for (const pl of s.teams[tid]) preAges[p
 const preFa = new Map(s.faPool.map((pl) => [pl.id, pl.age]))
 const prePot = {}
 for (const tid of Object.keys(s.teams)) for (const pl of s.teams[tid]) prePot[pl.id] = pl.potential
+const preAll = new Map()
+const prePotAll = new Map()
+for (const tid of Object.keys(s.teams)) for (const pl of s.teams[tid]) { preAll.set(pl.id, pl.age); prePotAll.set(pl.id, pl.potential) }
+for (const pl of s.faPool) { preAll.set(pl.id, pl.age); prePotAll.set(pl.id, pl.potential) }
 s = reducer(s, { type: 'ADVANCE_SEASON' })
 let devOk = s.career.seasonIndex === 2
 for (const tid of Object.keys(s.teams)) for (const pl of s.teams[tid]) {
-  if (pl.age !== preAges[pl.id] + 1) devOk = false
-  if (pl.potential !== prePot[pl.id]) devOk = false
+  if (pl.age !== preAll.get(pl.id) + 1) devOk = false
+  if (pl.potential !== prePotAll.get(pl.id)) devOk = false
 }
-for (const pl of s.faPool) { if (pl.age !== preFa.get(pl.id) + 1) devOk = false }
+for (const pl of s.faPool) { if (pl.age !== preAll.get(pl.id) + 1) devOk = false }
 assert(devOk, 'ADVANCE_SEASON applies developPlayer to teams+faPool (age+1, potential fixed)')
 assert(s.lineup && Object.keys(s.lineup).length === 5, 'lineup rebuilt after development')
 

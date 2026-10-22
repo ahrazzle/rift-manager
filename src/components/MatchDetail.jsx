@@ -11,6 +11,7 @@ import { useMemo, useState } from 'react'
 import { simulateSeries } from '../engine/sim.js'
 import { mulberry32 } from '../game/useGameState.js'
 import { TEAMS } from '../data/lck.js'
+import MatchReview from './MatchReview.jsx'
 
 const STATIC_NAME = Object.fromEntries(TEAMS.map((t) => [t.id, t.name]))
 
@@ -30,6 +31,7 @@ const EVENT_META = {
 
 // Re-run the stored series inputs to recover the identical games[].
 export function recomputeGames(result) {
+  if (Array.isArray(result?.games)) return result.games
   const d = result?.detail
   if (!d || !d.homeLineup || !d.awayLineup) return null
   try {
@@ -186,11 +188,11 @@ function GoldGraph({ timeline, events, durationMin, youAreA }) {
     const cy = Y(Math.max(-maxAbs, Math.min(maxAbs, diffAt(raw, e.t))))
     const sideLabel = e.side === (youAreA ? 'A' : 'B') ? 'You' : 'Opp'
     const title = `${e.t}' ${meta.icon} ${meta.label} — ${sideLabel}: ${e.note}`
-    const common = { key: i, className: 'md-marker' }
+    const common = { className: 'md-marker' }
     const r = e.type === 'kill' ? 3 : 4
     if (e.type === 'dragon') {
       return (
-        <g {...common}>
+        <g key={i} {...common}>
           <title>{title}</title>
           <rect x={cx - 4} y={cy - 4} width={8} height={8} transform={`rotate(45 ${cx} ${cy})`} fill={meta.color} stroke="#0b0e13" strokeWidth={1} />
           <rect x={cx - 12} y={cy - 12} width={24} height={24} fill="transparent" />
@@ -199,7 +201,7 @@ function GoldGraph({ timeline, events, durationMin, youAreA }) {
     }
     if (e.type === 'baron') {
       return (
-        <g {...common}>
+        <g key={i} {...common}>
           <title>{title}</title>
           <polygon points={`${cx},${cy - 5} ${cx - 5},${cy + 4} ${cx + 5},${cy + 4}`} fill={meta.color} stroke="#0b0e13" strokeWidth={1} />
           <rect x={cx - 12} y={cy - 12} width={24} height={24} fill="transparent" />
@@ -208,7 +210,7 @@ function GoldGraph({ timeline, events, durationMin, youAreA }) {
     }
     if (e.type === 'tower') {
       return (
-        <g {...common}>
+        <g key={i} {...common}>
           <title>{title}</title>
           <rect x={cx - 4} y={cy - 4} width={8} height={8} fill={meta.color} stroke="#0b0e13" strokeWidth={1} />
           <rect x={cx - 12} y={cy - 12} width={24} height={24} fill="transparent" />
@@ -216,7 +218,7 @@ function GoldGraph({ timeline, events, durationMin, youAreA }) {
       )
     }
     return (
-      <g {...common}>
+      <g key={i} {...common}>
         <title>{title}</title>
         <circle cx={cx} cy={cy} r={r} fill={meta.color} stroke="#0b0e13" strokeWidth={1} />
         <circle cx={cx} cy={cy} r={12} fill="transparent" />
@@ -441,7 +443,7 @@ function GameCard({ game, youAreA, youLabel, oppLabel, showCoach, anchorId }) {
 }
 
 // --- MatchDetail --------------------------------------------------------------------
-export default function MatchDetail({ round, homeId, awayId, aWins, bWins, userSide, games, onBack, state }) {
+export default function MatchDetail({ round, homeId, awayId, aWins, bWins, userSide, games, onBack, state, showReview = true }) {
   const isUser = userSide != null
   const youAreA = userSide !== 'away'
   const youWonSeries = isUser ? (youAreA ? aWins > bWins : bWins > aWins) : null
@@ -455,7 +457,7 @@ export default function MatchDetail({ round, homeId, awayId, aWins, bWins, userS
     <div className="card md">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 4 }}>
         <div className="md-series" style={{ margin: 0 }}>
-          <span className="rw">Week {round} · {homeLabel} {aWins}–{bWins} {awayLabel}</span>
+          <span className="rw">{typeof round === 'number' ? `Week ${round}` : round} · {homeLabel} {aWins}–{bWins} {awayLabel}</span>
           {isUser && (
             <span className={youWonSeries ? 'outcome win' : 'outcome loss'}>{youWonSeries ? 'WIN' : 'LOSS'}</span>
           )}
@@ -466,6 +468,7 @@ export default function MatchDetail({ round, homeId, awayId, aWins, bWins, userS
         <p className="hint">No game data recorded for this series.</p>
       ) : (
         <>
+          {isUser && showReview && <MatchReview games={games} userSide={userSide} />}
           <div className="md-gamesline">
             Games: {[...games].sort((a, b) => a.game - b.game).map((g) => {
               const w = isUser ? g.winner === (youAreA ? 'A' : 'B') : null

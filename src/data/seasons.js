@@ -1,5 +1,5 @@
 // ============================================================================
-// LCK Manager — Season/year registry (historical-year selector architecture)
+// Rift Manager — Season/year registry (historical-year selector architecture)
 // ----------------------------------------------------------------------------
 // 'present' reuses the live src/data/lck.js dataset (NO duplication).
 // Historical years are DATA-ONLY drops built from
@@ -27,6 +27,14 @@
 //         B KDF 82 / BRO 81 / NS 80 · C HLE 77 (wooden spoon)
 // ============================================================================
 import { TEAMS, FREE_AGENTS, ROLES, makePlayer } from './lck.js'
+import { HISTORY_LCK } from './history-lck.js'
+import { HISTORY_LCK_FA } from './history-lck-fa.js'
+import { HISTORY_LPL } from './history-lpl.js'
+import { HISTORY_LPL_FA } from './history-lpl-fa.js'
+import { HISTORY_LEC } from './history-lec.js'
+import { HISTORY_LEC_FA } from './history-lec-fa.js'
+import { HISTORY_LCS } from './history-lcs.js'
+import { HISTORY_LCS_FA } from './history-lcs-fa.js'
 
 // Multi-league registry (multi-league design §1.1). 'present' stays the LCK
 // entry byte-identical; each new league is one more SEASONS entry built by
@@ -45,11 +53,15 @@ export const PRESENT_BY_LEAGUE = {
   LCS: 'present-lcs',
 }
 
-// Year ids selectable under each league in NewGame. LCK keeps present +
-// historical years; other leagues expose only their present entry (v1 scope).
+// Year ids selectable under each league in NewGame. Every league now exposes
+// present + every historical year 2013–2025 (built from the history-*.js
+// datasets below). Legacy split entries ('2022', '2015-spring',
+// '2013-summer') stay resolvable via getSeason() for campaigns but are hidden
+// from the picker to avoid duplicate years.
 export function seasonsForLeague(league) {
-  if (league === 'LCK') return SEASON_ORDER.filter((id) => id === 'present' || SEASONS[id].league === 'LCK' || SEASONS[id].league === 'OGN Champions')
-  return [PRESENT_BY_LEAGUE[league]].filter(Boolean)
+  const ids = [PRESENT_BY_LEAGUE[league]]
+  for (let y = 2025; y >= 2013; y--) ids.push(`${y}-${league.toLowerCase()}`)
+  return ids.filter((id) => SEASONS[id])
 }
 
 // Deterministic fictional-rating builder is imported from lck.js (single
@@ -654,9 +666,54 @@ const FA_LCS_DEFS = [
 ]
 
 // ============================================================================
+// Historical year datasets (2013–2025 × LCK/LPL/LEC/LCS), built from the
+// history-*.js research datasets. Same scope contract as above: team NAMES,
+// player NAMES and relative TIERS are historical; all ratings are fictional
+// values from makePlayer. Researchers ordered each year's array
+// strongest-first, so teams[0] is the title favorite (used for sublabels).
+// ============================================================================
+const HISTORY_BY_LEAGUE = {
+  LCK: [HISTORY_LCK, HISTORY_LCK_FA],
+  LPL: [HISTORY_LPL, HISTORY_LPL_FA],
+  LEC: [HISTORY_LEC, HISTORY_LEC_FA],
+  LCS: [HISTORY_LCS, HISTORY_LCS_FA],
+}
+
+function leagueEraLabel(league, year) {
+  if (league === 'LEC' && year < 2019) return 'EU LCS'
+  if (league === 'LCS' && year < 2021) return 'NA LCS'
+  return league
+}
+
+function buildHistoricalSeasons() {
+  const out = {}
+  for (const league of LEAGUES) {
+    const [teamsByYear, faByYear] = HISTORY_BY_LEAGUE[league]
+    for (let year = 2013; year <= 2025; year++) {
+      const raw = teamsByYear[year]
+      if (!raw || raw.length === 0) continue
+      const id = `${year}-${league.toLowerCase()}`
+      const faDefs = (faByYear[year] || []).map((f) => ({ name: f.name, role: f.role, tier: f.tier }))
+      out[id] = {
+        id,
+        label: `${year} (${leagueEraLabel(league, year)})`,
+        sublabel: `${raw[0].name} favored`,
+        league,
+        teams: expandTeams(raw),
+        freeAgents: expandFAs(id, faDefs),
+      }
+    }
+  }
+  return out
+}
+
+const HISTORICAL_SEASONS = buildHistoricalSeasons()
+
+// ============================================================================
 // Registry
 // ============================================================================
 export const SEASONS = {
+  ...HISTORICAL_SEASONS,
   present: {
     id: 'present',
     label: '2026 (Present)',
@@ -715,7 +772,8 @@ export const SEASONS = {
   },
 }
 
-export const SEASON_ORDER = ['present', '2022', '2015-spring', '2013-summer', 'present-lpl', 'present-lec', 'present-lcs']
+export const SEASON_ORDER = ['present', '2022', '2015-spring', '2013-summer', 'present-lpl', 'present-lec', 'present-lcs',
+  ...Object.keys(HISTORICAL_SEASONS).sort().reverse()]
 
 // Resolve a year id to its dataset; unknown/missing years fall back to present.
 export function getSeason(year) {

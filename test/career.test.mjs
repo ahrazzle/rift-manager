@@ -19,7 +19,7 @@ assert(Math.abs(r3.sA - r1.sA - 2.25) < 1e-9 && r3.sB === r1.sB, 'engine: aBonus
 let s = reducer(undefined, { type: 'START_CAREER', teamId: 'T1', managerName: 'Mozi' })
 assert(s.mode === 'career', 'START_CAREER -> mode career')
 assert(s.career.seasonIndex === 1 && s.career.maxSeasons === 10, 'seasonIndex 1, maxSeasons 10')
-assert(s.career.status === 'active' && s.career.seasonYear === 'present', 'active + present-locked')
+assert(s.career.status === 'active' && s.career.seasonYear === 'present', 'active + default present dataset')
 assert(s.career.managerName === 'Mozi' && s.career.teamId === 'T1', 'manager/team carried')
 assert(Object.keys(s.career.staff).length === 10, `staff seeded for all 10 teams (got ${Object.keys(s.career.staff).length})`)
 assert(s.career.coachPool.length >= 4 && s.career.coachPool.every((c) => c.team === 'FA'), `coachPool has FA coaches (got ${s.career.coachPool.length})`)

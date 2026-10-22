@@ -11,7 +11,7 @@ export default function Market({ state, dispatch }) {
   }
   return (
     <div className="card">
-      <h2>Transfer Market — Free Agents</h2>
+      <h2>Transfer Market: Free Agents</h2>
       <p className="hint">
         Sign a free agent to add them to your roster (they become the starter in their role).
       </p>

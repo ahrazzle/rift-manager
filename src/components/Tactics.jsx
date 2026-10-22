@@ -9,7 +9,7 @@ export default function Tactics({ state, dispatch }) {
         <h2>Tactics</h2>
         <p className="hint">
           Style shifts your effective strength and how swingy games are. Phase sets a timing
-          edge versus the opponent’s phase (Early beats Late; Late beats Early).
+          edge versus the opponent’s phase (Early beats Late, Late beats Early).
         </p>
 
         <div className="tac-section">

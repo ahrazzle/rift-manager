@@ -25,6 +25,8 @@ function SeasonReplay({ campaign, state, dispatch }) {
   const champ = byId[campaign.championId]
   const dash = (v) => (v === null || v === undefined ? '—' : String(v))
   const [open, setOpen] = useState({})
+  const [teamId, setTeamId] = useState(campaign.championId || season.teams[0].id)
+  const [opponentId, setOpponentId] = useState(season.teams.find((t) => t.id !== (campaign.championId || season.teams[0].id)).id)
 
   if (!prog) {
     return (
@@ -41,7 +43,7 @@ function SeasonReplay({ campaign, state, dispatch }) {
     return (
       <div className="stack">
         <div className="card">
-          <p>{campaign.title} — replayed. History kept its order.</p>
+          <p>{campaign.title}, replayed. History kept its order.</p>
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <button type="button" onClick={() => dispatch({ type: 'RESTART_CAMPAIGN' })}>
               Replay again →
@@ -61,7 +63,7 @@ function SeasonReplay({ campaign, state, dispatch }) {
         <h2>{campaign.title}</h2>
         <p style={{ opacity: 0.8 }}>{season.label}</p>
         <p>{campaign.description}</p>
-        <p>🏆 {champ ? champ.name : campaign.championId} — champions</p>
+        <p>🏆 {champ ? champ.name : campaign.championId}, champions</p>
       </div>
       <div className="card">
         <h3>Final standings (locked — history decided)</h3>
@@ -87,6 +89,13 @@ function SeasonReplay({ campaign, state, dispatch }) {
             ))}
           </tbody>
         </table>
+      </div>
+      <div className="card">
+        <h3>Play an exhibition</h3>
+        <p className="hint">Take a historical roster onto the Rift with Draft, IGL or a map simulation. Practice results leave the recorded standings unchanged.</p>
+        <div className="match-starting-five"><label className="field">Your team<select value={teamId} onChange={(e) => setTeamId(e.target.value)}>{season.teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label>
+        <label className="field">Opponent<select value={opponentId} onChange={(e) => setOpponentId(e.target.value)}>{season.teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label></div>
+        <button type="button" className="primary" disabled={teamId === opponentId} onClick={() => dispatch({ type: 'PREVIEW_MATCH', action: { type: 'PLAY_REPLAY_EXHIBITION', teamId, opponentId } })}>Enter exhibition →</button>
       </div>
       <div className="card">
         <h3>Rosters</h3>
@@ -127,14 +136,14 @@ function slotsOf(prog, nodeId) {
 
 function SlotDetail({ entry, node, campaign, roundLabel }) {
   const [open, setOpen] = useState(false)
-  if (entry.historicalLoss) {
+  if (entry.historicalLoss && !entry.games) {
     return (
       <div className="hint" style={{ margin: '4px 0' }}>
         🎞 Game {entry.slot}: historical loss (auto) — {campaign.playerLabel} fell to {node.opponentLabel}.
       </div>
     )
   }
-  const adapted = { detail: entry.detail, homeId: entry.homeId, awayId: entry.awayId }
+  const adapted = entry
   return (
     <div style={{ margin: '4px 0' }}>
       <button type="button" className="ghost" onClick={() => setOpen(!open)} aria-expanded={open}>
@@ -213,9 +222,9 @@ function NodeCard({ campaign, prog, node, index, dispatch }) {
         <button
           className="primary"
           style={{ marginTop: 8 }}
-          onClick={() => dispatch({ type: 'PLAY_CAMPAIGN_NODE' })}
+          onClick={() => dispatch({ type: 'PREVIEW_MATCH', action: { type: 'PLAY_CAMPAIGN_NODE' } })}
         >
-          {nextIsHard ? 'Acknowledge historical result →' : `Play Game ${nextSlot} →`}
+          {nextIsHard ? 'Enter historical game →' : `Play Game ${nextSlot} →`}
         </button>
       )}
     </div>

@@ -7,6 +7,7 @@ import { buildLCKSchedule } from '../engine/season.js'
 import { bestLineup, userLineup, estimateSeriesWinProb, explainWinProb, matchupSeed, matchupOppTactic, seededRng } from '../game/logic.js'
 import { managedCoachBonus } from '../game/useGameState.js'
 import { TRAIT_BY_ID } from '../data/traits.js'
+import { preparationBonus } from '../game/preparation.js'
 
 const FALLBACK_SCHEDULE = buildLCKSchedule()
 
@@ -62,18 +63,18 @@ export default function Strategy({ state, dispatch }) {
     const seed = matchupSeed(state, oppId)
     const oppTactic = matchupOppTactic(state, oppId)
     const fearless = state.seriesOptions?.fearless ?? false
-    const bonus = managedCoachBonus(state)
+    const bonus = managedCoachBonus(state) + preparationBonus(state, oppId)
     const base = estimateSeriesWinProb(myObj, state.tactic, oppObj, oppTactic, 300, seededRng(seed + '|base'), bonus)
     const withStrat = estimateSeriesWinProb(myObj, state.tactic, oppObj, oppTactic, 300, seededRng(seed), bonus, { aStrat: strat, fearless })
     const why = explainWinProb(state, oppId, { n: 300, rng: seededRng(seed), oppTactic })
     return { oppId, base, withStrat, why }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.teamId, state.round, state.finished, state.schedule, state.teams, state.lineup, state.form, state.tactic, state.strategy, state.seriesOptions, state.results])
+  }, [state.teamId, state.round, state.finished, state.schedule, state.teams, state.lineup, state.form, state.tactic, state.strategy, state.seriesOptions, state.results, state.career, state.preparation])
 
   return (
     <div className="stack">
       <div className="card">
-        <h2>Strategy — Week {state.round} Gameplan</h2>
+        <h2>Strategy: Week {state.round} Gameplan</h2>
         <p className="hint">
           Set before you play the week. Applies to your side only, every week until you change it.
           Stacked choices clamp at +2.5 strength.
@@ -156,7 +157,7 @@ export default function Strategy({ state, dispatch }) {
         )}
         {preview && preview.why ? (
           <details className="why">
-            <summary>Why {Math.round((preview.why.prob ?? 0.5) * 100)}%? — top factors</summary>
+            <summary>Why {Math.round((preview.why.prob ?? 0.5) * 100)}%? : top factors</summary>
             <ul>
               {preview.why.factors.map((f) => (
                 <li key={f.label}>
@@ -168,6 +169,7 @@ export default function Strategy({ state, dispatch }) {
             </ul>
           </details>
         ) : null}
+        {preview?.why.preparation > 0 && <p className="hint">Includes +{preview.why.preparation.toFixed(1)} match preparation from this week’s coaching session.</p>}
       </div>
 
       <div className="card">

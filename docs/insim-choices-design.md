@@ -1,196 +1,135 @@
-# In-Sim Strategic Choices — Research & Engine-Mapping (Roadmap Item 4)
+# LCK Manager — In-Sim Strategic Choices Design
 
-**Status:** research only. No `src/` changes. Ratings below are fictional/game-balanced
-mechanic-design inputs, not real-player evaluations.
-**Engine baseline:** `src/engine/sim.js` — `computeStrength(lineup, tactic)` +
-`phaseEdge(mine, theirs)` + `drawGame` logistic draw per game, best-of-3.
-Tactics: `style ∈ {AGGR, BAL, DEF}` (strength mult + variance),
-`phase ∈ {EARLY, MID, LATE}` (timing edge ±2.0). Role weights:
-`TOP 1.0 / JNG 1.0 / MID 1.1 / BOT 1.1 / SUP 0.9`. `SCALE = 9` per logistic e-fold.
-Players carry `ovr, mech, macro, consist, form, role`. Rosters are 10-man
-(5 roles × starter+sub); lineup = which 5 start.
+**Status: STABLE** — implementation-ready. Do not change the locked schema (§6) without a versioned revision of this doc.
 
-**Important engine gap (verified 2026-10-04):** the `extra={aBonus,bBonus}` param
-described in the roadmap brief does **not** exist in `simulateSeries` today —
-signature is `simulateSeries(lineupA, tacticA, lineupB, tacticB, rng, labelA, labelB)`.
-So every "strength bonus" proposal below needs either a new `extra` param or a new
-per-choice modifier struct. Flagged per-row in §5.
+**Scope:** roadmap item 4 — four player choices that MOVE win probability through the existing sim, not cosmetics. No code is written by this doc.
 
-Real-LoL grounding comes from public strategy literature (draft/win-condition
-taxonomies, support-roam guides, lane-swap analyses, objective-control writeups);
-effect sizes are translated into this sim's strength units, not quoted as real
-LoL statistics.
+**Source facts (current code):**
+- `src/engine/sim.js`: `computeStrength(lineup, tactic)` = weighted player ratings (`ROLE_WEIGHT TOP:1.0 JNG:1.0 MID:1.1 BOT:1.1 SUP:0.9`) × `STYLE_META` mult (`AGGR 1.03 / BAL 1.015 / DEF 1.0`) + macro/form/consist terms (form coeff 0.12/pt). `winProb` logistic with `SCALE = 9` → **±1.0 strength ≈ ±2.8% per-game winprob at 50/50** (Bo3 amplifies ~1.4× near even). `phaseEdge` = ±2.0 counter / +0.5 commit. `simulateSeries(lineupA, tacticA, lineupB, tacticB, rng, labelA, labelB)` — no `extra` param in code today. Cosmetics path (duration, gold walk, events, player stats) is conditioned on the pre-decided winner; tactic hooks there are magnitude/rate only.
+- `src/game/logic.js`: `estimateSeriesWinProb(userLineup, userTactic, oppLineup, oppTactic, n, rng)` calls `simulateSeries` with no extras.
+- `src/game/useGameState.js`: `PLAY_ROUND` sims each scheduled match via `simulateSeries` (managed side uses `userLineup` + `state.tactic`, AI sides `bestLineup` + `aiTactic`); stores compact `detail: {seed, homeLineup, awayLineup, homeTactic, awayTactic}` for deterministic MatchDetail recompute. `mode: 'season' | 'campaign'` in code (career design adds `'career'` + `extra = {aBonus, bBonus}` — not yet in `sim.js`).
+- `src/components/Tactics.jsx`: style + phase pickers dispatching `SET_TACTIC`. `src/components/Lineup.jsx`: per-role starter picker dispatching `SET_LINEUP`.
+- `docs/insim-choices-research.md` (Hazen) is **absent** from this repo — no research input; magnitudes below are derived from the `SCALE = 9` calibration above, not from external data.
+
+**Design rule:** every choice resolves to a small strength delta (±0.75–1.5 ≈ ±2–4% per game) plus reuse of existing cosmetic hooks. No tactic/variance/ratings logic is rewritten.
 
 ---
 
-## 1. Draft picks (initial): choosing starters + comp bias
+## 1) WHEN choices are made — DECIDED: pre-match panel, per-week
 
-### How draft determines outcomes in real LoL
-- Draft sets the **win condition**: the same five kits become one plan (engage /
-  pick / split / siege / protect). A comp without a coherent wincon (e.g. no
-  engage, no frontline, all-burst damage) loses winnable games regardless of
-  lane skill. (roamreport.gg champion taxonomy; baronbuff win-conditions guide;
-  boostroom draft guide.)
-- Structure: blue side gets 1st pick (safe/flex blind), red side gets last pick
-  (counter window). Only red's last pick gets a clean counter; earlier
-  "counters" picked blind are usually −EV. Comfort (high-confidence pick)
-  beats a theoretical counter you can't play. (boostingmarket draft guide;
-  guildorder draft theory.)
-- Quantified guidance used in solo-queue literature: a genuine counter-pick
-  (played 30+ games, enemy already locked, fits comp) is worth roughly
-  **+3–5% winrate**; a forced off-comfort/blind counter is symmetrically
-  negative. Treat as directional, not measured [UNCERTAIN].
+Choices are set on a **pre-match Strategy panel** (part of the Tactics/Lineup flow, §7) and apply to the **NEXT `PLAY_ROUND` only**. They are **re-settable every week** (every round): after `PLAY_ROUND` resolves, the strategy persists as displayed defaults but applies again to the following round until the player changes it — i.e. semantics are "current gameplan," not one-shot consumables.
 
-### Mapping to our sim (players have role+ovr only, no champions)
-Draft ≡ two coupled decisions:
-1. **Starter selection per role** — pick 1 of 2 roster players per role.
-   Already expressible: it IS the `lineup` argument. A 3-OVR gap between
-   starter and sub at a 1.1-weight role ≈ 3×1.1/5.1 ≈ 0.65 raw strength ≈
-   ~+1.8pp win-prob per game at even matchup (logistic, SCALE=9). So starter
-   choice is already the highest-leverage "draft" lever — no engine change.
-2. **Draft bias (comp style)** — aggro-leaning vs scaling-leaning roster
-   construction. Propose a single enum `draftBias ∈ {AGGRO, BALANCED, SCALING}`
-   chosen at draft time that **nudges tactic defaults and grants a small
-   compensating edge**:
-   - `AGGRO`: suggests/forces `phase EARLY`, +small early bonus.
-   - `SCALING`: suggests/forces `phase LATE`, +small late bonus.
-   - `BALANCED`: no bonus, full tactic freedom (the "safe blind pick").
+- New state slice `state.strategy` (§6), new action `SET_STRATEGY` (partial merge, usable any time before the next `PLAY_ROUND`).
+- Applies to the **managed team's side only** (home or away) in `PLAY_ROUND`. AI-vs-AI matches in the same round are unaffected (default-zero).
+- `estimateSeriesWinProb` preview on the Strategy panel passes the current strategy so the displayed edge moves when the player changes a choice.
+- Campaign (Scenario Mode) never reads `state.strategy` — scripted and unaffected.
 
-### Balanced mechanic proposal
-- Starter picks: free, no offset (strength flows through `computeStrength`).
-- Draft bias bonus: **±0.8 strength** (≈ ±2pp per game) applied as an `extra`
-  bonus when the player's in-game tactic phase matches their draft bias
-  (AGGRO+EARLY, SCALING+LATE), 0 otherwise. BALANCED never grants/denies.
-- Draft-mistake modeling (optional): if bias and phase conflict for the whole
-  series (e.g. drafted SCALING but play EARLY all 3 games), apply **−0.8**
-  instead — mirrors "counter that breaks the comp loses more than it wins."
-- Cap total draft swing ≈ ±2pp so draft matters pre-loading-screen without
-  deciding the series. Magnitude marked [UNCERTAIN] — tune via sim sweep.
+## 2) DRAFT PICKS — starter selection (existing) + draft bias (new comp term)
 
----
+Two layers, deliberately split:
 
-## 2. Support roam vs stay in lane
+1. **Starter selection = existing `Lineup` flow, unchanged.** Picking the starting 5 from the 10-man roster per role already moves strength through `ovr` weights — this IS the draft-picks mechanic for personnel. No new engine input.
+2. **Draft bias = new `strategy.comp` field:** `'AGGR' | 'SCALE' | null` (null = balanced, default).
+   - Engine effect (flat comp term, §6): `AGGR → +1.0`, `SCALE → +1.0`, `null → 0` strength for the managed side.
+   - Same magnitude, **different outcome shape** via existing cosmetic hooks only: `AGGR` reuses the AGGR cosmetics (kill/teamfight rate up, walk noise up, duration −1); `SCALE` reuses the LATE cosmetics (post-25′ swings ×1.15, duration +1). No new cosmetic code — the engine treats comp as an alias into the existing style/phase flavor branches.
+   - Trades off against nothing by itself (pure +1.0 when set); the opportunity cost is that it stacks toward the §6 clamp.
 
-### Real-LoL effect
-- A good roam converts **wave-state windows** (crash/recalled bot wave) into
-  mid/jungle pressure: kill, burned flash, river vision → dragon setup.
-  Round trip bot→mid ≈ 25–45s; one roam per recall cycle, then reset.
-  (boostingmarket support-roaming guide; levellegendary roam windows.)
-- Failure mode is symmetric: leaving on a slow-push/bounce toward your own
-  tower donates a dive (~plate + wave + XP, ~800g equiv. cited in coaching
-  literature [UNCERTAIN]); roaming on enchanters (Janna/Soraka/Lulu — no
-  kill threat, no mobility) is "almost always wrong."
-- Net: successful roam ≈ **+2–4% team winrate** early; failed roam ≈ −2–4%,
-  concentrated in JNG/MID upside vs BOT downside. Roam quality is gated by
-  (a) wave state, (b) ADC safety, (c) vision, (d) a real target — a builder
-  can gate success probability on support `macro` + ADC `form` if desired.
+## 3) SUPPORT ROAM vs STAY — per-role modifier, exact field + magnitude
 
-### Balanced mechanic proposal
-Binary choice `supStance ∈ {ROAM, STAY}`, resolved per game (or per series —
-per-series is simpler and recommended for v1):
-- `ROAM`: **+0.6 to team's effective JNG+MID contribution, −0.6 to BOT**
-  (net ≈ 0 at equal weights, redistributive). Implement as per-role weight
-  tweak inside `computeStrength` **or** as ±strength bonus. Adds variance:
-  suggest `variance +0.15` on the roaming side (roams are coin-flips).
-- `STAY`: **+0.6 to BOT**, neutral elsewhere, no variance change.
-- Net match effect ≈ ±1–2pp per game — a small early-game swing, never a
-  series decider alone. Gate (optional v2): roam bonus scales with support
-  `macro` (≥60 full effect, <50 halved) [UNCERTAIN — tuning knob, not sourced].
+`strategy.roam: 'ROAM' | 'STAY' | null` (null = default, no effect).
 
----
+Engine input: **per-role ovr-equivalent deltas** applied to the managed team's starters before role-weighting (inside the new `strategyDelta` helper, §6 — `computeStrength` itself untouched):
 
-## 3. Lane swap (yes/no)
+| choice | TOP | JNG | MID | BOT | SUP | net strength* |
+|--------|-----|-----|-----|-----|-----|---------------|
+| ROAM (support roams) | 0 | **+6** | **+4** | **−6** | 0 | **+0.75** |
+| STAY (support stays) | 0 | −2 | −1 | **+6** | **+2** | **+1.0** |
 
-### Real-LoL effect
-- Swap = TOP+SUP/BOT rotate to dodge a doomed 2v2 (protect a scaling ADC),
-  deny an enemy bully, or race towers/plates. Costs: sacrificed early towers/XP
-  on one side, jungler taxed as bodyguard, top laner starved if dived.
-  Modern pro swaps (MSI 2024+, "Viper swap" 2025) are timed to objective
-  windows (8-min grubs) and turn economy, not just matchup dodge.
-  (rich.report lane-swap guide; statup.gg 2025 meta analysis; namu.wiki.)
-- Riot's anti-swap patches (top/mid fortification, presence penalties) confirm
-  the design intent: swap **trades early structure for scaling/safety**.
-- Net: ≈ **±3–5% depending on matchup** — positive when avoiding a hard-losing
-  lane or protecting a hypercarry, negative when executed late/blind or into a
-  stronger laning opponent. Directional estimate [UNCERTAIN].
+\* Net = Σ(w·δ)/Σw over `ROLE_WEIGHT` (Σw = 5.1). ROAM: (6 + 4.4 − 6.6)/5.1 = +0.75. STAY: (−2 − 1.1 + 6.6 + 1.8)/5.1 = +1.04 ≈ +1.0.
 
-### Balanced mechanic proposal
-Binary `laneSwap ∈ {YES, NO}` per series (v1; per-game swap = NEW input path):
-- `YES`: **+1.0 late-game scaling term, −1.0 early tower term** (net ≈ 0
-  head-to-head, but shifts *when* strength applies). Simplest v1 cut: model as
-  `phase LATE` synergy — swap grants +1.0 only if tactic phase is LATE/MID,
-  −1.0 if EARLY (you swapped but then played for lanes anyway = worst of both).
-- `NO`: standard, no modifier.
-- Interaction with §4: swap+`scaling` wincon should stack sub-additively
-  (recommend diminishing: second scaling source at 50%) so the combination
-  doesn't double-count the same fantasy.
+- ROAM gambles the lane (BOT dips) for map pressure (JNG/MID rise); STAY secures the lane at the cost of map presence. Both net slightly positive when set (reward for committing), differing in **which roles pop** in `genPlayerStats` downstream (kill/assist weights follow the DELTA-adjusted skill — implement by adding δ to `sk` for those roles; 2-line change inside the stats path, winner-neutral).
+- Null → all deltas 0.
 
----
+## 4) LANE SWAP yes/no — scaling-vs-early tradeoff term
 
-## 4. Win-condition priority (dragons / towers-splitpush / scaling / early-lanes)
+`strategy.swap: boolean` (default `false`).
 
-### Each wincon in real LoL
-| Priority | Real meaning | Lean / when it wins |
-|---|---|---|
-| **Dragons** | Stack drakes → Soul point pressure → forced fights on your setup. First 3 drakes ≈ 80% win in pro (vicinity cited; reflects the advantages that *enable* drakes — priority/vision/tempo — as much as the buffs) [UNCERTAIN] | Mid-priority comps; teamfight/engage drafts; setup ≥ mechanics (90/60/30s vision plans) |
-| **Towers / split-push** | 1-4 or 1-3-1: duelist pressures side while 4 hold; convert numbers advantage → towers → map control. Grubs/Herald amplify. TF/global comps signal split | True side-lane threat + disengage mid; teleport timings; avoid 4v5s |
-| **Late-game scaling** | Stall, concede early drakes/plates, spike at items/levels (hypercarry + peel/frontline). "Scale and take over" | Protect-the-carry drafts; weak early lanes; cross-map trades instead of rescues |
-| **Win early / lanes** | Snowball plates + dives + early dragons before enemy scales; tempo comps fall off a cliff if denied | Lane bullies + skirmish jungler; plate gold → jungle pathing → dragon fights |
+Engine effect — conditional on the managed team's tactic phase (reuses the existing scaling/early vocabulary, no new phase logic):
 
-(Sources: victoryview objective control; boosterria objective management;
-boostroom objective control 2026; checkrankings objective-planning scale;
-baronbuff 17 win conditions; roamreport 5-label taxonomy.)
+```
+swapDelta = !swap ? 0 : (tactic.phase === 'EARLY' ? −1.0 : +1.0)
+```
 
-### Mapping to engine knobs (proposal)
-| Choice | Engine target | Reuse or NEW |
-|---|---|---|
-| Dragons | Objective/teamfight edge: +strength when `phase MID` (teamfight-around-objectives), plus optional dragon-event flavor weight | REUSE `tactic.phase=MID` + NEW small `objectiveEdge` bonus (≈ +0.8) |
-| Towers / split-push | NEW `splitpush` strength term (≈ +1.0), ideally scaling with TOP ovr (the splitter). Loses to hard-engage: −1.0 vs opponent `style AGGR` [UNCERTAIN] | NEW term (no side-lane concept exists today) |
-| Late-game scaling | `phase LATE` edge (exists: `phaseEdge` ±2.0) + NEW `scaling` term for series-decider games (game 3 weight ×1.5) | REUSE `phase`, NEW `scaling` term for game-3 emphasis |
-| Win early / lanes | `phase EARLY` edge (exists) + `style AGGR` mult/variance (exists) | REUSE only — no new input |
+- Swap with a MID/LATE phase: **+1.0** (concede lane for scaling). Swap with an EARLY phase: **−1.0** (contradictory plan — punished). This makes swap a genuine tradeoff, not a free bonus.
+- Cosmetics reuse only: swap=true takes the LATE flavor branch (first-tower timing pushed back, post-25′ swings ×1.15) regardless of phase.
+- **Coexistence with career `extra`:** career's design proposed `extra = {aBonus, bBonus}`. Item 4 extends that object additively (§6) — career's coach bonus and item-4 knobs are independent fields summed at the same call site. Neither design renames or retypes the other's fields.
 
-- Recommended magnitudes: each wincon ≈ **±0.8–1.2 strength** (≈ ±2–3pp/game),
-  phase-counter edges stay dominant (±2.0). Wincon choice should express
-  *which existing phase/style it synergizes with*, not bypass them.
-- Cosmetic path (already exists, must stay cosmetic): duration/events/stats
-  conditioned on winner — wincon flavor (more dragons vs more towers in events
-  log) can ride the cosmetics path freely since it never flips the winner.
+## 5) WIN-CONDITION PRIORITY — four options, exact field + magnitude each
 
----
+`strategy.wincon: 'DRAGONS' | 'SPLIT' | 'SCALE' | 'EARLY' | null` (null = default, no effect).
 
-## 5. Builder mapping table (choice → engine input)
+Each option = a flat strength term **plus** a distinct cosmetic branch (existing hooks only). Magnitudes:
 
-| # | Choice surface | Affects outcome? | Modulates (existing field) | Needs NEW input? | Proposed size |
-|---|---|---|---|---|---|
-| 1a | Draft: starter/sub per role | YES (primary) | `lineup` (already a param) | NO | via `computeStrength` weights |
-| 1b | Draft: comp bias aggro/scaling | YES (small) | `tactic.phase` nudge + `extra` bonus | YES — `draftBias` enum + `extra.{aBonus,bBonus}` (latter missing today) | ±0.8 str (≈ ±2pp) |
-| 2 | Support roam vs stay | YES (small, redistributive) | per-role weights in `computeStrength`, `STYLE variance` | YES — `supStance` enum (or fold into `extra`) | ±0.6 role-shift; +0.15 var |
-| 3 | Lane swap yes/no | YES (temporal shift) | `tactic.phase` synergy (LATE/MID vs EARLY) | YES — `laneSwap` bool (or fold into `extra`) | +1.0 late / −1.0 early |
-| 4a | Wincon: dragons | YES | `tactic.phase=MID` + `extra` | HALF — `wincon` enum + `objectiveEdge` | +0.8 |
-| 4b | Wincon: towers/split | YES | (none — new axis) | YES — `splitpush` term (+ TOP-ovr link), engage-vulnerability | +1.0 / −1.0 vs AGGR |
-| 4c | Wincon: scaling | YES | `tactic.phase=LATE` (`phaseEdge` ±2.0 exists) | HALF — `scaling` term for game-3 weight | +1.0 (×1.5 game 3) |
-| 4d | Wincon: early/lanes | YES | `tactic.phase=EARLY` + `style=AGGR` | NO | reuse only |
+| wincon | strength term | cosmetic branch (existing) | outcome shape |
+|--------|---------------|----------------------------|---------------|
+| DRAGONS (teamfight/objective) | **+1.25** | AGGR kill/teamfight rate + dragon-event bias | bloodier, objective-heavy games |
+| SPLIT (towers/splitpush) | **+1.25** | tower-event bias to managed side, first-tower swing | tower-led, lower-kill wins |
+| SCALE (late-game scaling) | **+1.0**, or **+0.25** if `tactic.phase === 'EARLY'` (contradiction haircut) | LATE branch (duration +1, late swings ×1.15) | longer, comeback-shaped wins |
+| EARLY (win lanes fast) | **+1.0**, or **+0.25** if `tactic.phase === 'LATE'` (contradiction haircut) | EARLY branch (duration −1, pre-14′ event density) | short stomps or fizzle-out losses |
 
-**Cleanest v1 implementation:** one new optional struct (no per-choice plumbing):
-`simOptions = { draftBias, supStance, laneSwap, wincon }` → a single
-`choiceBonus(lineupA/B, tacticA/B, simOptions, gameIndex)` helper returning
-`{aBonus, bBonus}` added to strength inside `drawGame`, plus the
-`extra` param the brief assumed. Keeps RNG discipline intact (bonuses are
-deterministic given choices; no new draws). Per-game choices (roam/swap per
-game 1/2/3) can wait for v2 — per-series is enough to make all 4 surfaces
-outcome-relevant.
+- The contradiction haircuts (+0.25 instead of +1.0) punish incoherent plans (scale comp with EARLY phase and vice versa) without adding new systems — the engine already knows `tactic.phase`.
+- DRAGONS vs SPLIT have equal magnitude but different event distributions, so two wincons produce **different, sensible outcome distributions** at matched winrates (acceptance §8.4).
 
-**Anti-stacking rule:** cap total choice bonus at **±2.5 strength** per side so
-combined picks (swap + scaling + LATE) can't exceed roughly one phase-counter
-edge. Diminishing second-source at 50%.
+## 6) ENGINE IMPACT (locked) — minimal, additive, default-zero
 
-## 6. Uncertainties & tuning notes
-- All % figures (draft 5–10%, counter +3–5%, roam ±2–4%, swap ±3–5%, drakes-80%)
-  are literature-directional, not controlled measurements — marked [UNCERTAIN]
-  where used. Convert to strength units via `winProb` (SCALE=9): +1.0 str ≈
-  +2.7pp at 50/50; verify with a sim sweep before locking numbers.
-- Support-roam gating on `macro`/`form` and split-push TOP-ovr linkage are
-  design proposals without direct sourcing — tune, don't assert.
-- Open builder questions: per-series vs per-game granularity for roam/swap;
-  whether AI opponents get the same choice UI (symmetry) or scripted biases;
-  how choices surface in the match log for readability.
+**One optional trailing param.** `simulateSeries` gains an additive `extra` object that unions career's fields with item-4's structured knobs:
+
+```js
+simulateSeries(lineupA, tacticA, lineupB, tacticB, rng = Math.random,
+  labelA = 'Team A', labelB = 'Team B',
+  extra = { aBonus: 0, bBonus: 0, aStrat: null, bStrat: null })
+```
+
+where `aStrat`/`bStrat` are `null | { comp, roam, swap, wincon }` snapshots (same shape as `state.strategy`, §7 — engine never imports UI state).
+
+New pure helper (only new engine code besides the call-site fold):
+
+```js
+// → { delta: number, flavor: { aggr: bool, late: bool, early: bool, dragonBias: bool, towerBias: bool } }
+// Pure arithmetic on (strat, tactic). Consumes NO rng.
+function strategyDelta(strat, tactic)
+```
+
+- `delta = compTerm + roleTerm + swapDelta + winconTerm`, then **clamped to [−2.5, +2.5]** so stacked choices cannot exceed roughly one phase-edge of total edge. Applied: `sA += (extra.aBonus || 0) + deltaA`, `sB += (extra.bBonus || 0) + deltaB` before `drawGame` — i.e. inside `simulateSeries`, after `computeStrength`, before the game loop. `sA`/`sB` returned include the bonus (same convention career's design set).
+- `flavor` flags only select **existing** cosmetic branches (AGGR/LATE/EARLY/dragon/tower bias); they add no strength and never flip a winner.
+- `computeStrength`, `winProb`, `phaseEdge`, `drawGame`, variance, and ratings paths are **not rewritten**. `strategyDelta` consumes no rng → seeded winner paths shift only by the strength delta, never by draw-order changes.
+
+**Caller contract (explicit):**
+
+| caller | passes `extra`? |
+|--------|-----------------|
+| `PLAY_ROUND` (season + career): managed team's side | **yes** — `{aBonus/bBonus: coach bonus if career, aStrat/bStrat: state.strategy snapshot on the managed side, null on the AI side}` |
+| `PLAY_ROUND`: AI-vs-AI matches | **no** (default-zero; outputs byte-identical) |
+| `PLAY_CAMPAIGN_NODE` (campaign) | **no** — scripted, unaffected |
+| `logic.js estimateSeriesWinProb`: gains optional trailing `extra = {}` | **yes** from the Strategy panel preview; **no** everywhere else (Monte-Carlo default-zero) |
+| Season/campaign/career Monte-Carlo batch sims | **no** unless the caller opts in |
+
+`detail` snapshots in `PLAY_ROUND` results extend to `{seed, homeLineup, awayLineup, homeTactic, awayTactic, homeStrat, awayStrat}` (strat = snapshot or null) so MatchDetail recompute passes the same `extra` and stays byte-identical. `load()` backfills missing `strategy` → defaults and missing `homeStrat/awayStrat` → null.
+
+## 7) Scope guard (v1)
+
+- v1 ships the 4 choices for **Season AND Career** (both use `PLAY_ROUND`). **Campaign (Scenario Mode) is scripted and unaffected** — no strategy reads, no `extra` passed.
+- Choices are **per-week, re-settable** (§1). No lock-in, no cooldowns, no costs in v1.
+- **Minimal new UI:** one pre-match **Strategy panel** reusing Tactics/Lineup state — four controls (`comp` 3-way, `roam` 3-way incl. default, `swap` toggle, `wincon` 5-way incl. default) + live `estimateSeriesWinProb` readout. `Lineup.jsx`/`Tactics.jsx` reused as-is; only the new panel component + `SET_STRATEGY` case + `strategy` slice + `PLAY_ROUND` wiring are new.
+- **Deferred (not v1):** per-game (in-series) adjustments, opponent scouting intel, coach-style modifiers beyond career's flat bonus, AI use of strategy knobs, any economy/cost for choices.
+
+## 8) Acceptance criteria
+
+1. All-default (`strategy` all null/false) reproduces the current sim: 2000 seeded series vs. pre-change baseline → identical winners with identical seeds (only `extra`-carrying paths may differ; default paths are byte-identical).
+2. Set ROAM → managed-team JNG/MID effective skill rises and BOT falls in the next sim (assert via `strategyDelta` unit: role deltas `{JNG:+6, MID:+4, BOT:−6}` and net +0.75); set STAY → BOT/SUP rise (net ≈ +1.0). Series winprob moves +2–4% vs. default at even matchups.
+3. Set swap=true with MID/LATE phase → +1.0 scaling term; with EARLY phase → −1.0. Cosmetic: first-tower timing later + late swings larger.
+4. Each wincon vs. null at even strength: DRAGONS/SPLIT each move series winprob ≈ +3–5% (1.25 str); SCALE/EARLY with coherent phase ≈ +2–4%; incoherent phase haircut to +0.25. Over 1000 sims per wincon: dragon-event share highest under DRAGONS, tower share highest under SPLIT, mean duration longest under SCALE / shortest under EARLY.
+5. Draft bias AGGR vs SCALE at matched strength: kill totals higher + durations shorter under AGGR; late-swing magnitude higher + durations longer under SCALE.
+6. Stacking clamp: all choices maxed → total strategy delta ≤ +2.5 (assert `strategyDelta` never returns outside [−2.5, +2.5]).
+7. No engine regression: season/campaign/career existing outputs identical when `extra` omitted; `estimateSeriesWinProb` default signature behavior unchanged; MatchDetail recompute with stored strat snapshots byte-identical.
+8. Scope: choices affect Season + Career `PLAY_ROUND` managed-team matches only; AI-vs-AI and all Campaign sims show zero delta.

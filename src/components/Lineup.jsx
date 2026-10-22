@@ -1,5 +1,6 @@
 import { ROLES, ROLE_LABEL } from '../data/lck.js'
 import { styledPlayer } from '../game/logic.js'
+import PlayerTags from './PlayerTags.jsx'
 
 function PlayerRow({ player, isStarter, form, onSelect, onHover }) {
   const f = form[player.id] ?? player.form
@@ -16,6 +17,7 @@ function PlayerRow({ player, isStarter, form, onSelect, onHover }) {
         <Mini label="C" v={player.consist} />
         <Mini label="F" v={f} />
       </span>
+      <PlayerTags player={player} />
       {isStarter && <span className="badge">START</span>}
     </button>
   )
@@ -44,7 +46,7 @@ export default function Lineup({ state, dispatch }) {
   return (
     <div className="stack">
       <div className="card">
-        <h2>Starting Lineup — {teamName}</h2>
+        <h2>Starting Lineup: {teamName}</h2>
         <p className="hint">Click a player to start them in their role. Subs are listed below starters.</p>
         {ROLES.map((role) => {
           const inRole = players.filter((p) => p.role === role)

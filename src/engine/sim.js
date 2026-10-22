@@ -1,5 +1,5 @@
 // ============================================================================
-// LCK Manager — Match simulation engine (pure JS, no DOM, runs under node)
+// Rift Manager — Match simulation engine (pure JS, no DOM, runs under node)
 // ----------------------------------------------------------------------------
 // Model:
 //   - A team's strength = weighted player ratings + macro + form + tactic edge.
@@ -593,6 +593,72 @@ export function strategyDelta(strat, tactic) {
   return { delta, flavor }
 }
 
+function ordinal(n) {
+  const s = ['th', 'st', 'nd', 'rd']
+  const v = n % 100
+  return n + (s[(v - 20) % 10] || s[v] || s[0])
+}
+
+// Rewrite event notes with real team/player names and gold. Deterministic
+// (no rng): killers and victims are dealt round-robin weighted by their
+// actual kills/deaths, so re-runs stay byte-identical and the main rng
+// stream is untouched. Also stamps killer/victim on kill events for live
+// UI (the IGL game-state panel attributes kills as the ticker reveals).
+function enrichEvents(events, players, labelA, labelB) {
+  const bySide = { A: [], B: [] }
+  for (const p of players) (bySide[p.side] === undefined ? bySide.A : bySide[p.side]).push(p)
+  const weighted = (list, key) => {
+    const out = []
+    list.forEach((p, i) => {
+      const n = Math.max(0, Math.round(p[key] ?? 0))
+      for (let k = 0; k < n; k++) out.push(i)
+    })
+    if (out.length === 0) list.forEach((_, i) => out.push(i))
+    return out
+  }
+  const killW = { A: weighted(bySide.A, 'kills'), B: weighted(bySide.B, 'kills') }
+  const deathW = { A: weighted(bySide.A, 'deaths'), B: weighted(bySide.B, 'deaths') }
+  const ki = { A: 0, B: 0 }
+  const di = { A: 0, B: 0 }
+  const towers = { A: 0, B: 0 }
+  const drakes = { A: 0, B: 0 }
+  for (const e of events) {
+    const t = Math.round(e.t)
+    const mine = e.side === 'A' ? labelA : labelB
+    const foe = e.side === 'A' ? labelB : labelA
+    if (e.type === 'kill') {
+      const kl = bySide[e.side][killW[e.side][ki[e.side] % killW[e.side].length] ?? 0] ?? {}
+      ki[e.side]++
+      const opp = e.side === 'A' ? 'B' : 'A'
+      const vc = bySide[opp][deathW[opp][di[opp] % deathW[opp].length] ?? 0] ?? {}
+      di[opp]++
+      e.killer = kl.name
+      e.victim = vc.name
+      const first = /first blood/i.test(e.note)
+      e.note = `${t}' — ${first ? 'First Blood: ' : ''}${mine} ${kl.name ?? '?'} kills ${foe} ${vc.name ?? '?'} (+${first ? 400 : 300}g)`
+    } else if (e.type === 'tower') {
+      towers[e.side]++
+      const conv = /converts off the ace/i.test(e.note)
+      e.note = conv
+        ? `${t}' — ${mine} converts off the ace (tower)`
+        : `${t}' — ${mine} takes ${ordinal(towers[e.side])} tower`
+    } else if (e.type === 'dragon') {
+      drakes[e.side]++
+      e.note = `${t}' — ${mine} secures ${ordinal(drakes[e.side])} dragon`
+    } else if (e.type === 'teamfight') {
+      e.note = `${t}' — ${mine} wins the teamfight`
+    } else if (e.type === 'baron') {
+      const conv = /converts off the ace/i.test(e.note)
+      e.note = conv
+        ? `${t}' — ${mine} converts off the ace (baron)`
+        : `${t}' — ${mine} secures Baron`
+    } else if (e.type === 'ace') {
+      e.note = `${t}' — ${mine} ACEs ${foe}`
+    }
+  }
+  return events
+}
+
 function simulateGame(lineupA, lineupB, winner, gameIndex, note, strDiff, tacticA, tacticB, rng, fx = {}) {
   const winnerStrDiff = winner === 'A' ? strDiff : -strDiff
   const winnerTactic = winner === 'A' ? tacticA : tacticB
@@ -604,6 +670,7 @@ function simulateGame(lineupA, lineupB, winner, gameIndex, note, strDiff, tactic
   const players = genPlayerStats(lineupA, lineupB, winner, durationMin, teamKillsA, teamKillsB, rng, fx.roleA, fx.roleB)
   const killsA = players.filter((p) => p.side === 'A').reduce((a, p) => a + p.kills, 0)
   const killsB = players.filter((p) => p.side === 'B').reduce((a, p) => a + p.kills, 0)
+  enrichEvents(events, players, fx.labelA ?? 'Team A', fx.labelB ?? 'Team B')
   return { game: gameIndex, winner, durationMin, goldTimeline, events, players, note, killsA, killsB }
 }
 
@@ -658,6 +725,7 @@ export function simulateSeries(lineupA, tacticA, lineupB, tacticB, rng = Math.ra
   const fx = {
     flavorA: dA.flavor, flavorB: dB.flavor,
     roleA: roleDeltasFor(aStrat?.roam), roleB: roleDeltasFor(bStrat?.roam),
+    labelA, labelB,
   }
   const strDiff = sA - sB
   const games = []
@@ -718,5 +786,42 @@ export function simulateSeries(lineupA, tacticA, lineupB, tacticB, rng = Math.ra
   // (revealed flags for the reducer to persist). Trait-free series keep the
   // exact P0 return shape.
   if (hasCarriers) out.lineups = { A: snapA, B: snapB }
+  return out
+}
+
+// Single-game sim for draft/IGL modes (per-game bonuses from drafts/calls).
+// Mirrors one iteration of simulateSeries' game loop: same strength formula,
+// same drawGame, same simulateGame cosmetics. Returns { aWon, game, sA, sB }.
+export function simulateSingleGame(lineupA, tacticA, lineupB, tacticB, rng = Math.random, labelA = 'Team A', labelB = 'Team B', extra = {}) {
+  const { aBonus = 0, bBonus = 0, aStrat = null, bStrat = null, gameIndex = 1,
+    bigMatch = false, deciding = false, fearless = false, previousWinner = null, forcedWinner = null } = extra ?? {}
+  const simMode = extra?.simMode === 'random' ? 'random'
+    : extra?.simMode === 'manual' && ['A', 'B'].includes(forcedWinner) ? 'manual' : 'biased'
+  const dA = strategyDelta(aStrat, tacticA)
+  const dB = strategyDelta(bStrat, tacticB)
+  const snapA = snapLineup(lineupA)
+  const snapB = snapLineup(lineupB)
+  const log = []
+  const traitRng = simMode === 'biased' ? rng : () => 0.5
+  const tA = traitDelta(snapA, { deciding: false, bigMatch }, traitRng, log)
+  const tB = traitDelta(snapB, { deciding: false, bigMatch }, traitRng, log)
+  const sA = computeStrength(lineupA, tacticA) + (aBonus || 0) + dA.delta + tA.delta
+  const sB = computeStrength(lineupB, tacticB) + (bBonus || 0) + dB.delta + tB.delta
+  const fx = {
+    flavorA: dA.flavor, flavorB: dB.flavor,
+    roleA: roleDeltasFor(aStrat?.roam), roleB: roleDeltasFor(bStrat?.roam),
+    labelA, labelB,
+  }
+  const strDiff = sA - sB
+  const clutchA = deciding ? clutchBonus(snapA, log) : 0
+  const clutchB = deciding ? clutchBonus(snapB, log) : 0
+  const effA = sA + clutchA - (fearless && previousWinner === 'A' ? FEARLESS_PENALTY : 0)
+  const effB = sB + clutchB - (fearless && previousWinner === 'B' ? FEARLESS_PENALTY : 0)
+  const aWon = simMode === 'manual' ? forcedWinner === 'A'
+    : simMode === 'random' ? rng() < 0.5 : drawGame(effA, effB, tacticA, tacticB, rng)
+  const note = aWon ? pick(FLAVOR_WIN, rng) : pick(FLAVOR_LOSS, rng)
+  const game = simulateGame(lineupA, lineupB, aWon ? 'A' : 'B', gameIndex, note, strDiff, tacticA, tacticB, rng, fx)
+  const out = { aWon, game, sA, sB, log }
+  if (hasTraitCarriers(snapA) || hasTraitCarriers(snapB)) out.lineups = { A: snapA, B: snapB }
   return out
 }

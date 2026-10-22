@@ -1,14 +1,58 @@
-# LCK Manager (lolsim) — Project Handoff
+# Rift Manager — Project Handoff
 
-> Start here. This is the overview + continuing-project guide for other ASKA agents.
-> For the internal feature/design history see `docs/`. For how to run/play see `docs/GUIDE.md`.
+Current source: `/Users/kethuda/Work/lolsim`. Restored from the latest online Drive
+snapshot on 2026-10-12; the old mounted Drive copy was missing the October 10 expansion.
+Local Git baseline: `06adf30`; active feature branch: `feat/match-experiences`.
+There is no GitHub remote. Do not treat this repository's new `main` branch as a live release.
 
-## What this is
-A League-of-Legends esports **team-management simulation** (no in-game playing). You are the
-head coach/GM: build a roster, set tactics, train players, sign free agents, and sim a season —
-and a full multi-season career. Matches auto-resolve from a rating + form + tactics + traits model.
+The app is a React 18 / Vite client-side management simulation. Saves live in the
+browser; there is no backend or account system. Read `docs/GUIDE.md` to play,
+`docs/DEPLOY-AND-CONTINUE.md` to deploy, and `CHANGELOG.md` for prior work.
 
-It is a **pure client-side React SPA** (Vite), state in `localStorage`, no backend. Static-hostable.
+## Current release scope
+
+This release targets **lck-manager-staging only**:
+https://lck-manager-staging.vercel.app/ and https://lolsim.askaconsult.com/staging/.
+The live root is the separate `lck-manager` project. It requires a separate promotion decision.
+
+- Weekly coaching sessions in Season/Career: matchup scrims, lane mechanics,
+  objective setup, or recovery. Visible form gains and bounded, one-match strength
+  bonuses feed the same forecast and simulation. Substitutes do not inherit preparation.
+- Series reviews count recorded objectives and gold patterns, with a next-week
+  coaching focus. Draft/IGL retain their actual games for inline and Results review.
+- Historical Career honors every selectable year/league. Career development branches
+  from the chosen roster. Foreign tournament teams use the starting-year datasets;
+  foreign qualifiers are seeded by tier, and formats are simplified.
+- Four story modes: Season, Career, Scenario, Gauntlet. Draft and IGL are composable
+  match add-ons, selectable at start and before each series, including international
+  brackets. Show simulation is independent; IGL forces the map on.
+- The original SVG map animates ten role icons, towers, dragon/Baron pits, deaths,
+  rotations, objective events and the selected IGL call. Map positions are illustrative.
+- One persisted match session owns setup, draft, map, decision, intermission and result.
+  Story progression is applied once. Results keep actual games instead of recomputing
+  different timelines. Watching alone preserves the same resolver and RNG output.
+- IGL is still a strength-based continuation, not a full event-level macro engine.
+  It retains the visible event/gold prefix, adjusts the unseen continuation, and
+  reconciles combat counts. Opening map gold interpolates from zero to the engine's
+  five-minute checkpoint. Objective timing and positions are stylized.
+- Saves migrate standalone Draft/IGL into Season + add-on, retaining unfinished drafts,
+  calls, completed games and already-resolved AI matches. Staging has an isolated key.
+  Save errors offer Retry saving; New Game asks before replacing the current session.
+
+## Verification and continuing work
+
+Run `npm ci`, `npm test`, and `npm run build` (24 suites in this release). The test runner discovers every
+`test/*.test.mjs` suite and fails if any suite fails. Tests cover pure simulation,
+real reducer lifecycles, save migration, React control events and server rendering.
+React test host nodes are mocks: they do not certify native dialog focus or visual layout.
+Native Safari verified the setup toggles, an animated Career match and its IGL pause.
+Browser control became unavailable during follow-up; the complete call-to-result flow
+is covered by React interaction tests. Mobile layout still needs device playtesting.
+
+Deploy with `bash scripts/deploy-staging.sh` from a clean committed tree. It verifies
+all suites, copies the commit without `.git`, pins the staging project ID, and deploys
+without moving domains. Verify the returned URL, then promote that deployment to the
+staging alias as described in the runbook. Never deploy this machine's Git identity.
 
 ## Why this exists — owner's intent & vision
 Synthesized from the owner's (Ahraz's) prompts, instructions, and directives this session. Read this
@@ -58,110 +102,33 @@ reaction game.
    version of #2/#4 mechanics on staging — traits, win-prob panel, fearless, playoffs, academy —
    as building blocks toward the full vision.)
 
-**Bottom line for the next agent:** Ahraz is building a *LoL-esports management sim* that feels real,
+**Direction for the next agent:** Ahraz is building a *LoL-esports management sim* that feels real,
 lets people relive esports history, and rewards real strategic thinking — shipped continuously on the
 web. Optimize for that feeling and that depth; keep live and staging separate; verify what you deploy.
 
-## Live state (as of this handoff, 2026-10-04)
-- **Live (P0):** https://lolsim.askaconsult.com and https://lck-manager-five.vercel.app
-  serve the P0 build (bundle `index-16I-M-51.js`). Two aliases, one Vercel project (`lck-manager`).
-- **Staging (P1):** https://lolsim.askaconsult.com/staging serves a SEPARATE Vercel project
-  (`lck-manager-staging`, bundle `index--aGgR-dS.js`) via a `/staging/*` rewrite proxy on the live
-  project. P1 is experimental, **NOT merged to live**.
-- **Git branch in this folder:** `staging` at commit `f8632ef` = full P1 (live-ready but unpromoted).
-  `main` at `52a2e0e` = P0 (what is on the live root). See `git log`.
+## Architecture
 
-## Architecture at a glance
-```
-src/
-  data/       league + rules data (EDIT to change the league): lck.js, traits.js, academy.js,
-              development.js, events.js, coaches.js, seasons.js, campaigns.js
-  engine/     pure sim (runs under node for tests): sim.js (series + per-game detail),
-              season.js (round-robin schedule + playoff bracket builder)
-  game/       app state + persistence: useGameState.js (single reducer, localStorage),
-              ai.js (AI lineups/tactics), logic.js (win-prob: estimateSeriesWinProb, explainWinProb)
-  components/ UI views: Dashboard, Lineup, Tactics, Strategy, Standings, Results, Market,
-              Squad, Tournament, MatchDetail, Campaign, Guide, NewGame
-  utils/      exportPng.js (shareable result image via html2canvas)
-test/         node test suites (no framework): node test/<name>.test.mjs
-```
-- **Single source of truth for state:** `src/game/useGameState.js`. All mutation goes through one
-  reducer; `PLAY_ROUND`, `PLAY_TOURNAMENT_ROUND`, `ADVANCE_SEASON`, `RESOLVE_EVENT`,
-  `RESOLVE_PROMOTION`, `SET_SERIES_OPTION`, etc. When adding a feature, add a reducer action +
-  wire the UI; do not mutate state outside the reducer.
-- **Engine is additive-only.** `simulateSeries(lineupA, tacticA, lineupB, tacticB, rng, labelA,
-  labelB, extra={})`. New behavior is an `extra` flag defaulting to the P0 path, so trait-free /
-  feature-off output stays byte-identical. Keep this discipline or you'll break 6+ test suites.
+- `src/data/`: fictional ratings, year/league rosters, campaigns, champions, coaches.
+- `src/engine/`: pure match and schedule simulation; additive optional behavior.
+- `src/game/useGameState.js`: reducer; all gameplay mutations go through actions.
+- `src/game/persistence.js`: environment-aware save keys and storage access.
+- `src/game/preparation.js`: deterministic training, scouting and match bonus.
+- `src/game/matchReview.js`: descriptive analysis of generated match events.
+- `src/components/`: game screens; `src/styles.css` and `src/management.css` style them.
+- `src/utils/exportPng.js`: lazy-loads html2canvas only for a requested export.
 
-## Features shipped (MVP → P0 → P1)
-**MVP / core:** single round-robin LCK season (10 teams, BO3 series, 1 pt per series win), lineup
-by role, tactics (style + phase), form training, free-agent market, standings, results, per-game
-match detail (gold graph, player grades, event timeline, coach read).
+## Conventions and limits
 
-**Upgrades:** Scenario Mode (locked historical seasons 2013/2015/2022), Career Mode (multi-season,
-up to 10, player development + dilemmas + coaches + trading), multi-league (LPL/LEC/LCS) with
-regional splits + MSI/Worlds international tournament bracket, in-sim strategic choices (draft
-bias, support roam/stay, lane swap, win-condition), Campaign Mode (Faker's first LCK win — hard
-wired wins the player can't change, winnable games are win-or-lose).
+Ratings are fictional, balanced game values. Historical names have uncertainty tags;
+do not present these as verified esports statistics or exact historical formats.
+Keep `base: './'` in Vite so assets work through the staging path proxy. Keep the
+live-only rewrite in the tracked `vercel.json`; the staging deploy script removes it
+from the temporary deployment copy. Keep footer credit `Created by @ahrazzle` linked
+to https://github.com/ahrazzle. No third-party game code/assets are copied.
+Never commit or sync `.env*`, tokens, `.vercel`, `node_modules`, `dist`, or `.git` to Drive.
+Use the existing project commit identity `proteus <proteus@askaconsult.com>`.
 
-**P0 (on live):** resolver modes (biased/random/manual), stage-gated bracket reveal + keyboard +
-manual resolver in Tournament, career dilemma events, shareable PNG export.
-
-**P1 (on staging only):**
-1. **Hidden traits** — One-Season Wonder, Injury Prone, Big-Game, Clutch, Inconsistent; revealed on
-   first fire in the match log; age-driven spike/regression in development.
-2. **Academy promotion** — career off-season may offer a generated prospect; promote (cut weakest
-   bench to FA pool) or keep. `PromotionModal` in Squad.
-3. **Win-prob explanation** — collapsible "Why X%?" panel (rating/form/tactics/H2H/trait/coaching).
-4. **Fearless draft** — per-series toggle; game-N winner plays off comfort (-1.0) next game, biased
-   mode only.
-5. **Season playoffs** — top-4 single-elim (1v4, 2v3) BO3 semis + final appended to season end;
-   feeds the season champion. This changed the post-season flow: a finished season now ends in
-   `phase:'playoffs'` with an active bracket; MSI/Worlds build from *done* playoffs.
-
-## How to run / build / test
-```
-npm install
-npm run dev        # local dev on :5173
-npm run build      # outputs ./dist  (vite base = './' — relative assets, works under /staging/)
-npm test           # not defined; run suites directly:
-node test/engine.test.mjs   # and the other 10 (see below)
-```
-**All 11 suites must exit 0 before any commit/deploy** (engine, season, sim-detail, career,
-multileague, strategy, scenario, scenario-selector, p0-engine, p0-ux, p1). Tests use `node:assert`
-and import the engine/reducer directly (no browser). Run them all; P1 playoff changes require
-career/multileague/p0-ux to play the bracket before advancing seasons — don't "simplify" that away.
-
-## How to continue the project
-See **`docs/DEPLOY-AND-CONTINUE.md`** for the full ops runbook (deploy live vs staging, promote P1,
-branching, common pitfalls). Summary:
-1. Work on `staging` for experimental features; keep `main` = what's live.
-2. Build + run all 11 suites green.
-3. Commit as `proteus <proteus@askaconsult.com>`.
-4. Deploy staging (`lck-manager-staging`) for experiments, or live (`lck-manager`) to ship.
-5. To promote P1 to live: merge `staging`→`main`, then deploy the live project (relink
-   `.vercel/project.json` first — it follows the last `vercel link`).
-
-## Roadmap (next work, in order)
-See `docs/` design docs. Owner-set priorities:
-1. **Historical-year selector** (`docs/historical-year-design.md`) — pick a year; pull real rosters
-   from the LoL esports API. Depends on a live-data layer (`docs/live-data-research.md`).
-2. **Multi-league / international expansion** (`docs/multileague-design.md`) — LPL/LEC/LCS + MSI/Worlds.
-3. **In-sim strategic choices that move win prob** (`docs/insim-choices-design.md`).
-4. Campaign/storyline expansion beyond Faker's first LCK win (`docs/campaign-faker-first-lck.md`).
-
-## Conventions & cautions
-- **Data is fictional/balanced.** Ratings in `src/data/lck.js` are game-tuned, not real stats.
-  Team/player names are LCK-flavor. Respect this when adding features.
-- **No code/assets lifted from third-party games** (riftscore, worldssim, leagueofdraft) — design
-  inspiration only (`docs/similar-games-research.md`, `docs/oss-survey.md`).
-- **Secrets never in the repo/vault.** `.env.local` (LoL esports API key, Vercel/Cloudflare tokens)
-  is gitignored and deliberately NOT copied here. Recreate locally; never commit.
-- **No GitHub remote** — the repo is local + Vercel-only. Vault rule #4 (code merges on GitHub)
-  does not apply to this project; the local repo IS the source of truth.
-- Footer credit: "Created by @ahrazzle" → https://github.com/ahrazzle.
-
-## Contact / ownership
-Owner: Ahraz Arifuddin (@ahrazzle, a@askaconsult.com). Protean roles: Hazen=research,
-Leo=design, Mozi=build, Shaka=QA, Proteus=orchestrate. Any ASKA agent may continue — coordinate
-via `CHANGELOG.md` per the project-files SOP.
+Next work is in `docs/roadmap.md`: verified historical data, deeper event-level IGL,
+and optional server-backed language-model flavor. No API key should ever enter the
+browser bundle. Source edits belong in the local repository and working-files folder
+in the same session; append meaningful changes to `CHANGELOG.md`.

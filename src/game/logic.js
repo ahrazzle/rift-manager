@@ -4,6 +4,7 @@ import { TRAIT_BY_ID } from '../data/traits.js'
 import { COACH_BY_ID, coachBonus } from '../data/coaches.js'
 import { computeStrength, simulateSeries, strategyDelta, phaseEdge } from '../engine/sim.js'
 import { aiTactic } from './ai.js'
+import { preparationBonus } from './preparation.js'
 
 export const TEAM_BY_ID = Object.fromEntries(TEAMS.map((t) => [t.id, t]))
 export const TEAM_ORDER = TEAMS.map((t) => t.id)
@@ -86,6 +87,7 @@ export function matchupSeed(state, oppId) {
     JSON.stringify(state.tactic), JSON.stringify(state.lineup),
     JSON.stringify(state.strategy), JSON.stringify(state.seriesOptions),
     JSON.stringify(state.form), coachBonusFor(state),
+    preparationBonus(state, oppId),
     state.teamMeta?.[oppId]?.tier ?? '',
   ].join('|')
 }
@@ -178,8 +180,9 @@ export function explainWinProb(state, oppId, opts = {}) {
   const oppTactic = opts.oppTactic
     ?? aiTactic(oppId, state.teamId, state.round ?? 1, rng, state.teamMeta?.[oppId]?.tier)
   const bonus = coachBonusFor(state)
+  const preparation = preparationBonus(state, oppId)
   const prob = estimateSeriesWinProb(
-    myLineup, myTactic, oppLineup, oppTactic, n, rng, bonus,
+    myLineup, myTactic, oppLineup, oppTactic, n, rng, bonus + preparation,
     { aStrat: state.strategy ?? null, fearless: state.seriesOptions?.fearless ?? false },
   )
   const rating = clampPP((avgOvr(myLineup) - avgOvr(oppLineup)) * 1.1, -25, 25)
@@ -204,6 +207,7 @@ export function explainWinProb(state, oppId, opts = {}) {
   const coaching = { label: 'Coaching', contribution: clampPP(bonus * 2.2, -6, 6) }
   return {
     prob,
+    preparation,
     factors: [
       { label: 'Rating edge', contribution: rating },
       { label: 'Form edge', contribution: form },
