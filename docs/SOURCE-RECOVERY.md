@@ -36,6 +36,11 @@ Generated assets byte-match https://lck-manager-staging.vercel.app/:
 The lazy `html2canvas.esm-CBrSDip1.js` chunk also byte-matches staging. These
 checks establish source/build equivalence; they do not add new browser playtesting.
 
+These asset hashes describe the imported snapshot in commit `e63a1b4`. Subsequent
+changes on this branch add the owner's requested “Made by Aska Digital” footer
+signature, linked to https://digital.askaconsult.com/, alongside the original
+creator credit. Builds containing that signature will have different asset hashes.
+
 ## Documentation and deployment
 
 The original handoff, changelog and deployment runbook are preserved. Their old

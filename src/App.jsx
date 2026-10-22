@@ -94,10 +94,15 @@ function CareerEpitaph({ state, dispatch }) {
 function SiteFooter() {
   return (
     <footer className="site-footer">
-      Created by{' '}
-      <a href="https://github.com/ahrazzle" target="_blank" rel="noreferrer">
-        @ahrazzle
+      <a className="aska-signature" href="https://digital.askaconsult.com/" target="_blank" rel="noreferrer">
+        <span>Made by</span> Aska Digital
       </a>
+      <span className="footer-credit">
+        Created by{' '}
+        <a href="https://github.com/ahrazzle" target="_blank" rel="noreferrer">
+          @ahrazzle
+        </a>
+      </span>
     </footer>
   )
 }

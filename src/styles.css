@@ -228,6 +228,17 @@ button { font-family: inherit; }
 }
 .site-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
 .site-footer a:hover { text-decoration: underline; }
+.site-footer .aska-signature {
+  display: inline-block;
+  padding: 6px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.aska-signature span { font-weight: 400; }
+.site-footer .aska-signature:hover { color: var(--text); }
+.aska-signature:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.footer-credit { display: block; margin-top: 4px; font-size: 11px; }
 
 /* ---------------- New game ---------------- */
 .newgame { max-width: 780px; margin: 28px auto; }
