@@ -1,6 +1,8 @@
 import { ROLE_LABEL } from '../data/lck.js'
+import { canAfford, fmtMoney, playerWage, signingFee } from '../game/economy.js'
 
 export default function Market({ state, dispatch }) {
+  const budget = state.finance?.budget
   if (state.faPool.length === 0) {
     return (
       <div className="card">
@@ -15,6 +17,7 @@ export default function Market({ state, dispatch }) {
       <p className="hint">
         Sign a free agent to add them to your roster (they become the starter in their role).
       </p>
+      {budget != null && <p>Transfer budget: {fmtMoney(budget)}</p>}
       <div className="market-grid">
         {state.faPool.map((p) => (
           <div className="fa-card" key={p.id}>
@@ -28,8 +31,9 @@ export default function Market({ state, dispatch }) {
               <span title="Macro">MAC {p.macro}</span>
               <span title="Consistency">CON {p.consist}</span>
             </div>
-            <button className="primary" onClick={() => dispatch({ type: 'SIGN', playerId: p.id })}>
-              Sign
+            <p className="hint">Signing fee: {fmtMoney(signingFee(p))} · Annual wage: {fmtMoney(playerWage(p))}</p>
+            <button className="primary" disabled={budget != null && !canAfford(budget, signingFee(p))} onClick={() => dispatch({ type: 'SIGN', playerId: p.id })}>
+              {budget != null && !canAfford(budget, signingFee(p)) ? 'Insufficient budget' : 'Sign'}
             </button>
           </div>
         ))}
