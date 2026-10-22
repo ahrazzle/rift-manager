@@ -1,32 +1,75 @@
 # Rift Manager
 
-A League of Legends esports management simulation: build your roster, prepare your
-five, make tactical calls, and chase regional and international titles.
+A League of Legends esports management sim by [Aska Digital](https://digital.askaconsult.com/).
+Build a roster, prepare your team, make tactical calls, and chase regional and
+international titles. Matches simulate themselves; your decisions happen in the
+coach’s office, on the draft board, and at key moments in a series.
 
-Play [staging](https://lck-manager-staging.vercel.app/) or read the
-[guide](docs/GUIDE.md). Project context: [HANDOFF.md](HANDOFF.md).
+**[Play the live game](https://lolsim.askaconsult.com/)** ·
+**[Try staging](https://lck-manager-staging.vercel.app/)** ·
+[How to play](docs/GUIDE.md)
 
-## Run and verify
+## Versions
+
+`main` contains the recovered source of the current live game. The newer staging
+version is on `update/staging`, proposed in [PR #1](https://github.com/ahrazzle/rift-manager/pull/1).
+The staging import was verified against the deployed staging build; the PR also
+adds the “Made by Aska Digital” footer signature.
+
+Staging includes:
+
+- **Season, Career, Scenario, and Gauntlet:** manage a split, build a club across
+  seasons, relive story campaigns, or survive five escalating series.
+- **Historical rosters:** choose years from 2013–2026 across LCK, LPL, LEC, and LCS.
+- **Draft and IGL add-ons:** pick and ban before games, then make macro calls at
+  tactical pauses. Use either add-on or both together.
+- **Animated Rift map:** watch players and objectives move through an illustrative
+  match timeline, including playoffs, MSI, and Worlds.
+- **Preparation and reviews:** coach players each week and use post-match reviews
+  to plan the next matchup.
+
+Player ratings are fictional, balanced game values. Historical rosters have
+uncertainty and league formats are simplified. Map movement illustrates simulated
+events; it is not live League telemetry.
+
+## Run locally
+
+Requires Node.js and npm. Clone the repo, then run:
 
 ```sh
 npm ci
 npm run dev
-npm test
+```
+
+To work on the staging update, check out `update/staging` before installing.
+Build and preview with:
+
+```sh
 npm run build
 npm run preview
 ```
 
-React 18 + Vite, entirely client-side. Four story modes: Season, Career, Scenario
-and Gauntlet. Draft and IGL are optional match add-ons; Show simulation enables
-an animated map with moving player and objective icons in any story mode. Rosters span 2013–2026 across LCK, LPL, LEC and LCS.
-Historical careers create alternate timelines. Ratings are fictional and formats
-are simplified; these are not official esports statistics.
+On the staging branch, `npm test` runs all 24 test suites. The production baseline
+has 11 suites, which can be run individually with `node test/<name>.test.mjs`.
 
-Season and Career include weekly preparation and post-match coaching reviews.
-Choose add-ons when starting a story or before each match, including playoffs,
-MSI and Worlds. IGL always uses the map and pauses for your macro call.
-Progress saves locally in your browser. Staging has a separate save from live.
+## How it works
 
-Deploy from a clean commit with `bash scripts/deploy-staging.sh`, then follow the
-[deployment verification steps](docs/DEPLOY-AND-CONTINUE.md). The script is pinned
-to the staging project and deploys from a git-free copy.
+React 18 + Vite, entirely in the browser. Saves use `localStorage`; no account or
+backend is required. Staging uses a separate save key from production.
+
+- `src/components/` — game screens and controls
+- `src/game/` — state, management systems, and progression
+- `src/engine/` — match and schedule simulation
+- `src/data/` — rosters, ratings, and game content
+- `test/` — simulation and gameplay regression suites
+
+Read the [player guide](docs/GUIDE.md), [project handoff](HANDOFF.md),
+[changelog](CHANGELOG.md), and [deployment runbook](docs/DEPLOY-AND-CONTINUE.md)
+for details. Imported handoff documents retain historical machine paths and local
+commit references. Production and staging are separate Vercel projects; merging
+the PR does not itself promote a deployment.
+
+---
+
+Made by **[Aska Digital](https://digital.askaconsult.com/)**.
+Created by [@ahrazzle](https://github.com/ahrazzle).
