@@ -2,10 +2,27 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { BASES, LANES, mapSnapshot, eventLocation, playbackLimit, physicalSide } from '../game/mapSimulation.js'
 import { iglCallById } from '../game/igl.js'
 import { CHAMP_BY_ID } from '../data/champions.js'
+import { readMapDisplay, writeMapDisplay, playerIdentity } from '../game/mapDisplay.js'
 
 const COLORS = { A: '#66dbff', B: '#ff8a87' }
 const RATE = { slow: 0.35, normal: 0.8, fast: 2.4, instant: 1000 }
 const ROLE_GLYPH = { TOP: '◆', JNG: '✦', MID: '✧', BOT: '⊕', SUP: '+' }
+
+function MapMarker({ player: p, game, display, color, clipId }) {
+  const identity = playerIdentity(game, p, display)
+  const [failedPortrait, setFailedPortrait] = useState(null)
+  const blue = physicalSide(game, p.side) === 'A'
+  const portrait = identity.portrait && failedPortrait !== identity.portrait && !p.dead
+  const glyph = p.dead ? '×' : display.portraits === 'players' ? identity.initials : ROLE_GLYPH[p.role]
+  return <g className="rift-player" data-player={p.name} style={{ transform: `translate(${p.point[0].toFixed(2)}px, ${p.point[1].toFixed(2)}px)`, opacity: p.dead ? .35 : 1 }}>
+    <title>{p.name}{identity.champion ? ` · ${identity.champion.name}` : ''} · {p.role} · {p.kills}/{p.deaths} · {p.activity}</title>
+    <defs><clipPath id={clipId}>{blue ? <circle r="2.2" /> : <rect x="-2.2" y="-2.2" width="4.4" height="4.4" rx=".5" />}</clipPath></defs>
+    {blue ? <circle r="2.4" fill="#103c50" stroke={color} strokeWidth=".5" /> : <rect x="-2.3" y="-2.3" width="4.6" height="4.6" rx=".5" fill="#4c2631" stroke={color} strokeWidth=".5" />}
+    <text y=".85" textAnchor="middle" fill={color} fontSize={display.portraits === 'players' && !p.dead ? '1.8' : '2.8'} fontWeight="800">{glyph}</text>
+    {portrait && <image href={identity.portrait} x="-2.2" y="-2.2" width="4.4" height="4.4" preserveAspectRatio="xMidYMid slice" clipPath={`url(#${clipId})`} onError={() => setFailedPortrait(identity.portrait)} />}
+    {identity.label && <text className="rift-player-label" y="4.5" textAnchor="middle" fill="#edf7f6" fontSize="1.75" stroke="#0a2028" strokeWidth=".65" paintOrder="stroke">{identity.label}</text>}
+  </g>
+}
 export function clockLabel(minute) {
   return `${Math.floor(minute)}:${String(Math.floor((minute % 1) * 60)).padStart(2, '0')}`
 }
@@ -14,6 +31,12 @@ export default function AnimatedRift({ game, homeName, awayName, initialTime = 0
   onCheckpoint, onComplete, onCursor, onSpeedChange, decisionPanel }) {
   const id = useId().replace(/:/g, '')
   const [time, setTime] = useState(initialTime)
+  const [display, setDisplay] = useState(readMapDisplay)
+  const changeDisplay = (key, value) => {
+    const next = { ...display, [key]: value }
+    setDisplay(next)
+    writeMapDisplay(next)
+  }
   const [paused, setPaused] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
   const callbacks = useRef({})
   callbacks.current = { onCheckpoint, onComplete, onCursor }
@@ -55,6 +78,16 @@ export default function AnimatedRift({ game, homeName, awayName, initialTime = 0
       </div>)}
       <div className="rift-clock"><strong>{clockLabel(time)}</strong><span>Game {game.game}</span><small>{Math.abs(snapshot.gold) < 100 ? 'Gold even' : `${snapshot.gold > 0 ? homeName : awayName} +${(Math.abs(snapshot.gold) / 1000).toFixed(1)}k gold`}</small></div>
     </div>
+    <fieldset className="rift-display-controls">
+      <legend>Map display</legend>
+      <label>Names <select aria-label="Names" value={display.names} onChange={(e) => changeDisplay('names', e.target.value)}>
+        <option value="players">Players</option><option value="champions">Champions</option><option value="both">Players + champions</option><option value="hidden">Hidden</option>
+      </select></label>
+      <label>Portraits <select aria-label="Portraits" value={display.portraits} onChange={(e) => changeDisplay('portraits', e.target.value)}>
+        <option value="roles">Role icons</option><option value="players">Player initials</option><option value="champions">Champions</option>
+      </select></label>
+      {!game.picks && (display.names === 'champions' || display.names === 'both' || display.portraits === 'champions') && <span className="hint">Champion names and portraits appear after a draft.</span>}
+    </fieldset>
     <div className="rift-layout"><div className="rift-map-wrap">
       <svg className="rift-map" viewBox="0 0 100 100" role="img" aria-labelledby={`${id}-title ${id}-desc`}>
         <title id={`${id}-title`}>Rift map at {clockLabel(time)}</title>
@@ -87,12 +120,7 @@ export default function AnimatedRift({ game, homeName, awayName, initialTime = 0
           <text x={x} y={y + 7} textAnchor="middle" fill="#c3d4d3" fontSize="1.8">{objective.toUpperCase()}{alive ? '' : ` · ${clockLabel(nextSpawn)}`}</text>
         </g>)}
         {burst && <circle className="rift-burst" cx={burst[0]} cy={burst[1]} r="6" fill="none" stroke={color(latest.side)} strokeWidth=".7" />}
-        {snapshot.players.map((p) => <g key={`${p.side}-${p.name}`} className="rift-player" style={{ transform: `translate(${p.point[0].toFixed(2)}px, ${p.point[1].toFixed(2)}px)`, opacity: p.dead ? .35 : 1 }}>
-          <title>{p.name} · {p.role} · {p.kills}/{p.deaths}{p.dead ? ' · respawning' : ''}</title>
-          {physicalSide(game, p.side) === 'A' ? <circle r="2.2" fill="#103c50" stroke={COLORS.A} strokeWidth=".5" /> : <rect x="-2.1" y="-2.1" width="4.2" height="4.2" rx=".5" fill="#4c2631" stroke={COLORS.B} strokeWidth=".5" />}
-          <text y=".85" textAnchor="middle" fill={color(p.side)} fontSize="2.8" fontWeight="800">{p.dead ? '×' : ROLE_GLYPH[p.role]}</text>
-          <text y="4.3" textAnchor="middle" fill="#edf7f6" fontSize="1.85" stroke="#0a2028" strokeWidth=".5" paintOrder="stroke">{p.name}</text>
-        </g>)}
+        {snapshot.players.map((p, index) => <MapMarker key={`${p.side}-${p.role}`} player={p} game={game} display={display} color={color(p.side)} clipId={`${id}-portrait-${index}`} />)}
       </svg>
       {decision && <div className="rift-map-status" role="status">TACTICAL PAUSE · YOUR CALL</div>}
       {!decision && call && <div className="rift-map-status rift-call">{call.label}</div>}
@@ -113,6 +141,6 @@ export default function AnimatedRift({ game, homeName, awayName, initialTime = 0
       <button type="button" className="ghost" disabled={decision} onClick={() => seek(limit)}>{decisionAt != null && !callMade ? 'Jump to call' : 'Finish game'}</button>
       <label className="rift-speed"><span className="sr-only">Playback speed</span><select value={speed} onChange={(e) => onSpeedChange?.(e.target.value)}>{Object.keys(RATE).map((s) => <option key={s} value={s}>{s === 'instant' ? 'Instant' : s[0].toUpperCase() + s.slice(1)}</option>)}</select></label>
     </div>
-    <p className="hint rift-caption">Stylized match simulation · Player positions illustrate the event timeline. Icons: ◆ top · ✦ jungle · ✧ mid · ⊕ bot · + support.</p>
+    <p className="hint rift-caption">Stylized match simulation · Rotations illustrate recorded events and your calls. Blue circles / red squares show teams. Icons: ◆ top · ✦ jungle · ✧ mid · ⊕ bot · + support.</p>
   </section>
 }

@@ -50,4 +50,34 @@ const hiddenEvent = { ...game, events: [{ t: 3.1, type: 'dragon', side: 'A' }] }
 assert.deepEqual(mapSnapshot(hiddenEvent, 3).players, mapSnapshot({ ...hiddenEvent, events: [] }, 3).players, 'future events cannot attract icons')
 assert.equal(JSON.stringify(game), original, 'presentation preserves engine data')
 assert.equal(TOWERS.length, 18)
+
+// Ordinary lane play must not repeatedly funnel both teams through mid.
+const quiet = { ...game, events: [] }
+for (let minute = 3; minute < 30; minute += 0.25) {
+ const s = mapSnapshot(quiet, minute)
+ assert(s.players.filter(p => distance(p.point, [50, 50]) < 12).length <= 2, 'uninvolved lanes stay out of mid')
+ for (let i = 0; i < s.players.length; i++) for (let j = i + 1; j < s.players.length; j++) {
+  assert(distance(s.players[i].point, s.players[j].point) >= 5.5, 'living markers remain readable')
+ }
+}
+for (const blueSide of ['A', 'B']) {
+ const objective = { ...quiet, blueSide, events: [{ t: 12, type: 'dragon', side: 'A' }] }
+ const rotating = mapSnapshot(objective, 12.9)
+ const baseline = mapSnapshot({ ...objective, events: [] }, 12.9)
+ for (const p of rotating.players.filter(p => p.role === 'TOP' || p.side === 'B')) {
+  assert.deepEqual(p.point, baseline.players.find(q => q.name === p.name).point, 'dragon rotation does not summon every player')
+ }
+ assert.equal(rotating.players.find(p => p.name === 'AJNG').activity, 'Dragon rotation')
+ for (const t of [12, 13.8]) {
+  const left = mapSnapshot(objective, t - 1e-6), right = mapSnapshot(objective, t + 1e-6)
+  for (const p of left.players) assert(distance(p.point, right.players.find(q => q.name === p.name).point) < .001, 'rotations start and end continuously')
+ }
+}
+const roam = { ...quiet, coachingCall: { at: 10, side: 'A', id: 'roam' } }
+for (const name of ['ATOP', 'ABOT', 'AMID']) {
+ assert(distance(mapSnapshot(roam, 11).players.find(p => p.name === name).point,
+  mapSnapshot(quiet, 11).players.find(p => p.name === name).point) < 3, 'roam preserves uninvolved lanes apart from marker spacing')
+}
+const split = mapSnapshot({ ...quiet, coachingCall: { at: 10, side: 'A', id: 'split' } }, 11)
+assert(distance(split.players.find(p => p.name === 'ATOP').point, [50, 50]) > 25, 'split pusher remains in a side lane')
 console.log('Map spawning, side alternation, movement, gold continuity, revealed stats and objectives pass')
