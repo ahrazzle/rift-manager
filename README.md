@@ -41,6 +41,8 @@ npm ci
 npm run dev
 ```
 
+Use Node.js 22 or newer for the current staging build tooling.
+
 To work on the staging update, check out `update/staging` before installing.
 Build and preview with:
 
