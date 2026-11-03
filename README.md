@@ -24,7 +24,8 @@ Staging includes:
 - **Draft and IGL add-ons:** pick and ban before games, then make macro calls at
   tactical pauses. Use either add-on or both together.
 - **Animated Rift map:** watch players and objectives move through an illustrative
-  match timeline, including playoffs, MSI, and Worlds.
+  match timeline, including playoffs, MSI, and Worlds. Choose player/champion
+  labels and role icons, player initials, or drafted champion portraits.
 - **Preparation and reviews:** coach players each week and use post-match reviews
   to plan the next matchup.
 
@@ -49,7 +50,7 @@ npm run build
 npm run preview
 ```
 
-On the staging branch, `npm test` runs all 24 test suites. The production baseline
+On the staging branch, `npm test` runs every `test/*.test.mjs` suite. The production baseline
 has 11 suites, which can be run individually with `node test/<name>.test.mjs`.
 
 ## How it works
