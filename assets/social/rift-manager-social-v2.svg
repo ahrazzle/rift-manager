@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Rift Manager — esports management sim</title>
+  <desc id="desc">Build your team. Own the season. An original strategy dashboard with three lanes, two teams and a five-role lineup.</desc>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101f30"/><stop offset="1" stop-color="#080e19"/></linearGradient>
+    <linearGradient id="map" x2="1" y2="1"><stop stop-color="#183242"/><stop offset="1" stop-color="#10222e"/></linearGradient>
+    <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse"><path d="M36 0H0V36" fill="none" stroke="#b5daee" stroke-opacity=".045"/></pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <path d="M0 0H1200" stroke="#57e0ce" stroke-width="10"/>
+  <g font-family="Barlow Condensed" font-weight="500">
+    <rect x="64" y="66" width="32" height="4" rx="2" fill="#57e0ce"/>
+    <text x="111" y="77" font-size="24" letter-spacing="3" fill="#8dc3cf">ESPORTS MANAGEMENT SIM</text>
+    <g font-weight="700" fill="#f0f5f8">
+      <text x="57" y="244" font-size="166" letter-spacing="2">RIFT</text>
+      <text x="60" y="361" font-size="116" letter-spacing="1">MANAGER</text>
+    </g>
+    <text x="65" y="425" font-size="32" fill="#b5cbd9">Build your team. Own the season.</text>
+    <path d="M65 477H519" stroke="#294151"/>
+    <text x="65" y="522" font-size="25" letter-spacing="2" fill="#57e0ce">YOUR ROSTER. YOUR STRATEGY.</text>
+    <text x="65" y="579" font-size="19" letter-spacing="1.8" fill="#7796aa">BY ASKA DIGITAL</text>
+  </g>
+  <!-- Original schematic, not a screenshot or Riot game artwork. -->
+  <g transform="translate(595 60)">
+    <rect width="541" height="504" rx="20" fill="#0d1926" stroke="#334a5d" stroke-width="2"/>
+    <path d="M0 60H541" stroke="#334a5d"/>
+    <circle cx="28" cy="30" r="5" fill="#57e0ce"/>
+    <text x="45" y="39" fill="#cedfe9" font-family="Barlow Condensed" font-weight="700" font-size="25" letter-spacing="2">MATCH STRATEGY</text>
+    <g transform="translate(25 83)">
+      <rect width="491" height="322" rx="12" fill="url(#map)"/>
+      <path d="M39 280V43H452M39 280H452V43M39 280L452 43" fill="none" stroke="#3e6977" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M39 280V43H452M39 280H452V43M39 280L452 43" fill="none" stroke="#78a4aa" stroke-opacity=".5" stroke-width="2"/>
+      <path d="M94 6C148 70 143 116 243 164S386 229 402 317" fill="none" stroke="#4098aa" stroke-opacity=".25" stroke-width="23"/>
+      <g fill="#1a3039" stroke="#3a5862" stroke-width="2">
+        <path d="M79 91L151 91L180 131L115 180L79 156Z"/><path d="M215 63L344 63L356 92L284 123Z"/>
+        <path d="M137 223L200 185L252 235L235 270L146 270Z"/><path d="M324 160L398 126L417 171L417 224L357 224Z"/>
+      </g>
+      <path d="M75 269L206 193" fill="none" stroke="#57e0ce" stroke-width="3" stroke-dasharray="7 7"/>
+      <path d="M199 188L215 187L207 201" fill="none" stroke="#57e0ce" stroke-width="3" stroke-linejoin="round"/>
+      <g fill="#57e0ce" stroke="#0f2633" stroke-width="4">
+        <circle cx="39" cy="105" r="11"/><circle cx="129" cy="210" r="11"/><circle cx="218" cy="177" r="11"/>
+        <circle cx="310" cy="280" r="11"/><circle cx="276" cy="260" r="11"/>
+      </g>
+      <g fill="#f29a87" stroke="#0f2633" stroke-width="4">
+        <rect x="270" y="32" width="22" height="22" rx="4"/><rect x="309" y="107" width="22" height="22" rx="4"/>
+        <rect x="346" y="82" width="22" height="22" rx="4"/><rect x="441" y="205" width="22" height="22" rx="4"/><rect x="407" y="239" width="22" height="22" rx="4"/>
+      </g>
+      <g fill="#133e42" stroke="#57e0ce" stroke-width="3"><rect x="19" y="260" width="40" height="40" rx="8"/><path d="M29 280H49M39 270V290"/></g>
+      <g fill="#493137" stroke="#f29a87" stroke-width="3"><rect x="432" y="23" width="40" height="40" rx="8"/><path d="M442 43H462M452 33V53"/></g>
+    </g>
+    <g font-family="Barlow Condensed" font-weight="700" font-size="21" text-anchor="middle" fill="#8eb6c5">
+      <g fill="#182c3c" stroke="#314e60"><rect x="25" y="427" width="87" height="51" rx="7"/><rect x="126" y="427" width="87" height="51" rx="7"/><rect x="227" y="427" width="87" height="51" rx="7"/><rect x="328" y="427" width="87" height="51" rx="7"/><rect x="429" y="427" width="87" height="51" rx="7"/></g>
+      <text x="69" y="460">TOP</text><text x="170" y="460">JNG</text><text x="271" y="460">MID</text><text x="372" y="460">BOT</text><text x="473" y="460">SUP</text>
+    </g>
+  </g>
+</svg>
