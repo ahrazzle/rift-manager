@@ -6,17 +6,18 @@ international titles. Matches simulate themselves; your decisions happen in the
 coach’s office, on the draft board, and at key moments in a series.
 
 **[Play the live game](https://lolsim.askaconsult.com/)** ·
-**[Try staging](https://lck-manager-staging.vercel.app/)** ·
+**[Staging snapshot](https://lck-manager-staging.vercel.app/)** ·
 [How to play](docs/GUIDE.md)
 
-## Versions
+## Current release
 
-`main` contains the recovered source of the current live game. The newer staging
-version is on `update/staging`, proposed in [PR #1](https://github.com/ahrazzle/rift-manager/pull/1).
-The staging import was verified against the deployed staging build; the PR also
-adds the “Made by Aska Digital” footer signature.
+The latest released game includes historical rosters, Draft and IGL add-ons,
+and map presentation controls. Production and
+staging are separate Vercel projects; merging code does not deploy either one.
+The stable staging URL currently serves an older snapshot.
+See the [release record](docs/RELEASE-2026-11-03.md) for the tested source and build.
 
-Staging includes:
+Features include:
 
 - **Season, Career, Scenario, and Gauntlet:** manage a split, build a club across
   seasons, relive story campaigns, or survive five escalating series.
@@ -35,14 +36,13 @@ events; it is not live League telemetry.
 
 ## Run locally
 
-Requires Node.js and npm. Clone the repo, then run:
+Use Node.js 22 or newer and npm. Clone the repo and stay on `main`, then run:
 
 ```sh
 npm ci
 npm run dev
 ```
 
-To work on the staging update, check out `update/staging` before installing.
 Build and preview with:
 
 ```sh
@@ -50,8 +50,7 @@ npm run build
 npm run preview
 ```
 
-On the staging branch, `npm test` runs every `test/*.test.mjs` suite. The production baseline
-has 11 suites, which can be run individually with `node test/<name>.test.mjs`.
+Run `npm test` to execute every `test/*.test.mjs` suite (25 suites in this release).
 
 ## How it works
 
@@ -66,9 +65,19 @@ backend is required. Staging uses a separate save key from production.
 
 Read the [player guide](docs/GUIDE.md), [project handoff](HANDOFF.md),
 [changelog](CHANGELOG.md), and [deployment runbook](docs/DEPLOY-AND-CONTINUE.md)
-for details. Imported handoff documents retain historical machine paths and local
-commit references. Production and staging are separate Vercel projects; merging
-the PR does not itself promote a deployment.
+for details. Research notes and older changelog entries describe historical snapshots.
+
+## Contributing
+
+Open an issue with reproduction steps, expected behavior, and browser/device
+information, or propose a focused pull request against `main`. Run `npm test` and
+`npm run build` before submitting. Include screenshots for UI changes and a
+regression test for behavior changes. Never commit saves containing private data,
+credentials, `.env` files, build output, or `node_modules`.
+
+The game uses Riot champion imagery and League of Legends names; these are not
+original project assets. No software license is currently included in this
+repository. Public source availability alone does not grant reuse rights.
 
 ---
 

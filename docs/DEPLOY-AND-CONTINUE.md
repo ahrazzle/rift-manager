@@ -15,8 +15,7 @@ selected project; for this workflow that project is **staging**, not the live ga
 ## Staging release
 
 1. Run `npm test` and `npm run build`; address failures.
-2. Commit the intended source and docs using the project identity:
-   `git -c user.name=proteus -c user.email=proteus@askaconsult.com commit`.
+2. Commit the intended source and documentation using your own Git identity.
 3. Run `bash scripts/deploy-staging.sh`. It requires a clean tree, verifies the
    build, archives the commit without Git metadata, links only the staging project,
    verifies its ID, and creates a deployment with `--skip-domain`.
@@ -33,7 +32,7 @@ selected project; for this workflow that project is **staging**, not the live ga
 
 Do not use the legacy root `deploy.sh`: it deploys whichever local project happens
 to be linked. The new script pins the destination and avoids sending this machine's
-Git identity to Vercel. The source repository has no GitHub remote.
+Git identity to Vercel. The canonical source repository is https://github.com/ahrazzle/rift-manager.
 
 ## Assets, proxy and saves
 
@@ -50,12 +49,14 @@ writes only its own key. The two hostnames have separate browser storage origins
 
 Live requires a separate explicit instruction. Verify its project ID before use,
 retain the staging proxy in its deployment config, and deploy from a git-free copy.
-The restored repository's `main` branch is an import baseline, not a record of live.
-Consult Vercel's deployed artifacts and `CHANGELOG.md`, not old branch labels.
+Keep the repository's `main` branch aligned with the verified live release. Record
+the source SHA, deployment identity, asset hashes, and verification in a release
+record; consult deployed artifacts rather than assuming a branch was deployed.
 
-## Source sync
+## Source reconciliation
 
-After a release, sync final tracked source to the supplied working-files folder.
-Preserve existing online file IDs and upload new files only where needed. Exclude
-`.git`, `.env*`, `.vercel`, `node_modules`, and `dist`. The old local Drive folder was
-behind the online snapshot; never restore it over the current repository.
+After a release, ensure `main` contains the reviewed application source matching
+that release and record its verification. Keep any private working-file mirror in
+sync only through its authorized owner workflow; repository contributors do not
+need access to it. Exclude `.git`, `.env*`, `.vercel`, `node_modules`, and `dist`
+from source exports. Never restore an old mirror over newer source.

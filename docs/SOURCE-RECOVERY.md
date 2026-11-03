@@ -20,8 +20,8 @@ passed. Generated JS and CSS byte-match https://lolsim.askaconsult.com/:
 
 ## Staging update
 
-Branch `update/staging` imports the 129 files from the owner's
-[Drive vault](https://drive.google.com/drive/folders/1-SHUV7zfFa2465XtQrW_apwnb8ki60G8).
+Branch `update/staging` imports the 129 files from the owner's private working-file
+archive.
 The vault contains staging, not the older production release. Downloads used raw
 files and all sizes matched Drive metadata. Application source was not rewritten.
 
@@ -43,9 +43,9 @@ creator credit. Builds containing that signature will have different asset hashe
 
 ## Documentation and deployment
 
-The original handoff, changelog and deployment runbook are preserved. Their old
-machine paths, local Git commit IDs, and statements about having no GitHub remote
-are historical. The repository is now https://github.com/ahrazzle/rift-manager.
+The original recovery retained historical handoff and deployment notes. Current
+contributor documentation has since been refreshed; old changelog entries, local
+commit IDs, and statements about having no GitHub remote describe past snapshots. The repository is now https://github.com/ahrazzle/rift-manager.
 
 Keep production and staging release decisions separate. Neither Vercel project
 was connected to this GitHub repository during recovery. The legacy `deploy.sh`
