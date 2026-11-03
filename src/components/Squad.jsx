@@ -46,7 +46,7 @@ export default function Squad({ state, dispatch }) {
       {state.lastEventLog && <p className="hint">{state.lastEventLog}</p>}
       {/* ---- 1. My Staff ---- */}
       <div className="card">
-        <h2>My Staff — Head Coach</h2>
+        <h2>My Staff: Head Coach</h2>
         {myCoach ? (
           <div className="fa-card" key={myCoach.id}>
             <div className="fa-top">
@@ -126,7 +126,7 @@ export default function Squad({ state, dispatch }) {
 
       {/* ---- 3. Trade Board ---- */}
       <div className="card">
-        <h2>Trade Board — Player Swaps</h2>
+        <h2>Trade Board: Player Swaps</h2>
         <p className="hint">
           1-for-1 swaps, same role only. The AI accepts unless it loses more
           than 3 OVR. If you trade a starter, the incoming player takes their
@@ -198,7 +198,7 @@ export default function Squad({ state, dispatch }) {
             <h3>Trade Preview</h3>
             <p>
               {giveP.name} (OVR {giveP.ovr}, {ROLE_LABEL[giveP.role]}) ⇄{' '}
-              {getP.name} (OVR {getP.ovr}, {ROLE_LABEL[getP.role]}) — delta{' '}
+              {getP.name} (OVR {getP.ovr}, {ROLE_LABEL[getP.role]}): delta{' '}
               {delta >= 0 ? '+' : ''}{delta} OVR
             </p>
             {!roleOk ? (

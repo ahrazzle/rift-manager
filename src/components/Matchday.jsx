@@ -10,9 +10,7 @@ import {
   teamName, teamColor, seriesWon, seriesScore, streakOf,
   mvpOfGames, fmtKDA, coachNote,
 } from '../game/hype.js'
-
-const WALKOUT_MS = 1900
-const GAME_MS = 1500
+import { SIM_SPEEDS } from '../game/useGameState.js'
 
 function Confetti({ n = 70 }) {
   const pieces = useMemo(() => {
@@ -46,10 +44,14 @@ function Confetti({ n = 70 }) {
   )
 }
 
-export default function Matchday({ state, result, games, onDone, roundLabel }) {
+export default function Matchday({ state, result, games, onDone, roundLabel, onSpeedChange }) {
   const [phase, setPhase] = useState('walkout') // walkout | games | verdict
   const [revealed, setRevealed] = useState(0)
   const [celebrate, setCelebrate] = useState(false)
+
+  const speed = SIM_SPEEDS[state?.simSpeed] ?? SIM_SPEEDS.normal
+  const WALKOUT_MS = speed.walkoutMs
+  const GAME_MS = speed.gameMs
 
   const me = state.teamId
   const won = seriesWon(result, me)
@@ -68,14 +70,15 @@ export default function Matchday({ state, result, games, onDone, roundLabel }) {
     }
     if (phase === 'games') {
       if (revealed < gamesList.length) {
+        if (GAME_MS <= 0) { setRevealed(gamesList.length); return undefined }
         const t = setTimeout(() => setRevealed((r) => r + 1), GAME_MS)
         return () => clearTimeout(t)
       }
-      const t = setTimeout(() => setPhase('verdict'), 650)
+      const t = setTimeout(() => setPhase('verdict'), GAME_MS <= 0 ? 0 : 650)
       return () => clearTimeout(t)
     }
     return undefined
-  }, [phase, revealed, gamesList.length])
+  }, [phase, revealed, gamesList.length, WALKOUT_MS, GAME_MS])
 
   useEffect(() => {
     if (phase === 'verdict' && won) {
@@ -108,6 +111,17 @@ export default function Matchday({ state, result, games, onDone, roundLabel }) {
       {phase !== 'verdict' && (
         <button className="mw-skip" onClick={skip}>Skip ▸▸</button>
       )}
+      <select
+        className="year-select mw-speed"
+        value={state?.simSpeed ?? 'normal'}
+        onChange={(e) => onSpeedChange?.(e.target.value)}
+        title="Sim speed"
+        style={{ position: 'absolute', top: 12, right: 90, fontSize: 12, padding: '4px 8px', zIndex: 5 }}
+      >
+        {Object.keys(SIM_SPEEDS).map((k) => (
+          <option key={k} value={k}>{SIM_SPEEDS[k].label}</option>
+        ))}
+      </select>
       <div className="mw-stage">
         {phase === 'walkout' && (
           <>
@@ -169,7 +183,7 @@ export default function Matchday({ state, result, games, onDone, roundLabel }) {
             )}
             {st && st.dir === 'L' && st.n >= 2 && !won && (
               <div className="mw-streakline">
-                <span className="streak-pill cold">{st.n} straight defeats — bounce back next week</span>
+                <span className="streak-pill cold">{st.n} straight defeats. Bounce back next week</span>
               </div>
             )}
             {mvp && mvp.rating >= 7 && (
@@ -189,7 +203,7 @@ export default function Matchday({ state, result, games, onDone, roundLabel }) {
             )}
             <div className="mw-ctas">
               <button className="primary big" onClick={onDone}>
-                {won ? 'Savour it — full detail →' : 'Full match detail →'}
+                {won ? 'Savour it: full detail →' : 'Full match detail →'}
               </button>
             </div>
           </div>

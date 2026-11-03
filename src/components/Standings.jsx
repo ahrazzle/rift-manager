@@ -57,7 +57,7 @@ export default function Standings({ state }) {
       <button className="ghost" onClick={async () => {
         setShotErr(null)
         try { await exportPng(shotRef, 'lck-standings.png') }
-        catch { setShotErr('Export failed — try again.') }
+        catch { setShotErr('Export failed. Try again.') }
       }}>Download PNG ⬇</button>
       {shotErr && <p className="hint">{shotErr}</p>}
     </div>

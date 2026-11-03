@@ -62,8 +62,11 @@ for (const id of HIST_IDS) {
     assert(e.standings.every((s) => s.wins === null && s.losses === null), `${id} all W-L null`)
   }
 }
-// seasonsForLeague covers the 2022 year.
-assert(seasonsForLeague('LCK').includes('2022'), 'seasonsForLeague(LCK) includes 2022')
+// seasonsForLeague exposes the clean 2013–2025 year set; the legacy
+// special entries (2022, 2015-spring, 2013-summer) stay resolvable via
+// getSeason for their campaigns but are hidden from the picker.
+assert(!seasonsForLeague('LCK').includes('2022'), 'legacy 2022 hidden from picker')
+assert(getSeason('2022').teams.length === 10, 'legacy 2022 still resolvable')
 
 // 3. START_CAMPAIGN per hist id -> spectator replay state.
 for (const id of HIST_IDS) {

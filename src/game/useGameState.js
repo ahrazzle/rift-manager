@@ -1,38 +1,177 @@
 // ============================================================================
 // useGameState — game state, actions, and localStorage persistence.
 // ============================================================================
-import { useEffect, useReducer } from 'react'
+import { useCallback, useEffect, useReducer, useState } from 'react'
 import { TEAMS, FREE_AGENTS, ROLES } from '../data/lck.js'
 import { getSeason, LEAGUES, PRESENT_BY_LEAGUE } from '../data/seasons.js'
 import { CAMPAIGNS } from '../data/campaigns.js'
 import { COACHES, COACH_BY_ID, coachBonus } from '../data/coaches.js'
 import { buildLCKSchedule, makeStandings, emptyStanding, roundRobin, buildPlayoffs } from '../engine/season.js'
-import { simulateSeries } from '../engine/sim.js'
+import { simulateSeries, simulateSingleGame } from '../engine/sim.js'
+import { createDraft, applyBan, applyPick, scoreComp, getDraftDebrief, PERSONALITY_IDS } from './draft.js'
+import { IGL_CALLS, buildIglPrompt, evaluateIglCall } from './igl.js'
+import { playerWage, signingFee, teamBudget, canAfford } from './economy.js'
 import { developPlayer } from '../data/development.js'
 import { SERIES_TRAIT_IDS } from '../data/traits.js'
 import { buildAcademyPlayer } from '../data/academy.js'
 import { DILEMMA_EVENTS } from '../data/events.js'
 import { bestLineup, userLineup, styledPlayer, clampForm } from './logic.js'
 import { aiTactic } from './ai.js'
+import { prepareWeek, preparationBonus, upcomingOpponent } from './preparation.js'
+import { readSave, writeSave } from './persistence.js'
 
 // Deterministic per-series RNG so the Match Detail view can recompute identical
 // games[] on demand without persisting full timelines. Each series stores its
 // seed + the two lineup/tactic snapshots used at sim time; the detail view
 // re-runs simulateSeries with mulberry32(seed) to get byte-identical output
 // (sim.js threads the single injected rng in fixed order).
-export function mulberry32(seed) {
-  let a = seed >>> 0
-  return function () {
-    a |= 0
-    a = (a + 0x6d2b79f5) | 0
-    let t = Math.imul(a ^ (a >>> 15), 1 | a)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-const SAVE_KEY = 'lck-manager-save-v1'
+import { mulberry32 } from './random.js'
+export { mulberry32 } from './random.js'
+import { comfortChamps } from './comfort.js'
+export { comfortChamps } from './comfort.js'
+import { MATCH_OPTIONS, matchOptions, createMatchSession, startMatchSession, startSessionGame, changeSessionDraft, makeSessionCall, finishSessionGame, nextSessionGame, sessionResult } from './matchSession.js'
 const SCHEDULE = buildLCKSchedule()
 const TOTAL_ROUNDS = SCHEDULE.length
+
+// --- Expansion systems: board, economy, contracts/morale, press -------------
+// Backfill contract/morale onto players that predate the systems (old saves,
+// campaign extraTeams). Deterministic-ish; cosmetic only.
+function backfillPlayerFields(teams, faPool) {
+  for (const tid in teams) {
+    for (const p of teams[tid]) {
+      if (p.contract == null) p.contract = 1 + Math.floor(Math.random() * 3)
+      if (p.morale == null) p.morale = 65 + Math.floor(Math.random() * 20)
+    }
+  }
+  for (const p of faPool || []) {
+    if (p.contract == null) p.contract = 1
+    if (p.morale == null) p.morale = 70
+  }
+}
+function clampMorale(v) {
+  return Math.max(0, Math.min(100, Math.round(v)))
+}
+function boardExpectationFor(tier) {
+  if (tier >= 89) return 'Win the title'
+  if (tier >= 86) return 'Reach the final'
+  if (tier >= 83) return 'Make the playoffs'
+  return 'Avoid last place'
+}
+// Board + finance + press init once the managed team is known.
+function initManagerState(base) {
+  const tier = base.teamMeta?.[base.teamId]?.tier ?? 82
+  base.board = { expectation: boardExpectationFor(tier), confidence: 60 }
+  base.finance = { budget: teamBudget(tier) }
+  base.press = { pending: true }
+}
+// Recent user-series streak: positive = win streak, negative = losing.
+function userStreak(state) {
+  const mine = (state.results || []).filter((r) => r.isUser).slice(-5)
+  let s = 0
+  for (let i = mine.length - 1; i >= 0; i--) {
+    const r = mine[i]
+    const won = r.userSide === 'home' ? r.homeWon : !r.homeWon
+    if (won && s >= 0) s++
+    else if (!won && s <= 0) s--
+    else break
+  }
+  return s
+}
+// itero-inspired: deterministic comfort champions per player (3 from role
+// pool). Drafting comfort gives a small bonus in draft mode.
+// Shared series finalizer for draft/IGL modes: pushes the result entry,
+// updates standings + form like PLAY_ROUND, advances the round.
+function applyUserSeriesResult(state, form, standings, results, homeId, awayId, userIsHome, aWins, bWins, log, games) {
+  const homeWon = aWins > bWins
+  results.push({
+    round: state.round,
+    homeId,
+    awayId,
+    homeWon,
+    aWins,
+    bWins,
+    isUser: true,
+    userSide: userIsHome ? 'home' : 'away',
+    log: log || [],
+    detail: null,
+    games: (games || []).map((entry) => entry.game),
+  })
+  const hw = standings[homeWon ? homeId : awayId]
+  const lw = standings[homeWon ? awayId : homeId]
+  if (hw && lw) {
+    hw.W += 1; hw.points += 1; hw.gameWins += Math.max(aWins, bWins); hw.gameLosses += Math.min(aWins, bWins)
+    lw.L += 1; lw.gameWins += Math.min(aWins, bWins); lw.gameLosses += Math.max(aWins, bWins)
+  }
+  return { results, standings, form }
+}
+
+// Interactive modes share the ordinary split -> playoff transition.
+function finishInteractiveRound(state, updates) {
+  const next = { ...state, ...updates, round: state.round + 1, press: { pending: true } }
+  next.finished = next.round > state.totalRounds
+  if (next.finished) {
+    const ordered = orderStandings(next.standings).map((r) => r.teamId)
+    if (ordered.length >= 4) {
+      const { semis } = buildPlayoffs(ordered, 4)
+      next.phase = 'playoffs'
+      next.playoffChampionId = null
+      next.tournament = { kind: 'playoffs', rounds: [
+        { name: 'Semifinal', matches: semis.map(([h, a]) => tournamentMatch(h, a, state.teamId)) },
+        { name: 'Final', matches: [tournamentMatch(null, null, state.teamId)] },
+      ], status: 'active', championId: null, qualifies: ordered.slice(0, 4), revealedRounds: 1, resolver: 'biased' }
+    }
+  }
+  return next
+}
+
+// Sim non-user matches of a round (shared by draft/IGL week starts).
+// Mutates the passed form/standings/results copies; returns the user's match.
+function simOtherMatches(state, matches, myId, round, form, standings, results) {
+  let userMatch = null
+  for (const [homeId, awayId] of matches) {
+    if (homeId === myId || awayId === myId) {
+      userMatch = [homeId, awayId]
+      continue
+    }
+    const homeLineupObj = bestLineup(state.teams[homeId], form).lineup
+    const awayLineupObj = bestLineup(state.teams[awayId], form).lineup
+    const seed = (Math.random() * 0x7fffffff) | 0
+    const res = simulateSeries(
+      homeLineupObj, aiTactic(homeId, awayId, round, Math.random, state.teamMeta?.[homeId]?.tier),
+      awayLineupObj, aiTactic(awayId, homeId, round, Math.random, state.teamMeta?.[awayId]?.tier),
+      mulberry32(seed), homeId, awayId, { bigMatch: false, fearless: false },
+    )
+    const homeWon = res.winner === 'A'
+    results.push({ round, homeId, awayId, homeWon, aWins: res.aWins, bWins: res.bWins, isUser: false, userSide: null, log: [], detail: null })
+    const hw = standings[homeWon ? homeId : awayId]
+    const lw = standings[homeWon ? awayId : homeId]
+    if (hw && lw) {
+      hw.W += 1; hw.points += 1; hw.gameWins += Math.max(res.aWins, res.bWins); hw.gameLosses += Math.min(res.aWins, res.bWins)
+      lw.L += 1; lw.gameWins += Math.min(res.aWins, res.bWins); lw.gameLosses += Math.max(res.aWins, res.bWins)
+    }
+    for (const p of Object.values(homeWon ? homeLineupObj : awayLineupObj)) if (form[p.id] !== undefined) form[p.id] = clampForm(form[p.id] + 3)
+    for (const p of Object.values(homeWon ? awayLineupObj : homeLineupObj)) if (form[p.id] !== undefined) form[p.id] = clampForm(form[p.id] - 3)
+  }
+  return userMatch
+}
+// Draft side selection: home is BLUE on even games (pro-style alternation).
+function draftForGame(gameIndex, userIsHome) {
+  const homeIsBlue = gameIndex % 2 === 0
+  const userSide = (userIsHome === homeIsBlue) ? 'BLUE' : 'RED'
+  return createDraft(userSide)
+}
+
+// Sim-speed pacing (the sim math is instant; these only pace the theatrics).
+export const SIM_SPEEDS = {
+  slow: { label: 'Slow', revealMs: 1400, walkoutMs: 1900, gameMs: 1500, thinkMs: 1200 },
+  normal: { label: 'Normal', revealMs: 700, walkoutMs: 1200, gameMs: 800, thinkMs: 800 },
+  fast: { label: 'Fast', revealMs: 250, walkoutMs: 500, gameMs: 350, thinkMs: 350 },
+  instant: { label: 'Instant', revealMs: 0, walkoutMs: 0, gameMs: 0, thinkMs: 120 },
+}
+export function simSpeedMs(state, key) {
+  const s = SIM_SPEEDS[state?.simSpeed] ?? SIM_SPEEDS.normal
+  return s[key] ?? 0
+}
 
 function freshState(seasonYear = 'present') {
   const season = getSeason(seasonYear)
@@ -54,8 +193,11 @@ function freshState(seasonYear = 'present') {
   const schedule = roundRobin(yearTeams.map((t) => t.id))
   const standings = {}
   for (const t of yearTeams) standings[t.id] = emptyStanding(t.id)
+  backfillPlayerFields(teams, faPool)
   return {
     version: 1,
+    matchOptions: matchOptions(),
+    matchSession: null,
     teamId: null,
     managerName: '',
     // Year selector contract (design doc §2 LOCKED): seasonYear is canonical;
@@ -85,11 +227,20 @@ function freshState(seasonYear = 'present') {
     trainedRound: 0,
     finished: false,
     // Campaign mode (additive; old saves without these load as season).
-    mode: 'season', // 'season' | 'campaign' | 'career'
+    mode: 'season', // 'season' | 'campaign' | 'career' | 'draft' | 'igl' | 'gauntlet'
     campaign: null, // CampaignProgress | null (see freshCampaign below)
     career: null, // Career | null (see freshCareer below; null unless mode === 'career')
     pendingEvent: null, // CareerDilemma | null (p0-ux-design §2b; set by ADVANCE_SEASON roll)
     lastEventLog: null, // transient log string from the last RESOLVE_EVENT
+    // Expansion systems (additive; old saves backfill via load()).
+    board: null, // { expectation, confidence } | null
+    finance: null, // { budget } | null
+    press: { pending: false }, // post-match press conference
+    gauntlet: null, // { round, wins, target, opponents, opponentId, status, lastResult } | null
+    draftSeries: null, // active draft-mode series | null
+    live: null, // active IGL-mode live series | null
+    sacked: false, // board fired the coach
+    simSpeed: 'normal', // reveal pacing: 'slow' | 'normal' | 'fast' | 'instant'
   }
 }
 
@@ -136,7 +287,7 @@ function defaultLineup(teamPlayers) {
 
 // --- Career mode (design doc §2 LOCKED contract) ---------------------------
 // Career = { managerName, teamId, seasonIndex 1..10, maxSeasons: 10,
-//   status: 'active'|'retired', seasonYear: 'present',
+//   status: 'active'|'retired', seasonYear: starting dataset id,
 //   staff: { [teamId]: CoachId }, coachPool: Coach[], history: SeasonRecord[] }
 function freshCareer(teamId, managerName, teamIds, seasonYear = 'present') {
   const staff = {}
@@ -219,10 +370,23 @@ function seasonRecordFor(state) {
 // is ONE simulateSeries call, exactly like PLAY_ROUND. Engine untouched.
 export const QUALIFIERS_PER_LEAGUE = 2
 
-// Find a dataset team object by id across all present-league datasets.
-function datasetTeamById(teamId) {
+// Historical careers start an alternate timeline from the selected roster.
+// Foreign qualifiers use the same starting year where a dataset exists;
+// annual progression develops the live roster, rather than replaying history.
+export function tournamentSeasonForLeague(state, league) {
+  const year = /^(\d{4})/.exec(getSeason(state.seasonYear).id)?.[1]
+  if (year) {
+    const id = `${year}-${league.toLowerCase()}`
+    const season = getSeason(id)
+    if (season.id === id) return season
+  }
+  return getSeason(PRESENT_BY_LEAGUE[league])
+}
+
+// Find a team in the tournament's year-matched datasets.
+function datasetTeamById(state, teamId) {
   for (const league of LEAGUES) {
-    const season = getSeason(PRESENT_BY_LEAGUE[league])
+    const season = tournamentSeasonForLeague(state, league)
     const found = season.teams.find((t) => t.id === teamId)
     if (found) return found
   }
@@ -242,7 +406,7 @@ export function qualifiersForTournament(state) {
       const rows = orderStandings(state.standings)
       out[league] = [rows[0]?.teamId, rows[1]?.teamId].filter(Boolean)
     } else {
-      const season = getSeason(PRESENT_BY_LEAGUE[league])
+      const season = tournamentSeasonForLeague(state, league)
       out[league] = [...season.teams]
         .sort((a, b) => b.tier - a.tier || (a.id < b.id ? -1 : 1))
         .slice(0, QUALIFIERS_PER_LEAGUE)
@@ -287,7 +451,7 @@ function buildTournamentObject(state, kind) {
   const teamMeta = { ...state.teamMeta }
   for (const id of qualifies) {
     if (!teamMeta[id]) {
-      const team = datasetTeamById(id)
+      const team = datasetTeamById(state, id)
       if (team) teamMeta[id] = { id: team.id, name: team.name, short: team.short, color: team.color, tier: team.tier }
     }
   }
@@ -313,12 +477,12 @@ function buildTournamentObject(state, kind) {
 }
 
 // Roster source for one tournament side. Live league teams use live
-// rosters/form; foreign teams snapshot their present dataset via getSeason()
+// rosters/form; foreign teams snapshot the matching starting-year dataset
 // with neutral form (AI has no form history). The managed team keeps its live
 // roster/form via userLineup in playTournamentMatch.
 function tournamentRoster(state, teamId) {
   if (state.teams[teamId]) return { players: state.teams[teamId], form: state.form }
-  const team = datasetTeamById(teamId)
+  const team = datasetTeamById(state, teamId)
   const players = team ? team.players : []
   const form = {}
   for (const p of players) form[p.id] = 50
@@ -374,7 +538,7 @@ function playTournamentMatch(state, match, bonus, roundNo, simMode = 'biased', f
   }
 }
 
-function reducer(state, action) {
+function baseReducer(state, action) {
   switch (action.type) {
     case 'NEW_GAME': {
       const base = freshState(action.seasonYear ?? action.year)
@@ -382,19 +546,19 @@ function reducer(state, action) {
       base.teamId = ids.includes(action.teamId) ? action.teamId : ids[0]
       base.managerName = action.managerName || 'Coach'
       base.lineup = defaultLineup(base.teams[base.teamId])
+      const mode = action.mode ?? 'season'
+      base.mode = ['season', 'draft', 'igl', 'gauntlet'].includes(mode) ? mode : 'season'
+      initManagerState(base)
       return base
     }
     case 'RESET':
       return freshState()
 
     case 'START_CAREER': {
-      // Multi-league: seasonYear widened to any present-league id (default
-      // 'present'); historical/unknown years fall back to 'present'.
+      // Honor every valid selector dataset; getSeason retains the unknown-id
+      // fallback. Later seasons develop these rosters in an alternate timeline.
       const reqYear = action.seasonYear ?? action.year ?? 'present'
-      const resolved = getSeason(reqYear).id
-      const careerYear = ['present', 'present-lpl', 'present-lec', 'present-lcs'].includes(resolved)
-        ? resolved
-        : 'present'
+      const careerYear = getSeason(reqYear).id
       const base = freshState(careerYear)
       const ids = Object.keys(base.teams)
       base.teamId = ids.includes(action.teamId) ? action.teamId : ids[0]
@@ -402,6 +566,7 @@ function reducer(state, action) {
       base.lineup = defaultLineup(base.teams[base.teamId])
       base.mode = 'career'
       base.career = freshCareer(base.teamId, base.managerName, ids, careerYear)
+      initManagerState(base)
       // P1 item 7: stamp 2 managed-roster starters with one random
       // series-trigger trait each (revealed: false) so the user meets the
       // system. The rest of the league stays as generated.
@@ -467,26 +632,36 @@ function reducer(state, action) {
       return { ...state, form, trainedRound: state.round }
     }
 
+    case 'PREPARE_WEEK':
+      return prepareWeek(state, action.focus)
+
     case 'SIGN': {
       if (!state.teamId || isRetired(state)) return state
       const idx = state.faPool.findIndex((p) => p.id === action.playerId)
       if (idx < 0) return state
       const player = state.faPool[idx]
+      // Economy: signing fee must fit the budget.
+      const fee = signingFee(player)
+      const budget = state.finance?.budget
+      if (budget != null && !canAfford(budget, fee)) return state
       const faPool = state.faPool.filter((p) => p.id !== action.playerId)
+      const signed = { ...player, team: state.teamId, contract: 2, morale: 70 }
       const teams = {
         ...state.teams,
-        [state.teamId]: [...state.teams[state.teamId], { ...player, team: state.teamId }],
+        [state.teamId]: [...state.teams[state.teamId], signed],
       }
       const form = { ...state.form }
       if (form[player.id] === undefined) form[player.id] = 50
       // Make the signed player the starter for their role.
       const lineup = { ...state.lineup, [player.role]: player.id }
-      return { ...state, faPool, teams, form, lineup }
+      const finance = budget != null ? { budget: budget - fee } : state.finance
+      return { ...state, faPool, teams, form, lineup, finance }
     }
 
     case 'PLAY_ROUND': {
       if (state.finished || !state.teamId) return state
       if (state.mode === 'campaign') return state // campaign uses PLAY_CAMPAIGN_NODE
+      if (state.mode === 'draft' || state.mode === 'igl' || state.mode === 'gauntlet') return state // own week flows
       if (isRetired(state)) return state
       const round = state.round
       const schedule = state.schedule ?? SCHEDULE
@@ -495,12 +670,17 @@ function reducer(state, action) {
       if (!matches) return state
 
       const form = { ...state.form }
+      // Morale → form: happy players play slightly better, unhappy slightly worse.
+      for (const p of state.teams[state.teamId] || []) {
+        if (form[p.id] !== undefined) form[p.id] = clampForm(form[p.id] + Math.round(((p.morale ?? 70) - 70) / 10))
+      }
       const standings = JSON.parse(JSON.stringify(state.standings))
       const results = [...state.results]
       const myId = state.teamId
       // Career coach bonus: managed team only, AI teams get none.
       // Item 4 strategy: managed team's side only, AI-vs-AI default-zero.
-      const bonus = managedCoachBonus(state)
+      const prepBonus = preparationBonus(state, upcomingOpponent(state))
+      const bonus = managedCoachBonus(state) + prepBonus
       const stratSnap = state.strategy ? { ...state.strategy } : null
       const fearless = state.seriesOptions?.fearless ?? false // P1 item 10
       // P1 item 7: revealed-trait persistence. Engine returns post-series
@@ -546,7 +726,8 @@ function reducer(state, action) {
         const bonusB = awayIsUser ? bonus : 0
         const stratA = homeIsUser ? stratSnap : null
         const stratB = awayIsUser ? stratSnap : null
-        const res = simulateSeries(
+        const injected = action.__matchResult && homeId === action.__matchContext.homeId && awayId === action.__matchContext.awayId
+        const res = injected ? action.__matchResult : simulateSeries(
           homeLineupObj, homeTactic,
           awayLineupObj, awayTactic,
           mulberry32(seed),
@@ -570,11 +751,13 @@ function reducer(state, action) {
           isUser: homeIsUser || awayIsUser,
           userSide: homeIsUser ? 'home' : awayIsUser ? 'away' : null,
           log: res.log,
+          ...(injected ? { games: res.games } : {}),
           // Compact detail seed: lineups/tactics are snapshots at sim time so
           // MatchDetail can re-run simulateSeries deterministically. No full
           // timelines stored here — recomputed on demand. Strat snapshots
           // ride along so the recompute passes the same extra.
-          detail: { seed, homeLineup: homeLineupObj, awayLineup: awayLineupObj, homeTactic, awayTactic, bonusA, bonusB, homeStrat: stratA, awayStrat: stratB, bigMatch: false, fearless },
+          detail: { seed, homeLineup: homeLineupObj, awayLineup: awayLineupObj, homeTactic, awayTactic, bonusA, bonusB, homeStrat: stratA, awayStrat: stratB, bigMatch: false, fearless,
+            preparation: (homeIsUser || awayIsUser) && state.preparation?.round === round ? { focus: state.preparation.focus, bonus: prepBonus } : null },
         })
 
         // standings — aWins/bWins are home/away-relative, so map them to
@@ -591,6 +774,20 @@ function reducer(state, action) {
         const losers = homeWon ? Object.values(awayLineupObj) : Object.values(homeLineupObj)
         for (const p of winners) if (form[p.id] !== undefined) form[p.id] = clampForm(form[p.id] + 3)
         for (const p of losers) if (form[p.id] !== undefined) form[p.id] = clampForm(form[p.id] - 3)
+        // morale: user's roster rides the result; benched players drift down.
+        if (homeIsUser || awayIsUser) {
+          const userWon = (homeIsUser && homeWon) || (awayIsUser && !homeWon)
+          const lineupIds = new Set(Object.values(state.lineup || {}))
+          const roster = (state.teams[myId] || []).map((p) => ({
+            ...p,
+            morale: clampMorale((p.morale ?? 70) + (userWon ? 3 : -3) + (lineupIds.has(p.id) ? 0 : -1)),
+          }))
+          if (!teams) {
+            teams = {}
+            for (const tid of Object.keys(state.teams)) teams[tid] = state.teams[tid].map((x) => ({ ...x }))
+          }
+          teams[myId] = roster
+        }
       }
 
       // mild mean-reversion toward 50 so form doesn't run away
@@ -633,6 +830,7 @@ function reducer(state, action) {
             phase: 'playoffs',
             tournament,
             playoffChampionId: null,
+            press: { pending: true },
           }
         }
       }
@@ -644,7 +842,281 @@ function reducer(state, action) {
         results,
         round: nextRound,
         finished: seasonDone,
+        press: { pending: true },
       }
+    }
+
+    // --- Expansion: press conferences -------------------------------------
+    case 'PRESS_ANSWER': {
+      if (!state.press?.pending || !state.teamId || isRetired(state)) return state
+      const fx = {
+        confident: { morale: 2, board: 3 },
+        measured: { morale: 1, board: 1 },
+        deflect: { morale: 0, board: -2 },
+      }[action.answerId]
+      if (!fx) return state
+      // Bold talk on a losing streak backfires in the locker room.
+      const moraleFx = action.answerId === 'confident' && userStreak(state) <= -2 ? -4 : fx.morale
+      const teams = { ...state.teams }
+      teams[state.teamId] = (teams[state.teamId] || []).map((p) => ({
+        ...p, morale: clampMorale((p.morale ?? 70) + moraleFx),
+      }))
+      const board = state.board
+        ? { ...state.board, confidence: Math.max(0, Math.min(100, state.board.confidence + fx.board)) }
+        : state.board
+      return { ...state, teams, board, press: { pending: false } }
+    }
+    case 'PRESS_SKIP': {
+      if (!state.press?.pending) return state
+      return { ...state, press: { pending: false } }
+    }
+    case 'SET_SIM_SPEED': {
+      const speed = action.speed
+      if (!['slow', 'normal', 'fast', 'instant'].includes(speed)) return state
+      return { ...state, simSpeed: speed }
+    }
+
+    // --- Expansion: gauntlet mode -----------------------------------------
+    case 'GAUNTLET_START': {
+      if (!state.teamId || isRetired(state)) return state
+      const myTier = state.teamMeta?.[state.teamId]?.tier ?? 82
+      const others = Object.keys(state.teams)
+        .filter((id) => id !== state.teamId)
+        .map((id) => ({ id, tier: state.teamMeta?.[id]?.tier ?? 80 }))
+        .sort((a, b) => Math.abs(a.tier - myTier) - Math.abs(b.tier - myTier))
+        .slice(0, 5)
+        .sort((a, b) => a.tier - b.tier)
+      if (others.length === 0) return state
+      return {
+        ...state,
+        mode: 'gauntlet',
+        gauntlet: {
+          round: 0, wins: 0, target: others.length,
+          opponents: others.map((o) => o.id), opponentId: others[0].id,
+          status: 'active', lastResult: null,
+        },
+      }
+    }
+    case 'GAUNTLET_PLAY': {
+      const g = state.gauntlet
+      if (!g || g.status !== 'active' || !state.teamId || isRetired(state)) return state
+      const oppId = g.opponentId
+      const form = { ...state.form }
+      const myLineup = userLineup(state.teams[state.teamId], state.lineup, form).lineup
+      const oppLineup = bestLineup(state.teams[oppId], form).lineup
+      const seed = (Math.random() * 0x7fffffff) | 0
+      const res = action.__matchResult ?? simulateSeries(
+        myLineup, state.tactic,
+        oppLineup, aiTactic(oppId, state.teamId, 1, Math.random, state.teamMeta?.[oppId]?.tier),
+        mulberry32(seed), state.teamId, oppId, {},
+      )
+      const won = res.winner === 'A'
+      for (const p of Object.values(won ? myLineup : oppLineup)) if (form[p.id] !== undefined) form[p.id] = clampForm(form[p.id] + 3)
+      for (const p of Object.values(won ? oppLineup : myLineup)) if (form[p.id] !== undefined) form[p.id] = clampForm(form[p.id] - 3)
+      const teams = { ...state.teams }
+      teams[state.teamId] = (teams[state.teamId] || []).map((p) => ({
+        ...p, morale: clampMorale((p.morale ?? 70) + (won ? 4 : -4)),
+      }))
+      const wins = g.wins + (won ? 1 : 0)
+      const round = g.round + 1
+      const status = !won ? 'lost' : round >= g.target ? 'won' : 'active'
+      return {
+        ...state, form, teams,
+        gauntlet: {
+          ...g, round, wins, status,
+          opponentId: status === 'active' ? g.opponents[round] : oppId,
+          lastResult: { won, aWins: res.aWins, bWins: res.bWins, oppId, games: res.games },
+        },
+      }
+    }
+
+    // --- Expansion: active coach (draft) mode -------------------------------
+    case 'DRAFT_WEEK_START': {
+      if (state.mode !== 'draft' || state.finished || !state.teamId || isRetired(state)) return state
+      if (state.draftSeries) return state
+      const matches = (state.schedule ?? [])[state.round - 1]
+      if (!matches) return state
+      const form = { ...state.form }
+      const standings = JSON.parse(JSON.stringify(state.standings))
+      const results = [...state.results]
+      const userMatch = simOtherMatches(state, matches, state.teamId, state.round, form, standings, results)
+      if (!userMatch) {
+        return finishInteractiveRound(state, { form, standings, results })
+      }
+      const [homeId, awayId] = userMatch
+      const userIsHome = homeId === state.teamId
+      // Enemy coach personality for this series (shown in the draft UI).
+      const aiPersonality = PERSONALITY_IDS[(Math.random() * PERSONALITY_IDS.length) | 0]
+      const aiTeamId = userIsHome ? awayId : homeId
+      const aiComfort = []
+      for (const p of state.teams[aiTeamId] || []) {
+        for (const c of comfortChamps(p)) aiComfort.push(c)
+      }
+      return {
+        ...state, form, standings, results,
+        draftSeries: {
+          homeId, awayId, userIsHome, gameIndex: 0, aWins: 0, bWins: 0,
+          games: [], draft: draftForGame(0, userIsHome),
+          aiPersonality, aiComfort,
+        },
+      }
+    }
+    case 'DRAFT_BAN': {
+      const ds = state.draftSeries
+      if (!ds?.draft || isRetired(state)) return state
+      try {
+        return { ...state, draftSeries: { ...ds, draft: applyBan(ds.draft, action.champId) } }
+      } catch { return state }
+    }
+    case 'DRAFT_PICK': {
+      const ds = state.draftSeries
+      if (!ds?.draft || isRetired(state)) return state
+      try {
+        return { ...state, draftSeries: { ...ds, draft: applyPick(ds.draft, action.champId, action.role) } }
+      } catch { return state }
+    }
+    case 'DRAFT_RESOLVE_GAME': {
+      const ds = state.draftSeries
+      if (!ds?.draft?.done || !state.teamId || isRetired(state)) return state
+      const blue = scoreComp(ds.draft.picks.BLUE)
+      const red = scoreComp(ds.draft.picks.RED)
+      const userPicks = ds.draft.picks[ds.draft.userSide] || {}
+      const comfortCount = Object.entries(userPicks).filter(([role, champ]) => {
+        const p = (state.teams[state.teamId] || []).find((x) => x.id === state.lineup?.[role])
+        return p && comfortChamps(p).includes(champ)
+      }).length
+      const comfortBonus = Math.min(0.45, comfortCount * 0.15)
+      const homeSide = ds.userIsHome ? ds.draft.userSide : (ds.draft.userSide === 'BLUE' ? 'RED' : 'BLUE')
+      const homeBonus = (homeSide === 'BLUE' ? blue.bonus : red.bonus) + (ds.userIsHome ? comfortBonus : 0)
+      const awayBonus = (homeSide === 'BLUE' ? red.bonus : blue.bonus) + (ds.userIsHome ? 0 : comfortBonus)
+      const form = { ...state.form }
+      const homeLineupObj = ds.userIsHome
+        ? userLineup(state.teams[ds.homeId], state.lineup, form).lineup
+        : bestLineup(state.teams[ds.homeId], form).lineup
+      const awayLineupObj = !ds.userIsHome
+        ? userLineup(state.teams[ds.awayId], state.lineup, form).lineup
+        : bestLineup(state.teams[ds.awayId], form).lineup
+      const homeTactic = ds.userIsHome ? state.tactic : aiTactic(ds.homeId, ds.awayId, state.round, Math.random, state.teamMeta?.[ds.homeId]?.tier)
+      const awayTactic = !ds.userIsHome ? state.tactic : aiTactic(ds.awayId, ds.homeId, state.round, Math.random, state.teamMeta?.[ds.awayId]?.tier)
+      const seed = (Math.random() * 0x7fffffff) | 0
+      const sg = simulateSingleGame(homeLineupObj, homeTactic, awayLineupObj, awayTactic, mulberry32(seed), ds.homeId, ds.awayId, { aBonus: homeBonus, bBonus: awayBonus, gameIndex: ds.gameIndex + 1 })
+      const homeWon = sg.aWon
+      const aWins = ds.aWins + (homeWon ? 1 : 0)
+      const bWins = ds.bWins + (homeWon ? 0 : 1)
+      const games = [...ds.games, {
+        game: sg.game, homeWon,
+        blueIdentity: blue.identity, redIdentity: red.identity,
+        homeBonus, awayBonus, debrief: getDraftDebrief(ds.draft),
+      }]
+      const decided = aWins === 2 || bWins === 2 || games.length >= 3
+      for (const p of Object.values(homeWon ? homeLineupObj : awayLineupObj)) if (form[p.id] !== undefined) form[p.id] = clampForm(form[p.id] + 3)
+      for (const p of Object.values(homeWon ? awayLineupObj : homeLineupObj)) if (form[p.id] !== undefined) form[p.id] = clampForm(form[p.id] - 3)
+      if (!decided) {
+        const ni = ds.gameIndex + 1
+        return {
+          ...state, form,
+          draftSeries: { ...ds, gameIndex: ni, aWins, bWins, games, draft: draftForGame(ni, ds.userIsHome) },
+        }
+      }
+      const standings = JSON.parse(JSON.stringify(state.standings))
+      const results = [...state.results]
+      applyUserSeriesResult(state, form, standings, results, ds.homeId, ds.awayId, ds.userIsHome, aWins, bWins, sg.log, games)
+      return finishInteractiveRound(state, { form, standings, results, draftSeries: null, lastInteractiveSeries: { aWins, bWins, games } })
+    }
+
+    // --- Expansion: IGL (watch-live) mode -----------------------------------
+    case 'LIVE_WEEK_START': {
+      if (state.mode !== 'igl' || state.finished || !state.teamId || isRetired(state)) return state
+      if (state.live) return state
+      const matches = (state.schedule ?? [])[state.round - 1]
+      if (!matches) return state
+      const form = { ...state.form }
+      const standings = JSON.parse(JSON.stringify(state.standings))
+      const results = [...state.results]
+      const userMatch = simOtherMatches(state, matches, state.teamId, state.round, form, standings, results)
+      if (!userMatch) {
+        return finishInteractiveRound(state, { form, standings, results })
+      }
+      const [homeId, awayId] = userMatch
+      return {
+        ...state, form, standings, results,
+        live: {
+          homeId, awayId, userIsHome: homeId === state.teamId,
+          gameIndex: 0, aWins: 0, bWins: 0, games: [], current: null,
+        },
+      }
+    }
+    case 'LIVE_START_GAME': {
+      const lv = state.live
+      if (!lv || lv.current || !state.teamId || isRetired(state)) return state
+      const form = { ...state.form }
+      const homeLineupObj = lv.userIsHome
+        ? userLineup(state.teams[lv.homeId], state.lineup, form).lineup
+        : bestLineup(state.teams[lv.homeId], form).lineup
+      const awayLineupObj = !lv.userIsHome
+        ? userLineup(state.teams[lv.awayId], state.lineup, form).lineup
+        : bestLineup(state.teams[lv.awayId], form).lineup
+      const homeTactic = lv.userIsHome ? state.tactic : aiTactic(lv.homeId, lv.awayId, state.round, Math.random, state.teamMeta?.[lv.homeId]?.tier)
+      const awayTactic = !lv.userIsHome ? state.tactic : aiTactic(lv.awayId, lv.homeId, state.round, Math.random, state.teamMeta?.[lv.awayId]?.tier)
+      const seed = (Math.random() * 0x7fffffff) | 0
+      // Pass 1: no call — its early events set the scene; the winner is discarded.
+      const pass1 = simulateSingleGame(homeLineupObj, homeTactic, awayLineupObj, awayTactic, mulberry32(seed), lv.homeId, lv.awayId, { gameIndex: lv.gameIndex + 1 })
+      // The decision happens at the split (40% of events) — the prompt, the
+      // optimal call, and the panel all read the game AT the split, not the future.
+      const split = Math.max(3, Math.floor(pass1.game.events.length * 0.4))
+      const splitGame = { ...pass1.game, events: pass1.game.events.slice(0, split) }
+      return {
+        ...state,
+        live: {
+          ...lv,
+          current: {
+            pass1: pass1.game,
+            seed,
+            split,
+            lineups: { homeLineupObj, awayLineupObj, homeTactic, awayTactic },
+            prompt: buildIglPrompt(splitGame, lv.userIsHome),
+          },
+        },
+      }
+    }
+    case 'LIVE_MAKE_CALL': {
+      const lv = state.live
+      if (!lv?.current || lv.current.final || !state.teamId || isRetired(state)) return state
+      const call = IGL_CALLS.find((c) => c.id === action.callId)
+      if (!call) return state
+      const { homeLineupObj, awayLineupObj, homeTactic, awayTactic } = lv.current.lineups
+      const evaluation = evaluateIglCall({ ...lv.current.pass1, events: lv.current.pass1.events.slice(0, lv.current.split) }, lv.userIsHome, call.id)
+      const seed = lv.current.seed ?? ((Math.random() * 0x7fffffff) | 0)
+      // Pass 2 (official): the call's modifier applies to the user's side.
+      const sg = simulateSingleGame(homeLineupObj, homeTactic, awayLineupObj, awayTactic, mulberry32(seed), lv.homeId, lv.awayId, {
+        aBonus: lv.userIsHome ? evaluation.modifier : 0,
+        bBonus: lv.userIsHome ? 0 : evaluation.modifier,
+        gameIndex: lv.gameIndex + 1,
+      })
+      return {
+        ...state,
+        live: { ...lv, current: { ...lv.current, final: sg.game, evaluation, callId: call.id, homeWon: sg.aWon, log: sg.log } },
+      }
+    }
+    case 'LIVE_ADVANCE': {
+      const lv = state.live
+      if (!lv?.current?.final || !state.teamId || isRetired(state)) return state
+      const { final, homeWon, callId } = lv.current
+      const { homeLineupObj, awayLineupObj } = lv.current.lineups
+      const aWins = lv.aWins + (homeWon ? 1 : 0)
+      const bWins = lv.bWins + (homeWon ? 0 : 1)
+      const games = [...lv.games, { game: final, homeWon, callId }]
+      const decided = aWins === 2 || bWins === 2 || games.length >= 3
+      const form = { ...state.form }
+      for (const p of Object.values(homeWon ? homeLineupObj : awayLineupObj)) if (form[p.id] !== undefined) form[p.id] = clampForm(form[p.id] + 3)
+      for (const p of Object.values(homeWon ? awayLineupObj : homeLineupObj)) if (form[p.id] !== undefined) form[p.id] = clampForm(form[p.id] - 3)
+      if (!decided) {
+        return { ...state, form, live: { ...lv, gameIndex: lv.gameIndex + 1, aWins, bWins, games, current: null } }
+      }
+      const standings = JSON.parse(JSON.stringify(state.standings))
+      const results = [...state.results]
+      applyUserSeriesResult(state, form, standings, results, lv.homeId, lv.awayId, lv.userIsHome, aWins, bWins, lv.current.log, games)
+      return finishInteractiveRound(state, { form, standings, results, live: null, lastInteractiveSeries: { aWins, bWins, games } })
     }
 
     case 'ADVANCE_SEASON': {
@@ -666,6 +1138,77 @@ function reducer(state, action) {
       const teams = {}
       for (const tid of teamIds) teams[tid] = state.teams[tid].map((p) => developPlayer(p, Math.random))
       const faPool = (state.faPool ?? []).map((p) => developPlayer(p, Math.random))
+      // --- Expansion: economy / contracts / morale / board / AI churn --------
+      let finance = state.finance ? { ...state.finance } : null
+      const myRoster = teams[state.teamId] || []
+      // Annual wage bill.
+      if (finance) {
+        const bill = myRoster.reduce((s, p) => s + playerWage(p), 0)
+        finance.budget -= bill
+      }
+      // Contracts: decrement; expired → renew if affordable, else release.
+      // Starters are never released (the club always finds the money).
+      const lineupIds = new Set(Object.values(state.lineup || {}))
+      const kept = []
+      const released = []
+      for (const p of myRoster) {
+        const yearsLeft = (p.contract ?? 2) - 1
+        if (yearsLeft > 0) {
+          kept.push({ ...p, contract: yearsLeft })
+          continue
+        }
+        const renewFee = Math.round(signingFee(p) / 2)
+        const isStarter = lineupIds.has(p.id)
+        if (finance && (finance.budget >= renewFee || isStarter)) {
+          finance.budget -= renewFee
+          kept.push({ ...p, contract: 2, morale: clampMorale((p.morale ?? 70) + 5) })
+        } else {
+          released.push({ ...p, team: 'FA', contract: 1, morale: 60 })
+        }
+      }
+      teams[state.teamId] = kept
+      faPool.push(...released)
+      // Morale: title joy / playoff hope / midtable blues, by final placement.
+      const ordered = orderStandings(state.standings).map((r) => r.teamId)
+      const place = ordered.indexOf(state.teamId) + 1
+      const champ = state.playoffChampionId === state.teamId
+      const moraleFx = champ ? 12 : place <= 4 ? 6 : place <= 6 ? 0 : -6
+      teams[state.teamId] = (teams[state.teamId] || []).map((p) => ({
+        ...p, morale: clampMorale((p.morale ?? 70) + moraleFx),
+      }))
+      // Board evaluation: meet the expectation or lose confidence.
+      let board = state.board ? { ...state.board } : null
+      let sacked = false
+      if (board) {
+        const exp = board.expectation
+        const met = exp === 'Win the title' ? champ
+          : exp === 'Reach the final' ? champ || place <= 2
+          : exp === 'Make the playoffs' ? place <= 4
+          : place < ordered.length
+        board.confidence = Math.max(0, Math.min(100, board.confidence + (met ? 15 : -20)))
+        if (board.confidence <= 0) sacked = true
+      }
+      if (sacked) return {
+        ...state, board, finance, sacked: true, pendingEvent: null, pendingPromotion: null,
+        press: { pending: false }, career: { ...state.career, status: 'retired', history: [...state.career.history, record] },
+      }
+      // AI offseason churn (light two-agent homage): each AI team cuts its
+      // weakest player and signs the best FA fit for that role.
+      let fa = [...faPool]
+      for (const tid of teamIds) {
+        if (tid === state.teamId) continue
+        const roster = teams[tid] || []
+        if (roster.length === 0) continue
+        let weakIdx = 0
+        roster.forEach((p, i) => { if (p.ovr < roster[weakIdx].ovr) weakIdx = i })
+        const weak = roster[weakIdx]
+        const cand = fa.filter((p) => p.role === weak.role).sort((a, b) => b.ovr - a.ovr)[0]
+        if (cand && cand.ovr > weak.ovr + 2) {
+          teams[tid] = roster.map((p, i) => (i === weakIdx ? { ...cand, team: tid, contract: 2, morale: 70 } : p))
+          fa = fa.filter((p) => p.id !== cand.id)
+          fa.push({ ...weak, team: 'FA', contract: 1, morale: 60 })
+        }
+      }
       // P0 UX item 4: career dilemma roll (~35%, non-empty managed roster).
       // pendingEvent gate above blocks advancing while one is unresolved.
       let pendingEvent = null
@@ -700,11 +1243,16 @@ function reducer(state, action) {
         ...state,
         pendingEvent,
         pendingPromotion, // P1 item 8: null unless the academy roll hit
-        career: {
-          ...state.career,
-          seasonIndex: state.career.seasonIndex + 1,
-          history: [...state.career.history, record],
-        },
+        board,
+        finance,
+        sacked,
+        career: sacked
+          ? { ...state.career, status: 'retired' }
+          : {
+              ...state.career,
+              seasonIndex: state.career.seasonIndex + 1,
+              history: [...state.career.history, record],
+            },
         schedule,
         totalRounds: schedule.length,
         standings,
@@ -716,8 +1264,9 @@ function reducer(state, action) {
         phase: 'regional',
         playoffChampionId: null, // P1 item 11: cleared with the season reset
         teams,
-        faPool,
+        faPool: fa,
         lineup: defaultLineup(teams[state.teamId]),
+        press: { pending: true },
       }
     }
 
@@ -748,7 +1297,10 @@ function reducer(state, action) {
           cutIdx = i
         }
       })
-      if (cutIdx < 0) return state // no bench to cut — no change
+      if (cutIdx < 0) {
+        // No bench to cut — the offer lapses rather than hanging forever.
+        return { ...state, pendingPromotion: null }
+      }
       const cut = roster[cutIdx]
       const { academy, ...prospect } = pp.player
       const promoted = { ...prospect, team: pp.teamId }
@@ -765,7 +1317,7 @@ function reducer(state, action) {
     }
 
     case 'BUILD_TOURNAMENT': {
-      if (state.mode !== 'season' && state.mode !== 'career') return state
+      if (!['season', 'career', 'draft', 'igl'].includes(state.mode)) return state
       if (isRetired(state)) return state
       const kind = action.kind
       if (kind === 'msi') {
@@ -797,6 +1349,12 @@ function reducer(state, action) {
       return { ...state, tournament: { ...t, resolver: r } }
     }
 
+    case 'SELECT_MATCH_WINNER': {
+      const t = state.tournament, ri = action.roundIndex, mi = action.matchIndex
+      const m = t?.rounds?.[ri]?.matches?.[mi]
+      if (!t || t.status !== 'active' || !m || m.winner || !m.homeId || !m.awayId || ![m.homeId, m.awayId].includes(action.winnerId)) return state
+      return { ...state, tournament: { ...t, rounds: t.rounds.map((r, i) => i !== ri ? r : { ...r, matches: r.matches.map((x, j) => j !== mi ? x : { ...x, forcedWinner: action.winnerId === m.homeId ? 'home' : 'away' }) }) } }
+    }
     case 'SET_TOURNAMENT_WINNER': {
       // P0 UX item 1: manual-resolver clicks pick a match winner directly.
       const t = state.tournament
@@ -823,7 +1381,7 @@ function reducer(state, action) {
     }
 
     case 'PLAY_TOURNAMENT_ROUND': {
-      if (state.mode !== 'season' && state.mode !== 'career') return state
+      if (!['season', 'career', 'draft', 'igl'].includes(state.mode)) return state
       if (isRetired(state)) return state
       const t = state.tournament
       if (!t || t.status !== 'active') return state
@@ -832,10 +1390,16 @@ function reducer(state, action) {
       const bonus = managedCoachBonus(state)
       const roundNo = 10 + ri
       const simMode = t.resolver === 'random' || t.resolver === 'manual' ? t.resolver : 'biased'
-      const played = t.rounds[ri].matches.map((m) =>
-        m.winner || !m.homeId || !m.awayId ? m : playTournamentMatch(state, m, bonus, roundNo, simMode, m.forcedWinner ?? null, t.rounds.length),
-      )
+      const played = t.rounds[ri].matches.map((m, mi) => {
+        if (m.winner || !m.homeId || !m.awayId || (Number.isInteger(action.matchIndex) && action.matchIndex !== mi)) return m
+        if (action.__matchResult && m.homeId === action.__matchContext.homeId && m.awayId === action.__matchContext.awayId) {
+          const r = action.__matchResult
+          return { ...m, winner: r.winner === 'A' ? m.homeId : m.awayId, aWins: r.aWins, bWins: r.bWins, log: r.log, games: r.games, detail: null }
+        }
+        return playTournamentMatch(state, m, bonus, roundNo, simMode, m.forcedWinner ?? null, t.rounds.length)
+      })
       const rounds = t.rounds.map((r, i) => (i === ri ? { ...r, matches: played } : r))
+      if (played.some((m) => !m.winner)) return { ...state, tournament: { ...t, rounds } }
       const fill = (m, homeId, awayId) => ({
         ...m,
         homeId,
@@ -1004,6 +1568,16 @@ function campaignReducer(state, action) {
       const base = freshState()
       base.teamId = campaign.playerTeamId
       base.managerName = action.managerName || 'Coach'
+      // Campaign-local teams (e.g. Los Ratones + opponents): merged into the
+      // team map/meta/form so PLAY_CAMPAIGN_NODE can resolve them. They never
+      // touch the season datasets.
+      if (campaign.extraTeams) {
+        for (const t of campaign.extraTeams) {
+          base.teams[t.id] = t.players.map((p) => ({ ...p }))
+          base.teamMeta[t.id] = { id: t.id, name: t.name, short: t.short, color: t.color, tier: t.tier }
+          for (const p of base.teams[t.id]) base.form[p.id] = 50
+        }
+      }
       base.lineup = defaultLineup(base.teams[campaign.playerTeamId])
       base.mode = 'campaign'
       base.campaign = freshCampaign(campaign.id)
@@ -1047,6 +1621,7 @@ function campaignReducer(state, action) {
             `Historical loss — ${campaign.playerLabel} fell in Game ${slot} to ${node.opponentLabel}. This game was lost.`,
           ],
           detail: null,
+          ...(action.__matchResult ? { games: action.__matchResult.games } : {}),
         }
         const nodeResults = [...prog.nodeResults, entry]
         const cleared = nodeResults.filter((r) => r.nodeId === node.id).length >= CAMPAIGN_SLOTS
@@ -1066,7 +1641,7 @@ function campaignReducer(state, action) {
       const playerTactic = state.tactic
       const oppTactic = aiTactic(node.opponentId, campaign.playerTeamId, prog.nodeIndex + 1)
       const seed = (Math.random() * 0x7fffffff) | 0
-      const res = simulateSeries(
+      const res = action.__matchResult ?? simulateSeries(
         playerLineupObj, playerTactic,
         oppLineupObj, oppTactic,
         mulberry32(seed),
@@ -1084,6 +1659,7 @@ function campaignReducer(state, action) {
         aWins: res.aWins,
         bWins: res.bWins,
         log: res.log,
+        ...(action.__matchResult ? { games: res.games } : {}),
         // Same compact seed shape as season results: MatchDetail.recomputeGames
         // re-runs simulateSeries with mulberry32(seed) for identical games.
         detail: {
@@ -1115,6 +1691,16 @@ function campaignReducer(state, action) {
       return { ...state, campaign: { ...prog, nodeResults, nodeIndex, status } }
     }
 
+    case 'PLAY_REPLAY_EXHIBITION':
+      return action.__matchResult ? { ...state, lastExhibition: { ...action.__matchResult, homeId: action.__matchContext.homeId, awayId: action.__matchContext.awayId } } : state
+    case 'COMMIT_LEGACY_SERIES': {
+      if (!action.__matchResult || !action.__matchContext) return state
+      const r = action.__matchResult, c = action.__matchContext
+      const form = { ...state.form }, standings = structuredClone(state.standings), results = [...state.results]
+      applyUserSeriesResult(state, form, standings, results, c.homeId, c.awayId, c.userSide === 'home', r.aWins, r.bWins, r.log, r.games.map((game) => ({ game })))
+      return finishInteractiveRound(state, { form, standings, results, draftSeries: null, live: null })
+    }
+
     case 'RETRY_CAMPAIGN_NODE': {
       if (state.mode !== 'campaign' || !state.campaign) return state
       const prog = state.campaign
@@ -1142,14 +1728,207 @@ function campaignReducer(state, action) {
   }
 }
 
+// A snapshot freezes the match setup before any draft or map interaction.
+export function matchContextFor(state, action) {
+  if (!state || isRetired(state)) return null
+  let homeId, awayId, round = state.round, needWins = 2, locked = false, sourceAction
+  let kind, label, simMode = 'biased', forcedWinner = null
+  const form = { ...state.form }
+  let managedId = state.teamId
+  if (action?.type === 'PLAY_ROUND') {
+    if (!['season', 'career'].includes(state.mode) || state.finished) return null
+    const match = state.schedule?.[state.round - 1]?.find((m) => m.includes(state.teamId))
+    if (!match) return null
+    ;[homeId, awayId] = match
+    for (const p of state.teams[state.teamId] || []) {
+      if (form[p.id] !== undefined) form[p.id] = clampForm(form[p.id] + Math.round(((p.morale ?? 70) - 70) / 10))
+    }
+    kind = 'regional'; label = `${state.league} · Week ${state.round}`
+    sourceAction = { type: action.type }
+  } else if (action?.type === 'PLAY_TOURNAMENT_ROUND') {
+    const t = state.tournament
+    if (!t || t.status !== 'active') return null
+    const ri = t.rounds.findIndex((r) => r.matches.some((m) => !m.winner))
+    if (ri < 0) return null
+    const matches = t.rounds[ri].matches
+    const own = matches.findIndex((m) => !m.winner && m.isUser)
+    const mi = Number.isInteger(action.matchIndex) ? action.matchIndex
+      : own >= 0 ? own : matches.findIndex((m) => !m.winner)
+    const match = matches[mi]
+    if (!match || match.winner || !match.homeId || !match.awayId) return null
+    ;({ homeId, awayId } = match)
+    kind = 'tournament'; round = 10 + ri; label = `${t.kind === 'playoffs' ? state.league + ' playoffs' : t.kind.toUpperCase()} · ${t.rounds[ri].name}`
+    sourceAction = { type: action.type, matchIndex: mi }
+    simMode = t.resolver || 'biased'
+    forcedWinner = ['home', 'A'].includes(match.forcedWinner) ? 'A' : ['away', 'B'].includes(match.forcedWinner) ? 'B' : null
+    if (simMode === 'manual' && !forcedWinner) return null
+    locked = simMode === 'manual' && !!forcedWinner
+  } else if (action?.type === 'GAUNTLET_PLAY') {
+    if (state.mode !== 'gauntlet' || state.gauntlet?.status !== 'active') return null
+    homeId = state.teamId; awayId = state.gauntlet.opponentId
+    kind = 'gauntlet'; label = `Gauntlet · Round ${state.gauntlet.round + 1}`
+    sourceAction = { type: action.type }
+  } else if (action?.type === 'PLAY_CAMPAIGN_NODE') {
+    const campaign = campaignById(state.campaign?.campaignId)
+    const prog = state.campaign
+    if (state.mode !== 'campaign' || !campaign?.nodes || prog.status !== 'active') return null
+    const node = campaign.nodes[prog.nodeIndex]
+    if (!node) return null
+    const slot = nodeSlots(prog, node.id).length + 1
+    if (slot > CAMPAIGN_SLOTS) return null
+    homeId = campaign.playerTeamId; awayId = node.opponentId; round = prog.nodeIndex + 1
+    locked = (node.hardLossSlots || []).includes(slot)
+    if (locked) { needWins = 1; simMode = 'manual'; forcedWinner = 'B' }
+    kind = 'campaign'; label = `${campaign.title} · Slot ${slot}`
+    sourceAction = { type: action.type }
+  } else if (action?.type === 'PLAY_REPLAY_EXHIBITION') {
+    if (state.mode !== 'campaign' || campaignById(state.campaign?.campaignId)?.kind !== 'season') return null
+    homeId = action.teamId; awayId = action.opponentId
+    if (homeId === awayId || !state.teams[homeId] || !state.teams[awayId]) return null
+    managedId = homeId; kind = 'exhibition'; label = 'Historical roster exhibition'
+    sourceAction = { type: action.type, teamId: homeId, opponentId: awayId }
+  } else return null
+  const homeSrc = tournamentRoster(state, homeId), awaySrc = tournamentRoster(state, awayId)
+  const homeLineup = homeId === state.teamId ? userLineup(homeSrc.players, state.lineup, form).lineup : bestLineup(homeSrc.players, state.teams[homeId] ? form : homeSrc.form).lineup
+  const awayLineup = awayId === state.teamId ? userLineup(awaySrc.players, state.lineup, form).lineup : bestLineup(awaySrc.players, state.teams[awayId] ? form : awaySrc.form).lineup
+  const seed = (Math.random() * 0x7fffffff) | 0
+  const rng = mulberry32(seed ^ 0x71b8)
+  const homeTactic = homeId === managedId ? state.tactic : aiTactic(homeId, awayId, round, rng, state.teamMeta?.[homeId]?.tier)
+  const awayTactic = awayId === managedId ? state.tactic : aiTactic(awayId, homeId, round, rng, state.teamMeta?.[awayId]?.tier)
+  const bonus = ['regional', 'tournament'].includes(kind) ? managedCoachBonus(state) + (kind === 'regional' ? preparationBonus(state, upcomingOpponent(state)) : 0) : 0
+  const userSide = homeId === managedId ? 'home' : awayId === managedId ? 'away' : null
+  return { seed, sourceAction, kind, label, homeId, awayId, homeName: homeId, awayName: awayId,
+    homeLineup, awayLineup, homeTactic, awayTactic, userSide, needWins, locked,
+    extra: { aBonus: homeId === managedId ? bonus : 0, bBonus: awayId === managedId ? bonus : 0,
+      aStrat: kind === 'regional' && userSide === 'home' ? state.strategy : null,
+      bStrat: kind === 'regional' && userSide === 'away' ? state.strategy : null,
+      simMode, forcedWinner, bigMatch: kind === 'tournament' && round - 10 >= state.tournament.rounds.length - 2,
+      fearless: ['regional', 'tournament'].includes(kind) && !!state.seriesOptions?.fearless } }
+}
+
+function settleMatch(state, session) {
+  if (session.stage !== 'complete') return { ...state, matchSession: session }
+  const result = sessionResult(session)
+  const next = baseReducer({ ...state, matchSession: null }, {
+    ...session.context.sourceAction, __matchResult: result, __matchContext: session.context,
+  })
+  return { ...next, matchSession: { ...session, stage: 'result' } }
+}
+
+function reducer(state, action) {
+  const s = state?.matchSession
+  if (['NEW_GAME', 'START_CAREER', 'START_CAMPAIGN'].includes(action.type)) {
+    if (s) return state
+    const next = baseReducer(state, action)
+    return { ...next, matchOptions: matchOptions(action.matchOptions ?? state?.matchOptions), matchSession: null }
+  }
+  if (action.type === 'PREVIEW_MATCH') {
+    if (s) return state
+    const context = matchContextFor(state, action.action)
+    if (!context) return state
+    const options = matchOptions(state.matchOptions)
+    if (!context.userSide) { options.draft = false; options.igl = false }
+    return { ...state, matchSession: createMatchSession(context, options) }
+  }
+  if (action.type === 'SET_MATCH_OPTION') {
+    if (!Object.hasOwn(MATCH_OPTIONS, action.key) || (s && s.stage !== 'setup') || (s && !s.context.userSide && action.key !== 'showSimulation')) return state
+    const options = { ...matchOptions(s?.options ?? state.matchOptions), [action.key]: action.value === true }
+    return { ...state, matchOptions: { ...matchOptions(state.matchOptions), [action.key]: options[action.key] },
+      matchSession: s ? { ...s, options } : null }
+  }
+  if (s) {
+    switch (action.type) {
+      case 'MATCH_CANCEL': return s.stage === 'setup' ? { ...state, matchSession: null } : state
+      case 'MATCH_CLOSE': return s.stage === 'result' ? { ...state, matchSession: null } : state
+      case 'MATCH_START': return settleMatch(state, startMatchSession(s))
+      case 'MATCH_DRAFT_AI': case 'MATCH_DRAFT_BAN': case 'MATCH_DRAFT_PICK':
+        return { ...state, matchSession: changeSessionDraft(s, action) }
+      case 'MATCH_DRAFT_LOCK': return s.stage === 'draft' && s.draft?.done ? settleMatch(state, startSessionGame(s)) : state
+      case 'MATCH_DECISION': return s.stage === 'map' && s.options.igl && !s.current.callId
+        ? { ...state, matchSession: { ...s, stage: 'decision', current: { ...s.current, cursor: s.current.decisionAt } } } : state
+      case 'MATCH_CALL': return { ...state, matchSession: makeSessionCall(s, action.callId) }
+      case 'MATCH_FINISH_GAME': return settleMatch(state, finishSessionGame(s))
+      case 'MATCH_NEXT_GAME': return settleMatch(state, nextSessionGame(s))
+      case 'MATCH_CURSOR': {
+        if (s.stage !== 'map' || !Number.isFinite(action.minute)) return state
+        const limit = s.options.igl && !s.current.callId ? s.current.decisionAt : s.current.game.durationMin
+        return { ...state, matchSession: { ...s, current: { ...s.current, cursor: Math.max(0, Math.min(limit, action.minute)) } } }
+      }
+      case 'RESET': case 'SET_SIM_SPEED': return baseReducer(state, action)
+      default: return state // Roster, campaign and bracket cannot change under an active match.
+    }
+  }
+  if (action.type.startsWith('MATCH_')) return state
+  // Result injection is private to settleMatch; ordinary actions cannot forge outcomes.
+  const { __matchResult, __matchContext, ...publicAction } = action
+  return baseReducer(state, publicAction)
+}
+
+function migrateMatchExperience(parsed) {
+  parsed.matchOptions = matchOptions(parsed.matchOptions)
+  if (!('matchSession' in parsed)) parsed.matchSession = null
+  if (!['draft', 'igl'].includes(parsed.mode)) return parsed
+  const oldMode = parsed.mode, old = parsed.draftSeries || parsed.live
+  parsed.mode = 'season'
+  parsed.matchOptions[oldMode] = true
+  if (old && !parsed.matchSession) {
+    const context = matchContextFor(parsed, { type: 'PLAY_ROUND' })
+    if (context) {
+      context.sourceAction = { type: 'COMMIT_LEGACY_SERIES' }
+      context.kind = 'legacy'
+      const games = (old.games || []).map((g) => g.game)
+      let session = { ...createMatchSession(context, parsed.matchOptions), games,
+        aWins: old.aWins, bWins: old.bWins, legacyCompleted: games.length }
+      if (oldMode === 'draft') session = { ...session, stage: 'draft', draft: old.draft, aiPersonality: old.aiPersonality }
+      else if (old.current) {
+        const c = old.current, l = c.lineups
+        Object.assign(context, { seed: c.seed, homeLineup: l.homeLineupObj, awayLineup: l.awayLineupObj, homeTactic: l.homeTactic, awayTactic: l.awayTactic })
+        const decisionAt = c.pass1.events[Math.max(0, c.split - 1)]?.t ?? 12
+        session = { ...session, stage: c.final ? 'map' : 'decision', current: {
+          game: c.final || c.pass1, seed: c.seed, cursor: decisionAt, decisionAt,
+          extra: { ...context.extra, gameIndex: games.length + 1 }, callId: c.callId ?? null,
+          prompt: c.prompt, evaluation: c.evaluation, log: c.log || [],
+        } }
+      } else session = { ...session, stage: 'between' }
+      parsed.matchSession = session
+    }
+  }
+  parsed.draftSeries = null; parsed.live = null
+  return parsed
+}
+
 export function load() {
   try {
-    const raw = localStorage.getItem(SAVE_KEY)
+    const raw = readSave()
     if (!raw) return freshState()
     const parsed = JSON.parse(raw)
-    if (!parsed || parsed.version !== 1 || !parsed.teamId) return freshState()
+    if (!parsed || parsed.version !== 1 || !parsed.teams || typeof parsed.teams !== 'object' ||
+        Array.isArray(parsed.teams) || !Object.values(parsed.teams).every((players) =>
+          Array.isArray(players) && players.every((p) => p && typeof p === 'object' && !Array.isArray(p))) ||
+        !Array.isArray(parsed.results) || !Array.isArray(parsed.faPool) ||
+        !Number.isInteger(parsed.round) || parsed.round < 1 ||
+        !['standings', 'lineup', 'form', 'tactic'].every((key) => parsed[key] &&
+          typeof parsed[key] === 'object' && !Array.isArray(parsed[key]))) return freshState()
     // Old season saves predate campaign mode: default to season.
-    if (!['season', 'campaign', 'career'].includes(parsed.mode)) parsed.mode = 'season'
+    if (parsed.mode == null) parsed.mode = 'season'
+    if (!['season', 'campaign', 'career', 'draft', 'igl', 'gauntlet'].includes(parsed.mode)) return freshState()
+    if (parsed.mode === 'campaign') {
+      const progress = parsed.campaign
+      const campaign = campaignById(progress?.campaignId)
+      if (!campaign || !Number.isInteger(progress.nodeIndex) || progress.nodeIndex < 0 ||
+          !['active', 'failed', 'cleared'].includes(progress.status) || !Array.isArray(progress.nodeResults)) return freshState()
+      if ((campaign.kind ?? 'series') === 'season') {
+        if (parsed.teamId != null || parsed.seasonYear !== campaign.seasonYear ||
+            progress.nodeIndex !== 0 || progress.nodeResults.length || progress.status === 'failed') return freshState()
+      } else {
+        if (parsed.teamId !== campaign.playerTeamId || progress.nodeIndex > campaign.nodes.length ||
+            (progress.status === 'active' && progress.nodeIndex === campaign.nodes.length) ||
+            !progress.nodeResults.every((r) => r && campaign.nodes.some((n) => n.id === r.nodeId) &&
+              Number.isInteger(r.slot) && r.slot >= 1 && r.slot <= CAMPAIGN_SLOTS)) return freshState()
+      }
+    } else if (!parsed.teamId || !Array.isArray(parsed.teams[parsed.teamId])) return freshState()
+    if (parsed.mode === 'campaign' && parsed.teamId && !Array.isArray(parsed.teams[parsed.teamId])) return freshState()
+    if (parsed.mode === 'career' && (!parsed.career || typeof parsed.career !== 'object')) return freshState()
     if (!('campaign' in parsed)) parsed.campaign = null
     // Old saves predate career mode: null unless a career save.
     if (!('career' in parsed)) parsed.career = null
@@ -1224,7 +2003,7 @@ export function load() {
     else if (typeof parsed.seriesOptions.fearless !== 'boolean') parsed.seriesOptions.fearless = false
     if (!('pendingPromotion' in parsed)) parsed.pendingPromotion = null
     if (!('playoffChampionId' in parsed)) parsed.playoffChampionId = null
-    return parsed
+    return migrateMatchExperience(parsed)
   } catch {
     return freshState()
   }
@@ -1232,16 +2011,19 @@ export function load() {
 
 export function useGameState() {
   const [state, dispatch] = useReducer(reducer, undefined, load)
+  const [storageError, setStorageError] = useState(null)
 
-  useEffect(() => {
+  const retrySave = useCallback(() => {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(state))
+      writeSave(state)
+      setStorageError(null)
     } catch {
-      /* ignore quota errors */
+      setStorageError('Progress could not be saved in this browser. Free some storage, then retry saving.')
     }
   }, [state])
+  useEffect(() => { retrySave() }, [retrySave])
 
-  return { state, dispatch, TOTAL_ROUNDS }
+  return { state, dispatch, TOTAL_ROUNDS, storageError, retrySave }
 }
 
 export { TOTAL_ROUNDS, reducer }

@@ -127,15 +127,26 @@ assert(typeof ACADEMY_PER_ORG === 'number' && ACADEMY_PER_ORG >= 1, '§8 ACADEMY
 
 // Academy offer appears over many ADVANCE_SEASON rolls (career); then RESOLVE_PROMOTION keeps roster size.
 let gotPromo = null
-let s2 = finishRegional() // finished season 1, playoff bracket active
-let guard = 0
-while (!gotPromo && guard++ < 80) {
+// Career caps at 10 seasons; the offer roll needs headroom, so lift the cap
+// (the offer logic itself is what's under test). A sacked career is retired
+// and unplayable, so a sacking restarts from a fresh career rather than
+// resurrecting a dead one (the old reset produced an incoherent state).
+const freshCareer = () => {
+  const s = finishRegional()
+  return { ...s, career: { ...s.career, maxSeasons: 500 } }
+}
+let s2 = freshCareer()
+let guard = 0, restarts = 0
+while (!gotPromo && guard++ < 200 && restarts < 10) {
   // finish any active playoff/international bracket first (P1: playoffs at season end)
   while (s2.tournament && s2.tournament.status !== 'done') s2 = reducer(s2, { type: 'PLAY_TOURNAMENT_ROUND' })
   // resolve any pending dilemma/promotion so ADVANCE_SEASON is allowed
   if (s2.pendingEvent) { s2 = reducer(s2, { type: 'RESOLVE_EVENT', optionIndex: 0 }); continue }
   if (s2.pendingPromotion) { s2 = reducer(s2, { type: 'RESOLVE_PROMOTION', promote: false }); continue }
+  // Board sackings are out of scope for this test — a sacked career restarts.
+  if (s2.sacked || s2.career?.status !== 'active') { s2 = freshCareer(); restarts++; continue }
   s2 = reducer(s2, { type: 'ADVANCE_SEASON' })
+  if (s2.sacked || s2.career?.status !== 'active') { s2 = freshCareer(); restarts++; continue }
   if (s2.pendingPromotion) { gotPromo = s2; break }
   // new season started (not finished) → play its full regional schedule
   let rg = 0
@@ -143,7 +154,7 @@ while (!gotPromo && guard++ < 80) {
   // its playoff bracket is now active; play it so the next ADVANCE is allowed
   while (s2.tournament && s2.tournament.status !== 'done') s2 = reducer(s2, { type: 'PLAY_TOURNAMENT_ROUND' })
 }
-assert(gotPromo != null, '§8 academy promotion offer surfaces within 80 ADVANCE_SEASON rolls')
+assert(gotPromo != null, '§8 academy promotion offer surfaces within 200 ADVANCE_SEASON rolls')
 const rosterBefore = gotPromo.teams[gotPromo.teamId].length
 const resolved = reducer(gotPromo, { type: 'RESOLVE_PROMOTION', promote: true })
 assert(resolved.teams[resolved.teamId].length === rosterBefore, '§8 RESOLVE_PROMOTION promote keeps roster size constant (net-zero)')

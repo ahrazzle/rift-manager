@@ -1,4 +1,14 @@
 {
+  "name": "lck-manager",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "node scripts/test.mjs",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 4173"
+  },
   "dependencies": {
     "html2canvas": "^1.4.1",
     "marked": "^18.0.14",
@@ -7,15 +17,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
+    "react-test-renderer": "18.3.1",
     "vite": "^5.4.11"
-  },
-  "name": "lck-manager",
-  "private": true,
-  "scripts": {
-    "build": "vite build",
-    "dev": "vite",
-    "preview": "vite preview --port 4173"
-  },
-  "type": "module",
-  "version": "0.1.0"
+  }
 }

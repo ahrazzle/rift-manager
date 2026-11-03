@@ -9,7 +9,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { TEAMS } from '../data/lck.js'
 import MatchDetail, { recomputeGames } from './MatchDetail.jsx'
-import Matchday from './Matchday.jsx'
 import { exportPng } from '../utils/exportPng.js'
 
 const STATIC_NAME = Object.fromEntries(TEAMS.map((t) => [t.id, t.name]))
@@ -28,9 +27,7 @@ function colorOf(state, teamId) {
 function MatchCard({ state, dispatch, match, roundLabel, roundIndex, matchIndex, openKey, setOpenKey }) {
   const key = `${roundLabel}-${match.homeId}-${match.awayId}`
   const isOpen = openKey === key
-  const games = match.detail
-    ? recomputeGames({ detail: match.detail, homeId: match.homeId, awayId: match.awayId })
-    : null
+  const games = recomputeGames(match)
   const homeWon = match.winner && match.winner === match.homeId
   return (
     <div className="card result" key={key}>
@@ -57,16 +54,17 @@ function MatchCard({ state, dispatch, match, roundLabel, roundIndex, matchIndex,
       {state.tournament?.resolver === 'manual' && !match.winner && match.homeId && match.awayId && (
         <div className="actions">
           <button className="primary" onClick={() =>
-            dispatch({ type: 'SET_TOURNAMENT_WINNER', roundIndex, matchIndex, winnerId: match.homeId })}>
-            {nameOf(state, match.homeId)} →
+            dispatch({ type: 'SELECT_MATCH_WINNER', roundIndex, matchIndex, winnerId: match.homeId })}>
+            {match.forcedWinner === 'home' ? '✓ ' : ''}{nameOf(state, match.homeId)} wins
           </button>
           <button className="primary" onClick={() =>
-            dispatch({ type: 'SET_TOURNAMENT_WINNER', roundIndex, matchIndex, winnerId: match.awayId })}>
-            {nameOf(state, match.awayId)} →
+            dispatch({ type: 'SELECT_MATCH_WINNER', roundIndex, matchIndex, winnerId: match.awayId })}>
+            {match.forcedWinner === 'away' ? '✓ ' : ''}{nameOf(state, match.awayId)} wins
           </button>
         </div>
       )}
-      {match.detail && games && (
+      {!match.winner && match.homeId && match.awayId && <button type="button" className="primary" disabled={state.tournament?.resolver === 'manual' && !match.forcedWinner} onClick={() => dispatch({ type: 'PREVIEW_MATCH', action: { type: 'PLAY_TOURNAMENT_ROUND', matchIndex } })}>{match.isUser ? 'Enter match →' : 'Watch match →'}</button>}
+      {games && (
         <div className="md-toggle-row">
           <button
             type="button"
@@ -78,7 +76,7 @@ function MatchCard({ state, dispatch, match, roundLabel, roundIndex, matchIndex,
           </button>
         </div>
       )}
-      {isOpen && match.detail && (
+      {isOpen && games && (
         <MatchDetail
           round={roundLabel}
           homeId={match.homeId}
@@ -106,46 +104,20 @@ export default function Tournament({ state, dispatch }) {
   const [openKey, setOpenKey] = useState(null)
   const [busy, setBusy] = useState(false)
   const [shotErr, setShotErr] = useState(null)
-  const [mdData, setMdData] = useState(null) // { match, roundLabel } — Matchday reveal for the user's series
-  const pendingMdRef = useRef(null)
   const shotRef = useRef(null)
   const t = state.tournament
 
   const ri = t ? t.rounds.findIndex((r) => r.matches.some((m) => !m.winner)) : -1
   const current = t && ri >= 0 ? t.rounds[ri] : null
   const userInRound = current?.matches.some((m) => m.isUser && !m.winner)
-  const title = t?.kind === 'msi' ? 'Mid-Season Invitational' : 'World Championship'
+  const title = t?.kind === 'playoffs' ? `${state.league} Playoffs` : t?.kind === 'msi' ? 'Mid-Season Invitational' : 'World Championship'
   const revealed = t ? (t.revealedRounds ?? t.rounds.length) : 0
   const visible = t ? t.rounds.slice(0, revealed) : []
   const tStatus = t?.status
 
   function playRound() {
-    const um = current?.matches.find((m) => m.isUser && !m.winner)
-    if (um) {
-      pendingMdRef.current = {
-        roundIndex: ri,
-        matchIndex: current.matches.indexOf(um),
-        roundLabel: current.name,
-      }
-    }
-    setBusy(true)
-    setTimeout(() => {
-      dispatch({ type: 'PLAY_TOURNAMENT_ROUND' })
-      setBusy(false)
-    }, 20)
+    dispatch({ type: 'PREVIEW_MATCH', action: { type: 'PLAY_TOURNAMENT_ROUND' } })
   }
-
-  // After the bracket round sims, unveil the user's series with the Matchday
-  // reveal instead of dropping them straight onto the bracket.
-  useEffect(() => {
-    const p = pendingMdRef.current
-    if (!p || !state.tournament) return
-    const m = state.tournament.rounds[p.roundIndex]?.matches[p.matchIndex]
-    if (m && m.winner) {
-      pendingMdRef.current = null
-      setMdData({ match: m, roundLabel: p.roundLabel })
-    }
-  }, [state.tournament])
 
   useEffect(() => {
     function onKey(e) {
@@ -162,46 +134,24 @@ export default function Tournament({ state, dispatch }) {
 
   if (!t) return null
 
-  const mdResult = mdData ? {
-    round: mdData.roundLabel,
-    homeId: mdData.match.homeId,
-    awayId: mdData.match.awayId,
-    aWins: mdData.match.aWins,
-    bWins: mdData.match.bWins,
-    homeWon: mdData.match.winner === mdData.match.homeId,
-    userSide: mdData.match.userSide ?? (mdData.match.homeId === state.teamId ? 'home' : 'away'),
-  } : null
-  const mdGames = mdData?.match.detail
-    ? recomputeGames({ detail: mdData.match.detail, homeId: mdData.match.homeId, awayId: mdData.match.awayId })
-    : null
-
   return (
     <div className="stack">
-      {mdData && mdResult && (
-        <Matchday
-          state={state}
-          result={mdResult}
-          games={mdGames}
-          roundLabel={mdData.roundLabel}
-          onDone={() => setMdData(null)}
-        />
-      )}
       <div className="card" ref={shotRef}>
         <h2>
-          {t.kind === 'playoffs' ? 'LCK Playoffs — Top 4' : title} {t.status === 'done' ? '🏆' : ''}
+          {title} {t.status === 'done' ? '🏆' : ''}
         </h2>
         <p className="tag">
           {t.kind === 'playoffs'
             ? 'Top 4 by standings · (1v4, 2v3) · Bo3 semifinals + Bo3 final'
             : 'Top 2 per league · single elimination · each series one Bo3-native sim'}
           {t.status === 'done' && t.championId && (
-            <> — <strong>Champion: {nameOf(state, t.championId)}</strong></>
+            <>: <strong>Champion: {nameOf(state, t.championId)}</strong></>
           )}
         </p>
         {current && (
           <div className="actions">
-            <button className="primary big" disabled={busy} onClick={playRound}>
-              {busy ? 'Simulating…' : userInRound ? `Play ${current.name} →` : `Simulate ${current.name} →`}
+            <button className="primary big" disabled={busy || (t.resolver === 'manual' && !current.matches.find((m) => !m.winner && (m.isUser || !userInRound))?.forcedWinner)} onClick={playRound}>
+              {busy ? 'Simulating…' : 'Enter next match →'}
             </button>
             {t.status === 'active' && (
               <label className="hint" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -213,22 +163,22 @@ export default function Tournament({ state, dispatch }) {
                   onChange={(e) => dispatch({ type: 'SET_RESOLVER', resolver: e.target.value })}
                   title="How undecided series are resolved"
                 >
-                  <option value="biased">Biased — form decides</option>
-                  <option value="random">Random — coin flip</option>
-                  <option value="manual">Manual — you pick winners</option>
+                  <option value="biased">Biased: form decides</option>
+                  <option value="random">Random: coin flip</option>
+                  <option value="manual">Manual: you pick winners</option>
                 </select>
               </label>
             )}
           </div>
         )}
         {current && t.status === 'active' && (
-          <p className="hint">Press N or → to sim the round.</p>
+          <p className="hint">Enter each match to choose Draft, IGL and map simulation. Press N for the next match.</p>
         )}
         {t.status === 'done' && (
           <p className="hint">
             {t.kind === 'msi'
-              ? 'MSI complete — build the Worlds bracket from the Dashboard to continue.'
-              : 'Worlds complete — advance from the Dashboard.'}
+              ? 'MSI complete. Build the Worlds bracket from the Dashboard to continue.'
+              : t.kind === 'playoffs' ? 'Playoffs complete. Continue to MSI from the Dashboard.' : 'Worlds complete. Advance from the Dashboard.'}
           </p>
         )}
         {t.status === 'done' && (
@@ -236,7 +186,7 @@ export default function Tournament({ state, dispatch }) {
             <button className="ghost" onClick={async () => {
               setShotErr(null)
               try { await exportPng(shotRef, `lck-${t.kind}-bracket.png`) }
-              catch { setShotErr('Export failed — try again.') }
+              catch { setShotErr('Export failed. Try again.') }
             }}>Download PNG ⬇</button>
             {shotErr && <p className="hint">{shotErr}</p>}
           </>

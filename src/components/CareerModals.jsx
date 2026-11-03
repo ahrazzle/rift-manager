@@ -66,7 +66,7 @@ export function PromotionModal({ state, dispatch }) {
             {cutName ? `Promote → ${pl.name} in, ${cutName} out to free agency.` : 'Promote → adds to your roster.'}
           </p>
           <div className="fa-card" style={{ marginBottom: 10 }}>
-            <div className="fa-top"><span className="fa-name">Promote — call them up</span></div>
+            <div className="fa-top"><span className="fa-name">Promote: call them up</span></div>
             <p>{cutName ? `${pl.name} joins; weakest bench player (${cutName}) is released to free agency.` : 'Adds the prospect to your roster.'}</p>
             <button className="primary" onClick={() => dispatch({ type: 'RESOLVE_PROMOTION', promote: true })}>
               Promote →

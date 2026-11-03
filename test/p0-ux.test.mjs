@@ -1,9 +1,10 @@
 // P0 UX tests (items 1/4/6): stage-gated reveal, manual resolver, dilemmas.
 // Run: node test/p0-ux.test.mjs
-import { reducer, load } from '../src/game/useGameState.js'
+import { reducer, load, mulberry32 } from '../src/game/useGameState.js'
 import { DILEMMA_EVENTS } from '../src/data/events.js'
 import { developPlayer } from '../src/data/development.js'
 
+Math.random = mulberry32(71)
 let failures = 0
 const assert = (c, m) => { if (!c) { console.error('FAIL:', m); failures++ } else console.log('ok  :', m) }
 
@@ -83,29 +84,17 @@ let ag = 0
 while (a.phase === 'playoffs' && a.tournament && a.tournament.status === 'active' && ag++ < 10) {
   a = reducer(a, { type: 'PLAY_TOURNAMENT_ROUND' })
 }
+const offseason = { ...a, board: { ...a.board, confidence: 100, expectation: 'Avoid last place' } }
 let set = 0, nul = 0, shapeOk = true
-for (let i = 0; i < 300; i++) {
-  // If a dilemma/promotion is pending, resolve it (option 0) then re-attempt advance.
-  if (a.pendingEvent) { a = reducer(a, { type: 'RESOLVE_EVENT', optionIndex: 0 }); continue }
-  if (a.pendingPromotion) { a = reducer(a, { type: 'RESOLVE_PROMOTION', promote: false }); continue }
-  // Finish the current season's full regional schedule + playoff bracket.
-  let rg = 0
-  while (!a.finished && rg++ < 60) a = reducer(a, { type: 'PLAY_ROUND' })
-  while (a.tournament && a.tournament.status !== 'done') a = reducer(a, { type: 'PLAY_TOURNAMENT_ROUND' })
-  const before = a.career.seasonIndex
-  const n = reducer(a, { type: 'ADVANCE_SEASON' })
-  // Reaching the career max-seasons is a valid terminal stop, not a shape bug.
-  if (n === a) {
-    if (a.career.seasonIndex >= a.career.maxSeasons) break
-    shapeOk = false; break
-  }
-  a = n
-  if (!a.pendingEvent) { nul++; continue }
+for (let i = 0; i < 40; i++) {
+  const n = reducer(offseason, { type: 'ADVANCE_SEASON' })
+  if (n === offseason || n.career.status !== 'active') { shapeOk = false; break }
+  if (!n.pendingEvent) { nul++; continue }
   set++
-  if (!DILEMMA_EVENTS.some((e) => e.id === a.pendingEvent.eventId)) shapeOk = false
-  const roster = a.teams[a.teamId] || []
-  if (!roster.some((p) => p.id === a.pendingEvent.playerId)) shapeOk = false
+  if (!DILEMMA_EVENTS.some((e) => e.id === n.pendingEvent.eventId)) shapeOk = false
+  if (!n.teams[n.teamId].some((p) => p.id === n.pendingEvent.playerId)) shapeOk = false
 }
+a = reducer(undefined, { type: 'START_CAREER', teamId: 'T1', managerName: 'Event fixture' })
 assert(set > 0 && nul > 0, `ADVANCE_SEASON sets pendingEvent ~35% (set ${set}, null ${nul})`)
 assert(shapeOk, 'pendingEvent shape valid (known eventId, managed playerId)')
 const blocked = { ...a, pendingEvent: { eventId: 'wrist-injury', playerId: (Object.values(a.lineup)[0] || a.teams[a.teamId][0].id) } }

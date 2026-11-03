@@ -10,6 +10,8 @@ import {
 import MatchDetail, { recomputeGames } from './MatchDetail.jsx'
 import Tournament, { phaseLabel } from './Tournament.jsx'
 import Matchday from './Matchday.jsx'
+import Preparation from './Preparation.jsx'
+import MatchReview from './MatchReview.jsx'
 
 const FALLBACK_SCHEDULE = buildLCKSchedule()
 const STATIC_NAME = Object.fromEntries(TEAMS.map((t) => [t.id, t.name]))
@@ -35,7 +37,7 @@ function PhaseBanner({ phase }) {
           </span>
         ))}
       </div>
-      <p className="hint">Phase: {phaseLabel(phase)} — top 2 per league qualify for MSI + Worlds.</p>
+      <p className="hint">Phase: {phaseLabel(phase)}. Top 2 per league qualify for MSI + Worlds.</p>
     </div>
   )
 }
@@ -107,7 +109,7 @@ function Toasts({ toasts }) {
       {toasts.map((t) => (
         <div key={t.id} className="ach-toast" role="status">
           <span style={{ fontSize: 22 }}>{t.icon}</span>
-          <span><b>Achievement unlocked</b> — {t.name}</span>
+          <span><b>Achievement unlocked:</b> {t.name}</span>
         </div>
       ))}
     </div>
@@ -123,6 +125,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
   const [showDetail, setShowDetail] = useState(true)
   const [matchday, setMatchday] = useState(false)
   const [toasts, setToasts] = useState([])
+  const [preparationFocus, setPreparationFocus] = useState(null)
   const prevAchRef = useRef(null)
 
   const round = state.round
@@ -143,7 +146,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
     const oppTactic = matchupOppTactic(state, oppId)
     const why = explainWinProb(state, oppId, { n: 300, rng: seededRng(seed), oppTactic })
     return { p: why.prob, oppTactic, why }
-  }, [myMatch, oppId, round, state.lineup, state.form, state.tactic, state.strategy, state.teams, state.teamId, state.career, state.seriesOptions])
+  }, [myMatch, oppId, round, state.lineup, state.form, state.tactic, state.strategy, state.teams, state.teamId, state.career, state.seriesOptions, state.preparation])
 
   // The just-played round (state.round was already advanced by PLAY_ROUND).
   const lastRound = state.round - 1
@@ -179,15 +182,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
   }, [state.results, state.playoffChampionId, state.tournament, state.phase])
 
   function playWeek() {
-    prevAchRef.current = achievements(state).filter((a) => a.unlocked).map((a) => a.id)
-    setBusy(true)
-    // let the UI paint before the sim (heavy loop on first call)
-    setTimeout(() => {
-      dispatch({ type: 'PLAY_ROUND' })
-      setBusy(false)
-      setShowDetail(true)
-      setMatchday(true)
-    }, 20)
+    dispatch({ type: 'PREVIEW_MATCH', action: { type: 'PLAY_ROUND' } })
   }
 
   function closeMatchday() {
@@ -197,7 +192,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
 
   // The Matchday reveal sits above every branch (preview, result, finished).
   if (matchday && userResult) {
-    return <Matchday state={state} result={userResult} games={userGames} onDone={closeMatchday} />
+    return <Matchday state={state} result={userResult} games={userGames} onDone={closeMatchday} onSpeedChange={(speed) => dispatch({ type: 'SET_SIM_SPEED', speed })} />
   }
 
   if (state.finished && view === 'preview') {
@@ -242,7 +237,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
                 : `${t.championId} won MSI. `}
               {qualified
                 ? 'The World Championship bracket is ready.'
-                : 'You did not qualify — sim Worlds as a spectator or move on.'}
+                : 'You did not qualify. Sim Worlds as a spectator or move on.'}
             </p>
             <div className="actions">
               <button className="primary big" onClick={() => dispatch({ type: 'BUILD_TOURNAMENT', kind: 'worlds' })}>
@@ -453,6 +448,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
           </div>
         </div>
 
+        <MatchReview games={userGames || []} userSide={userResult.userSide} onPrepare={!state.finished ? (focus) => { setPreparationFocus(focus); setView('preview') } : null} />
         <HeadlinesCard state={state} userGames={userGames} />
         <AchievementsCard state={state} gamesByRound={gamesByRound} />
 
@@ -467,6 +463,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
               bWins={userResult.bWins}
               userSide={userResult.userSide}
               games={userGames || []}
+              showReview={false}
               onBack={() => setShowDetail(false)}
               state={state}
             />
@@ -574,6 +571,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
                 </li>
               ))}
             </ul>
+            {preview.why.preparation > 0 && <p className="hint">Weekly preparation adds {preview.why.preparation.toFixed(2)} team strength to this forecast and your next series.</p>}
           </details>
         )}
 
@@ -585,14 +583,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
           >
             {busy ? 'Simulating…' : 'Play Week →'}
           </button>
-          <button
-            className="ghost"
-            disabled={state.trainedRound === state.round}
-            onClick={() => dispatch({ type: 'TRAIN' })}
-            title={state.trainedRound === state.round ? 'Already trained this week' : 'Boost starters’ form +4'}
-          >
-            {state.trainedRound === state.round ? 'Trained ✓' : 'Train Starters (+4 form)'}
-          </button>
+          <a className="prep-jump" href="#weekly-preparation">{state.trainedRound === state.round ? 'Preparation complete ✓' : 'Prepare your team ↓'}</a>
           {state.mode === 'career' && state.career?.status === 'active' && (
             <button
               className="ghost"
@@ -612,6 +603,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
         </p>
       </div>
 
+      <Preparation key={`${state.career?.seasonIndex ?? 1}-${state.round}`} state={state} dispatch={dispatch} suggestedFocus={preparationFocus} />
       <HeadlinesCard state={state} />
       <AchievementsCard state={state} gamesByRound={gamesByRound} />
 
