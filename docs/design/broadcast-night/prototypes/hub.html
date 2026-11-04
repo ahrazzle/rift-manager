@@ -1,0 +1,380 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hub · Rift Manager</title><meta name="description" content="Rift Manager UI prototype: Hub · Rift Manager"><meta name="theme-color" content="#0B0F15"><link rel="icon" href="data:,"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap"><style>/* ===== Rift Manager · "Broadcast Night" design system (prototype) ===== */
+:root{
+  /* color: surfaces */
+  --bg:#0B0F15; --s1:#121822; --s2:#18202C; --s3:#1F2936;
+  --line:#263040;            /* decorative dividers only */
+  --line-strong:#6B788B;     /* control borders, >=3:1 on s1/s2 */
+  /* color: text */
+  --text:#F2F5F8; --text-2:#B4BDC9; --text-3:#8E9AA8;
+  /* color: meaning (each has ONE job) */
+  --primary:#F2F5F8; --on-primary:#0B0F15;          /* the one action per view */
+  --blue:#5B9BFF; --blue-bg:#14243D;                /* blue side (draft/match only) */
+  --red:#FF6B6B;  --red-bg:#3A181C;                 /* red side (draft/match only) */
+  --win:#3DDC84;  --win-bg:#11301F;                 /* outcomes only */
+  --loss:#FF8577; --loss-bg:#3A1A17;
+  --warn:#FFC857;
+  --gold:#F2C14E; --gold-2:#FFE3A1; --gold-bg:#2E2512; /* reward/trophy only */
+  --focus:#7CC4FF;
+  --team:#e2012d;                                    /* user's team color: crests & thin accents only, never text */
+  /* type */
+  --font-display:"Barlow Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
+  --font-ui:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --fs-12:.75rem; --fs-14:.875rem; --fs-16:1rem; --fs-18:1.125rem; --fs-20:1.25rem; --fs-24:1.5rem; --fs-32:2rem; --fs-40:2.5rem; --fs-56:3.5rem; --fs-72:4.5rem;
+  /* space (4pt) */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px; --sp-12:48px; --sp-16:64px;
+  /* radius */
+  --r-sm:6px; --r-md:10px; --r-lg:16px; --r-pill:999px;
+  /* elevation */
+  --e1:0 1px 0 rgba(255,255,255,.04) inset, 0 1px 2px rgba(0,0,0,.4);
+  --e2:0 1px 0 rgba(255,255,255,.05) inset, 0 8px 24px rgba(0,0,0,.45);
+  --e3:0 1px 0 rgba(255,255,255,.06) inset, 0 24px 64px rgba(0,0,0,.6);
+  /* motion */
+  --d-instant:80ms; --d-fast:140ms; --d-base:220ms; --d-slow:360ms; --d-reward:1100ms;
+  --ease-out:cubic-bezier(.2,.8,.2,1); --ease-in-out:cubic-bezier(.65,0,.35,1); --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --rail:232px; --topbar:64px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:400 var(--fs-16)/1.5 var(--font-ui);font-feature-settings:"tnum" 1,"cv11" 1;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;line-height:1.15}
+p{margin:0}
+a{color:var(--focus)}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:var(--r-sm)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:8px;top:-60px;background:var(--primary);color:var(--on-primary);padding:8px 12px;border-radius:var(--r-sm);z-index:99}
+.skip:focus{top:8px}
+.display{font-family:var(--font-display);font-weight:700;letter-spacing:.01em;text-transform:uppercase}
+.label{font-size:var(--fs-12);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2)}
+.muted{color:var(--text-2)} .faint{color:var(--text-3)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- App shell ---------- */
+.shell{display:grid;grid-template-columns:var(--rail) 1fr;min-height:100vh}
+.rail{position:sticky;top:0;height:100vh;padding:var(--sp-5) var(--sp-4);border-right:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column;gap:var(--sp-6)}
+.brand{display:flex;align-items:center;gap:var(--sp-2);font-family:var(--font-display);font-weight:700;font-size:var(--fs-24);letter-spacing:.04em;text-transform:uppercase}
+.brand-mark{width:28px;height:28px;border-radius:7px;background:conic-gradient(from 210deg,var(--blue),#9b8cff,var(--red),var(--blue));display:grid;place-items:center}
+.brand-mark::after{content:"";width:12px;height:12px;border-radius:3px;background:var(--bg);transform:rotate(45deg)}
+.club{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3);border-radius:var(--r-md);background:var(--s1);border:1px solid var(--line)}
+.club img{width:36px;height:36px}
+.club b{display:block;font-size:var(--fs-14)} .club span{font-size:var(--fs-12);color:var(--text-2)}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:var(--sp-3);padding:10px var(--sp-3);border-radius:var(--r-md);color:var(--text-2);text-decoration:none;font-weight:500;font-size:var(--fs-14);min-height:44px}
+.nav a:hover{background:var(--s1);color:var(--text)}
+.nav a[aria-current="page"]{background:var(--s2);color:var(--text);box-shadow:inset 3px 0 0 var(--team)}
+.nav svg{width:20px;height:20px;flex:none}
+.rail-foot{margin-top:auto;display:flex;flex-direction:column;gap:var(--sp-2)}
+.main{min-width:0}
+.topbar{position:sticky;top:0;z-index:20;height:var(--topbar);display:flex;align-items:center;gap:var(--sp-4);padding:0 var(--sp-8);background:rgba(11,15,21,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar .ctx{display:flex;align-items:center;gap:var(--sp-3);min-width:0}
+.topbar .ctx b{font-size:var(--fs-16)} .topbar .ctx span{color:var(--text-2);font-size:var(--fs-14);white-space:nowrap}
+.topbar .spacer{flex:1}
+.mob-only{display:none}
+.content{padding:var(--sp-8);max-width:1360px;margin:0 auto}
+
+/* ---------- Progress track (season phase; not tabs) ---------- */
+.track{display:flex;align-items:center;gap:0;list-style:none;margin:0;padding:0}
+.track li{display:flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-12);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+.track li+li::before{content:"";width:28px;height:2px;background:var(--line);margin:0 var(--sp-2)}
+.track .dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--text-3)}
+.track .done{color:var(--text-2)} .track .done .dot{background:var(--text-2);border-color:var(--text-2)}
+.track .now{color:var(--text)} .track .now .dot{border-color:var(--text);box-shadow:0 0 0 3px rgba(242,245,248,.15)}
+
+/* ---------- Surfaces ---------- */
+.card{background:var(--s1);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--e1);padding:var(--sp-6)}
+.card-h{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-4)}
+.card-h h2{font-size:var(--fs-18);font-weight:600}
+.grid{display:grid;gap:var(--sp-6)}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);min-height:44px;padding:0 var(--sp-5);border-radius:var(--r-md);border:1px solid var(--line-strong);background:transparent;color:var(--text);font-weight:600;font-size:var(--fs-14);cursor:pointer;text-decoration:none;transition:background var(--d-fast) var(--ease-out),transform var(--d-fast) var(--ease-out),border-color var(--d-fast)}
+.btn:hover{background:var(--s2)}
+.btn:active{transform:translateY(1px)}
+.btn svg{width:18px;height:18px}
+.btn-primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.btn-primary:hover{background:#fff}
+.btn-lg{min-height:56px;padding:0 var(--sp-8);font-size:var(--fs-16);border-radius:12px}
+.btn-quiet{border-color:transparent;color:var(--text-2)} .btn-quiet:hover{color:var(--text)}
+.btn[disabled],.btn[aria-disabled="true"]{opacity:1;color:var(--text-3);border-color:var(--line);background:transparent;cursor:not-allowed}
+.icon-btn{width:44px;height:44px;padding:0;border-radius:var(--r-md)}
+
+/* ---------- Chips / badges ---------- */
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:var(--r-pill);background:var(--s2);border:1px solid var(--line);font-size:var(--fs-12);font-weight:600;color:var(--text-2);white-space:nowrap}
+.chip svg{width:14px;height:14px}
+.chip-win{background:var(--win-bg);color:var(--win);border-color:transparent}
+.chip-loss{background:var(--loss-bg);color:var(--loss);border-color:transparent}
+.chip-gold{background:var(--gold-bg);color:var(--gold);border-color:transparent}
+.chip-blue{background:var(--blue-bg);color:var(--blue);border-color:transparent}
+.chip-red{background:var(--red-bg);color:var(--red);border-color:transparent}
+.pips{display:inline-flex;gap:4px}
+.pip{width:22px;height:22px;border-radius:5px;display:grid;place-items:center;font-size:11px;font-weight:700}
+.pip.w{background:var(--win-bg);color:var(--win)} .pip.l{background:var(--loss-bg);color:var(--loss)} .pip.n{border:1px dashed var(--line-strong);color:var(--text-3)}
+
+/* ---------- Crest / champion glyph / role ---------- */
+.crest{width:var(--cs,48px);height:var(--cs,48px);flex:none}
+.role{width:16px;height:16px;color:var(--text-2);flex:none}
+.glyph{--h:200;position:relative;display:grid;place-items:center;aspect-ratio:1;border-radius:var(--r-md);background:linear-gradient(145deg,hsl(var(--h) 45% 26%),hsl(calc(var(--h) + 40) 40% 14%));color:#fff;font-family:var(--font-display);font-weight:700;font-size:var(--gfs,22px);letter-spacing:.02em;overflow:hidden}
+.glyph::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 25%,hsl(var(--h) 80% 70% / .35),transparent 55%)}
+.glyph::after{content:"";position:absolute;inset:auto -20% -40% auto;width:70%;height:70%;border:2px solid hsl(var(--h) 70% 70% / .25);border-radius:50%}
+.glyph span{position:relative;z-index:1;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+
+/* ---------- Meter ---------- */
+.meter{height:8px;border-radius:var(--r-pill);background:var(--s3);overflow:hidden}
+.meter > i{display:block;height:100%;border-radius:inherit;background:var(--text-2)}
+
+/* ---------- Table ---------- */
+.table{width:100%;border-collapse:collapse;font-size:var(--fs-14)}
+.table th{font-size:var(--fs-12);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);text-align:right;padding:var(--sp-2) var(--sp-3);border-bottom:1px solid var(--line)}
+.table td{padding:0 var(--sp-3);height:48px;text-align:right;border-bottom:1px solid var(--line)}
+.table th:nth-child(-n+2),.table td:nth-child(-n+2){text-align:left}
+.table tr.you td{background:var(--s2)}
+.table tr.you td:first-child{box-shadow:inset 3px 0 0 var(--team)}
+.table tr.cut td{border-bottom:2px solid var(--line-strong)}
+.teamcell{display:flex;align-items:center;gap:var(--sp-3)} .teamcell .crest{--cs:28px}
+
+/* ---------- Mobile tab bar ---------- */
+.tabbar{display:none}
+
+/* ---------- Dialog / sheet ---------- */
+.scrim{position:fixed;inset:0;background:rgba(5,8,12,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:var(--sp-4)}
+.scrim[data-open="true"]{display:flex}
+
+@media (max-width: 900px){
+  :root{--topbar:56px}
+  .shell{grid-template-columns:1fr}
+  .rail{display:none}
+  .topbar{padding:0 var(--sp-4)}
+  .mob-only{display:inline-flex}
+  .desk-only{display:none !important}
+  .content{padding:var(--sp-4) var(--sp-4) calc(var(--sp-16) + 40px)}
+  .card{padding:var(--sp-4);border-radius:var(--r-md)}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(11,15,21,.96);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+  .tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:60px;color:var(--text-2);text-decoration:none;font-size:11px;font-weight:600}
+  .tabbar a svg{width:22px;height:22px}
+  .tabbar a[aria-current="page"]{color:var(--text)}
+  .tabbar a[aria-current="page"] svg{color:var(--text)}
+  .tabbar a[aria-current="page"]::before{content:"";position:absolute;top:0;width:28px;height:3px;border-radius:0 0 3px 3px;background:var(--team)}
+  .tabbar a{position:relative}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:1ms !important;animation-iteration-count:1 !important;transition-duration:1ms !important;scroll-behavior:auto !important}
+}
+.select{min-height:44px;padding:0 36px 0 12px;border-radius:var(--r-md);border:1px solid var(--line-strong);background:var(--s1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23B4BDC9' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 12px center;appearance:none;color:var(--text);font-size:var(--fs-14)}
+.seg{display:inline-flex;padding:4px;gap:4px;border-radius:12px;background:var(--s1);border:1px solid var(--line)}
+.seg button,.seg a{min-height:36px;padding:0 var(--sp-4);border:0;border-radius:8px;background:transparent;color:var(--text-2);font-weight:600;font-size:var(--fs-14);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.seg [aria-pressed="true"],.seg [aria-selected="true"],.seg [aria-current="page"]{background:var(--s3);color:var(--text)}
+.topbar .mob-only{display:none}
+.table td.num,.table th{white-space:nowrap}
+@media (max-width:900px){ .topbar .mob-only{display:inline-flex} }
+</style>
+<style>
+.hub{display:grid;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:var(--sp-6);align-items:start}
+.col{display:grid;gap:var(--sp-6);min-width:0}
+.hero{position:relative;overflow:hidden;padding:var(--sp-8)}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(600px 240px at 0% 0%,color-mix(in srgb,var(--team) 22%,transparent),transparent 70%),radial-gradient(600px 240px at 100% 0%,color-mix(in srgb,#aa8a00 18%,transparent),transparent 70%);pointer-events:none}
+.hero > *{position:relative}
+.hero-top{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-4);flex-wrap:wrap}
+.versus{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:var(--sp-6);margin:var(--sp-8) 0 var(--sp-6)}
+.side{display:flex;align-items:center;gap:var(--sp-4)} .side.r{justify-content:flex-end;text-align:right}
+.side .crest{--cs:72px}
+.side h2{font-family:var(--font-display);font-size:var(--fs-40);font-weight:700;text-transform:uppercase;letter-spacing:.01em}
+.side p{color:var(--text-2);font-size:var(--fs-14)}
+.vs{font-family:var(--font-display);font-size:var(--fs-20);color:var(--text-3);font-weight:700}
+.odds{display:grid;gap:var(--sp-2)}
+.odds-bar{display:flex;height:10px;border-radius:var(--r-pill);overflow:hidden;background:var(--s3)}
+.odds-bar i{background:var(--text)} .odds-bar b{flex:1;background:var(--s3)}
+.odds-row{display:flex;justify-content:space-between;font-size:var(--fs-14)}
+.odds-row strong{font-size:var(--fs-20);font-family:var(--font-display);letter-spacing:.02em}
+details.why{margin-top:var(--sp-2);border-top:1px solid var(--line);padding-top:var(--sp-3)}
+details.why summary{cursor:pointer;color:var(--text-2);font-size:var(--fs-14);font-weight:600;min-height:32px;display:flex;align-items:center}
+.factors{list-style:none;margin:var(--sp-2) 0 0;padding:0;display:grid;gap:var(--sp-2);font-size:var(--fs-14)}
+.factors li{display:flex;justify-content:space-between;gap:var(--sp-3)} .factors .plus{color:var(--win)} .factors .minus{color:var(--loss)}
+.ready{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-3);margin:var(--sp-6) 0}
+.ready li{display:grid}
+.ready a{height:100%;box-sizing:border-box;display:grid;gap:2px;padding:var(--sp-3) var(--sp-4);border-radius:var(--r-md);background:var(--s2);border:1px solid var(--line);text-decoration:none;color:var(--text);min-height:64px}
+.ready a:hover{border-color:var(--line-strong)}
+.ready .k{display:flex;align-items:center;gap:6px;font-size:var(--fs-12);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
+.ready .k svg{width:16px;height:16px}
+.ready .ok svg{color:var(--win)} .ready .todo svg{color:var(--warn)}
+.ready .v{font-size:var(--fs-14);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cta{display:flex;gap:var(--sp-3);align-items:center;flex-wrap:wrap}
+.cta small{color:var(--text-2);font-size:var(--fs-14)}
+.mini td{height:40px}
+.inbox{list-style:none;margin:0;padding:0;display:grid;gap:var(--sp-2)}
+.inbox li{display:grid;grid-template-columns:auto 1fr;gap:var(--sp-3);padding:var(--sp-3);border-radius:var(--r-md);background:var(--s2)}
+.inbox .ic{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;background:var(--s3);color:var(--text-2)} .inbox .ic svg{width:18px;height:18px}
+.inbox b{font-size:var(--fs-14);display:block} .inbox p{font-size:var(--fs-14);color:var(--text-2)}
+.inbox .acts{display:flex;gap:var(--sp-2);margin-top:var(--sp-2)} .inbox .btn{min-height:36px;padding:0 var(--sp-3)}
+.fixtures{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:var(--sp-3)}
+.fixtures li{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:var(--sp-2);padding:var(--sp-3);border-radius:var(--r-md);background:var(--s2);font-size:var(--fs-14);font-weight:600}
+.fixtures li.you{box-shadow:inset 0 0 0 1px var(--line-strong)}
+.fixtures .t{display:flex;align-items:center;gap:var(--sp-2)} .fixtures .t.r{justify-content:flex-end}
+.fixtures .crest{--cs:24px} .fixtures .at{color:var(--text-3);font-size:var(--fs-12)}
+.roster{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:var(--sp-3)}
+.roster li{padding:var(--sp-3);border-radius:var(--r-md);background:var(--s2);display:grid;gap:var(--sp-1)}
+.roster .rl{display:flex;align-items:center;gap:6px;font-size:var(--fs-12);color:var(--text-2);font-weight:600;letter-spacing:.06em}
+.roster b{font-size:var(--fs-16)} .roster .ovr{font-family:var(--font-display);font-size:var(--fs-24);font-weight:700}
+.roster .form{font-size:var(--fs-12);display:flex;align-items:center;gap:2px} .roster .form svg{width:14px;height:14px}
+.up{color:var(--win)} .down{color:var(--loss)} .flat{color:var(--text-2)}
+.hype{display:grid;gap:var(--sp-2)}
+.hype .meter > i{background:linear-gradient(90deg,#4b5a6e,var(--text-2))}
+.scale{display:flex;justify-content:space-between;font-size:var(--fs-12);color:var(--text-3)} .scale .on{color:var(--text);font-weight:600}
+@media (max-width:1180px){.hub{grid-template-columns:1fr}.roster{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media (max-width:900px){
+  .hero{padding:var(--sp-5) var(--sp-4)}
+  .versus{gap:var(--sp-3);margin:var(--sp-5) 0 var(--sp-4)}
+  .side{flex-direction:column;gap:var(--sp-2);text-align:center} .side.r{text-align:center}
+  .side.r{flex-direction:column-reverse}
+  .side .crest{--cs:56px} .side h2{font-size:var(--fs-32)} .side p{font-size:var(--fs-12)}
+  .ready{grid-template-columns:1fr;gap:var(--sp-2);margin:var(--sp-4) 0}
+  .ready a{grid-template-columns:auto 1fr;align-items:center;min-height:48px;gap:var(--sp-3)}
+  .cta{flex-direction:column;align-items:stretch} .cta .btn{width:100%}
+  .roster{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px} .roster li{padding:var(--sp-2);text-align:center} .roster .rl{justify-content:center} .roster b{font-size:var(--fs-12)} .roster .ovr{font-size:var(--fs-20)} .roster .form{justify-content:center}
+  .fixtures{grid-template-columns:1fr}
+  .track{display:none}
+}
+</style>
+</head><body>
+<div hidden><svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  
+  <symbol id="i-hub" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-team" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5M15 14.6c2.8-.2 5 1.5 5.6 4.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-compete" viewBox="0 0 24 24"><path d="M4 5h5v5H4zM4 14h5v5H4zM9 7.5h4v9H9M13 12h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-club" viewBox="0 0 24 24"><path d="M7 4h10v4a5 5 0 01-10 0zM12 13v4M8 20h8M7 6H4v1a3 3 0 003 3M17 6h3v1a3 3 0 01-3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="16.6" r="1.3" fill="currentColor"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 7l8 6 8-6" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6.5 17.5l11-11" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.5 6 .8-4.4 4.1 1.1 5.9L12 17l-5.3 2.8 1.1-5.9L3.4 9.8l6-.8z" fill="currentColor"/></symbol>
+</svg>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  
+  <symbol id="role-TOP" viewBox="0 0 24 24"><path d="M4 4h16v4H8v12H4z" fill="currentColor"/><rect x="11" y="11" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="role-JNG" viewBox="0 0 24 24"><path d="M12 3l3 6-3 3-3-3zM5 13l5 1 2 7-5-3zM19 13l-5 1-2 7 5-3z" fill="currentColor"/></symbol>
+  <symbol id="role-MID" viewBox="0 0 24 24"><path d="M4 20L20 4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M4 4h6v2.5H6.5V10H4zM20 20h-6v-2.5h3.5V14H20z" fill="currentColor"/></symbol>
+  <symbol id="role-BOT" viewBox="0 0 24 24"><path d="M20 20H4v-4h12V4h4z" fill="currentColor"/><rect x="4" y="4" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="role-SUP" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+</svg>
+</div>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+<aside class="rail" aria-label="Main"><div class="brand"><span class="brand-mark" aria-hidden="true"></span>Rift Manager</div><div class="club"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJUMSBjcmVzdCI+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxQzE4IDU2IDcgNDUgNyAzMFYxMXoiIGZpbGw9IiNlMjAxMmQiLz48cGF0aCBkPSJNMzIgM2wyNSA4djE5YzAgMTUtMTEgMjYtMjUgMzF6IiBmaWxsPSIjMDAwIiBvcGFjaXR5PSIuMTgiLz48cGF0aCBkPSJNMzIgN2wyMSA2LjhWMzBjMCAxMi42LTkgMjItMjEgMjYuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utb3BhY2l0eT0iLjI1IiBzdHJva2Utd2lkdGg9IjEuNSIvPjx0ZXh0IHg9IjMyIiB5PSIzNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkJhcmxvdyBDb25kZW5zZWQsQXJpYWwgTmFycm93LHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iMjYiIGZpbGw9IiNmZmYiIGxldHRlci1zcGFjaW5nPSIuNSI+VDE8L3RleHQ+PC9zdmc+" alt=""><div><b>T1</b><span>Alkindus · Season 1</span></div></div><nav class="nav" aria-label="Primary"><a href="hub.html" aria-current="page"><svg aria-hidden="true"><use href="#i-hub"/></svg>Hub</a><a href="#team"><svg aria-hidden="true"><use href="#i-team"/></svg>Team</a><a href="standings.html"><svg aria-hidden="true"><use href="#i-compete"/></svg>Compete</a><a href="#club"><svg aria-hidden="true"><use href="#i-club"/></svg>Club</a><a href="#guide"><svg aria-hidden="true"><use href="#i-more"/></svg>Guide</a></nav><div class="rail-foot"><label class="label" for="speed-d">Sim speed</label><select id="speed-d" class="select"><option>Slow</option><option selected>Normal</option><option>Fast</option><option>Instant</option></select></div></aside>
+<div class="main">
+  <header class="topbar">
+    <img class="crest mob-only" style="--cs:32px" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJUMSBjcmVzdCI+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxQzE4IDU2IDcgNDUgNyAzMFYxMXoiIGZpbGw9IiNlMjAxMmQiLz48cGF0aCBkPSJNMzIgM2wyNSA4djE5YzAgMTUtMTEgMjYtMjUgMzF6IiBmaWxsPSIjMDAwIiBvcGFjaXR5PSIuMTgiLz48cGF0aCBkPSJNMzIgN2wyMSA2LjhWMzBjMCAxMi42LTkgMjItMjEgMjYuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utb3BhY2l0eT0iLjI1IiBzdHJva2Utd2lkdGg9IjEuNSIvPjx0ZXh0IHg9IjMyIiB5PSIzNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkJhcmxvdyBDb25kZW5zZWQsQXJpYWwgTmFycm93LHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iMjYiIGZpbGw9IiNmZmYiIGxldHRlci1zcGFjaW5nPSIuNSI+VDE8L3RleHQ+PC9zdmc+" alt="T1">
+    <div class="ctx"><b>Week 3 <span class="faint">of 9</span></b><span class="desk-only">LCK Regional Split</span></div>
+    <ol class="track desk-only" aria-label="Season progress">
+      <li class="now"><span class="dot" aria-hidden="true"></span>Regional<span class="sr-only"> (current)</span></li>
+      <li><span class="dot" aria-hidden="true"></span>Playoffs</li>
+      <li><span class="dot" aria-hidden="true"></span>MSI</li>
+      <li><span class="dot" aria-hidden="true"></span>Worlds</li>
+    </ol>
+    <span class="spacer"></span>
+    <span class="chip desk-only" title="Board trust">Board 64 · Win the title</span>
+    <span class="chip desk-only">$10.8M</span>
+    <button class="btn icon-btn btn-quiet mob-only" aria-label="More options"><svg aria-hidden="true" style="width:22px;height:22px"><use href="#i-more"/></svg></button>
+  </header>
+  <main id="main" class="content">
+    <h1 class="sr-only">Hub</h1>
+    <div class="hub">
+      <div class="col">
+        <section class="card hero" aria-labelledby="nm">
+          <div class="hero-top">
+            <span class="label" id="nm">Next match · Best of 3</span>
+            <span class="chip">Week 3 · Saturday</span>
+          </div>
+          <div class="versus">
+            <div class="side"><img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJUMSBjcmVzdCI+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxQzE4IDU2IDcgNDUgNyAzMFYxMXoiIGZpbGw9IiNlMjAxMmQiLz48cGF0aCBkPSJNMzIgM2wyNSA4djE5YzAgMTUtMTEgMjYtMjUgMzF6IiBmaWxsPSIjMDAwIiBvcGFjaXR5PSIuMTgiLz48cGF0aCBkPSJNMzIgN2wyMSA2LjhWMzBjMCAxMi42LTkgMjItMjEgMjYuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utb3BhY2l0eT0iLjI1IiBzdHJva2Utd2lkdGg9IjEuNSIvPjx0ZXh0IHg9IjMyIiB5PSIzNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkJhcmxvdyBDb25kZW5zZWQsQXJpYWwgTmFycm93LHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iMjYiIGZpbGw9IiNmZmYiIGxldHRlci1zcGFjaW5nPSIuNSI+VDE8L3RleHQ+PC9zdmc+" alt=""><div><h2>T1</h2><p>2–0 · 1st</p></div></div>
+            <span class="vs" aria-hidden="true">VS</span>
+            <div class="side r"><div><h2>GEN</h2><p>Gen.G · 2–0 · 2nd</p></div><img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJHRU4gY3Jlc3QiPjxwYXRoIGQ9Ik0zMiAzbDI1IDh2MTljMCAxNS0xMSAyNi0yNSAzMUMxOCA1NiA3IDQ1IDcgMzBWMTF6IiBmaWxsPSIjYWE4YTAwIi8+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxeiIgZmlsbD0iIzAwMCIgb3BhY2l0eT0iLjE4Ii8+PHBhdGggZD0iTTMyIDdsMjEgNi44VjMwYzAgMTIuNi05IDIyLTIxIDI2LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9Ii4yNSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48dGV4dCB4PSIzMiIgeT0iMzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJCYXJsb3cgQ29uZGVuc2VkLEFyaWFsIE5hcnJvdyxzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIiBmb250LXNpemU9IjIwIiBmaWxsPSIjZmZmIiBsZXR0ZXItc3BhY2luZz0iLjUiPkdFTjwvdGV4dD48L3N2Zz4=" alt=""></div>
+          </div>
+          <div class="odds" aria-label="Estimated win chance: T1 54 percent, Gen.G 46 percent">
+            <div class="odds-row"><span><strong>54%</strong> <span class="muted">T1</span></span><span class="muted">Close match</span><span><span class="muted">GEN</span> <strong>46%</strong></span></div>
+            <div class="odds-bar" aria-hidden="true"><i style="width:54%"></i><b></b></div>
+          </div>
+          <details class="why">
+            <summary>Why 54%? Top factors</summary>
+            <ul class="factors">
+              <li><span>Starting five OVR 90.4 vs 88.4</span><span class="plus">+4%</span></li>
+              <li><span>Form: 2 wins in a row</span><span class="plus">+2%</span></li>
+              <li><span>Phase: your Mid focus vs their Late focus</span><span class="minus">−2%</span></li>
+            </ul>
+          </details>
+          <ul class="ready" aria-label="Match readiness" style="list-style:none;margin:0;padding:0">
+            <li><a class="ok" href="#team"><span class="k"><svg aria-hidden="true"><use href="#i-check"/></svg>Lineup</span><span class="v">Zeus · Oner · Faker · Guma · Keria</span></a></li>
+            <li><a class="ok" href="#team"><span class="k"><svg aria-hidden="true"><use href="#i-check"/></svg>Tactics</span><span class="v">Balanced · Mid game</span></a></li>
+            <li><a class="todo" href="#team"><span class="k"><svg aria-hidden="true"><use href="#i-alert"/></svg>Strategy</span><span class="v">Not reviewed for GEN</span></a></li>
+          </ul>
+          <div class="cta">
+            <button class="btn btn-primary btn-lg"><svg aria-hidden="true"><use href="#i-play"/></svg>Play week 3</button>
+            <a class="btn btn-quiet" href="#team">Review strategy</a>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="sq">
+          <div class="card-h"><h2 id="sq">Starting five</h2><a class="btn btn-quiet" href="#team">Manage lineup</a></div>
+          <ul class="roster">
+            <li><span class="rl"><svg class="role" aria-hidden="true"><use href="#role-TOP"/></svg>TOP</span><b>Zeus</b><span class="ovr num">93</span><span class="form up"><svg aria-hidden="true"><use href="#i-up"/></svg>Form 58</span></li>
+            <li><span class="rl"><svg class="role" aria-hidden="true"><use href="#role-JNG"/></svg>JNG</span><b>Oner</b><span class="ovr num">88</span><span class="form flat">Form 50</span></li>
+            <li><span class="rl"><svg class="role" aria-hidden="true"><use href="#role-MID"/></svg>MID</span><b>Faker</b><span class="ovr num">91</span><span class="form up"><svg aria-hidden="true"><use href="#i-up"/></svg>Form 55</span></li>
+            <li><span class="rl"><svg class="role" aria-hidden="true"><use href="#role-BOT"/></svg>BOT</span><b>Gumayusi</b><span class="ovr num">86</span><span class="form down"><svg aria-hidden="true"><use href="#i-down"/></svg>Form 46</span></li>
+            <li><span class="rl"><svg class="role" aria-hidden="true"><use href="#role-SUP"/></svg>SUP</span><b>Keria</b><span class="ovr num">94</span><span class="form up"><svg aria-hidden="true"><use href="#i-up"/></svg>Form 61</span></li>
+          </ul>
+        </section>
+
+        <section class="card" aria-labelledby="fx">
+          <div class="card-h"><h2 id="fx">Week 3 fixtures</h2><span class="muted" style="font-size:var(--fs-14)">5 series</span></div>
+          <ul class="fixtures">
+            <li class="you"><span class="t"><img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJUMSBjcmVzdCI+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxQzE4IDU2IDcgNDUgNyAzMFYxMXoiIGZpbGw9IiNlMjAxMmQiLz48cGF0aCBkPSJNMzIgM2wyNSA4djE5YzAgMTUtMTEgMjYtMjUgMzF6IiBmaWxsPSIjMDAwIiBvcGFjaXR5PSIuMTgiLz48cGF0aCBkPSJNMzIgN2wyMSA2LjhWMzBjMCAxMi42LTkgMjItMjEgMjYuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utb3BhY2l0eT0iLjI1IiBzdHJva2Utd2lkdGg9IjEuNSIvPjx0ZXh0IHg9IjMyIiB5PSIzNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkJhcmxvdyBDb25kZW5zZWQsQXJpYWwgTmFycm93LHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iMjYiIGZpbGw9IiNmZmYiIGxldHRlci1zcGFjaW5nPSIuNSI+VDE8L3RleHQ+PC9zdmc+" alt="">T1</span><span class="at">vs</span><span class="t r">GEN<img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJHRU4gY3Jlc3QiPjxwYXRoIGQ9Ik0zMiAzbDI1IDh2MTljMCAxNS0xMSAyNi0yNSAzMUMxOCA1NiA3IDQ1IDcgMzBWMTF6IiBmaWxsPSIjYWE4YTAwIi8+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxeiIgZmlsbD0iIzAwMCIgb3BhY2l0eT0iLjE4Ii8+PHBhdGggZD0iTTMyIDdsMjEgNi44VjMwYzAgMTIuNi05IDIyLTIxIDI2LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9Ii4yNSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48dGV4dCB4PSIzMiIgeT0iMzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJCYXJsb3cgQ29uZGVuc2VkLEFyaWFsIE5hcnJvdyxzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIiBmb250LXNpemU9IjIwIiBmaWxsPSIjZmZmIiBsZXR0ZXItc3BhY2luZz0iLjUiPkdFTjwvdGV4dD48L3N2Zz4=" alt=""></span></li>
+            <li><span class="t"><img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJITEUgY3Jlc3QiPjxwYXRoIGQ9Ik0zMiAzbDI1IDh2MTljMCAxNS0xMSAyNi0yNSAzMUMxOCA1NiA3IDQ1IDcgMzBWMTF6IiBmaWxsPSIjZmY3YTAwIi8+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxeiIgZmlsbD0iIzAwMCIgb3BhY2l0eT0iLjE4Ii8+PHBhdGggZD0iTTMyIDdsMjEgNi44VjMwYzAgMTIuNi05IDIyLTIxIDI2LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9Ii4yNSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48dGV4dCB4PSIzMiIgeT0iMzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJCYXJsb3cgQ29uZGVuc2VkLEFyaWFsIE5hcnJvdyxzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIiBmb250LXNpemU9IjIwIiBmaWxsPSIjZmZmIiBsZXR0ZXItc3BhY2luZz0iLjUiPkhMRTwvdGV4dD48L3N2Zz4=" alt="">HLE</span><span class="at">vs</span><span class="t r">FOX<img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJGT1ggY3Jlc3QiPjxwYXRoIGQ9Ik0zMiAzbDI1IDh2MTljMCAxNS0xMSAyNi0yNSAzMUMxOCA1NiA3IDQ1IDcgMzBWMTF6IiBmaWxsPSIjMjJjNTVlIi8+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxeiIgZmlsbD0iIzAwMCIgb3BhY2l0eT0iLjE4Ii8+PHBhdGggZD0iTTMyIDdsMjEgNi44VjMwYzAgMTIuNi05IDIyLTIxIDI2LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9Ii4yNSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48dGV4dCB4PSIzMiIgeT0iMzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJCYXJsb3cgQ29uZGVuc2VkLEFyaWFsIE5hcnJvdyxzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIiBmb250LXNpemU9IjIwIiBmaWxsPSIjZmZmIiBsZXR0ZXItc3BhY2luZz0iLjUiPkZPWDwvdGV4dD48L3N2Zz4=" alt=""></span></li>
+            <li><span class="t"><img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJESyBjcmVzdCI+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxQzE4IDU2IDcgNDUgNyAzMFYxMXoiIGZpbGw9IiMwMDJmYTciLz48cGF0aCBkPSJNMzIgM2wyNSA4djE5YzAgMTUtMTEgMjYtMjUgMzF6IiBmaWxsPSIjMDAwIiBvcGFjaXR5PSIuMTgiLz48cGF0aCBkPSJNMzIgN2wyMSA2LjhWMzBjMCAxMi42LTkgMjItMjEgMjYuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utb3BhY2l0eT0iLjI1IiBzdHJva2Utd2lkdGg9IjEuNSIvPjx0ZXh0IHg9IjMyIiB5PSIzNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkJhcmxvdyBDb25kZW5zZWQsQXJpYWwgTmFycm93LHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iMjYiIGZpbGw9IiNmZmYiIGxldHRlci1zcGFjaW5nPSIuNSI+REs8L3RleHQ+PC9zdmc+" alt="">DK</span><span class="at">vs</span><span class="t r">KT<img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJLVCBjcmVzdCI+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxQzE4IDU2IDcgNDUgNyAzMFYxMXoiIGZpbGw9IiNmZjAwMDAiLz48cGF0aCBkPSJNMzIgM2wyNSA4djE5YzAgMTUtMTEgMjYtMjUgMzF6IiBmaWxsPSIjMDAwIiBvcGFjaXR5PSIuMTgiLz48cGF0aCBkPSJNMzIgN2wyMSA2LjhWMzBjMCAxMi42LTkgMjItMjEgMjYuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utb3BhY2l0eT0iLjI1IiBzdHJva2Utd2lkdGg9IjEuNSIvPjx0ZXh0IHg9IjMyIiB5PSIzNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkJhcmxvdyBDb25kZW5zZWQsQXJpYWwgTmFycm93LHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iMjYiIGZpbGw9IiNmZmYiIGxldHRlci1zcGFjaW5nPSIuNSI+S1Q8L3RleHQ+PC9zdmc+" alt=""></span></li>
+            <li><span class="t"><img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJLREYgY3Jlc3QiPjxwYXRoIGQ9Ik0zMiAzbDI1IDh2MTljMCAxNS0xMSAyNi0yNSAzMUMxOCA1NiA3IDQ1IDcgMzBWMTF6IiBmaWxsPSIjMDBiM2E0Ii8+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxeiIgZmlsbD0iIzAwMCIgb3BhY2l0eT0iLjE4Ii8+PHBhdGggZD0iTTMyIDdsMjEgNi44VjMwYzAgMTIuNi05IDIyLTIxIDI2LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9Ii4yNSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48dGV4dCB4PSIzMiIgeT0iMzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJCYXJsb3cgQ29uZGVuc2VkLEFyaWFsIE5hcnJvdyxzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIiBmb250LXNpemU9IjIwIiBmaWxsPSIjZmZmIiBsZXR0ZXItc3BhY2luZz0iLjUiPktERjwvdGV4dD48L3N2Zz4=" alt="">KDF</span><span class="at">vs</span><span class="t r">DRX<img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJEUlggY3Jlc3QiPjxwYXRoIGQ9Ik0zMiAzbDI1IDh2MTljMCAxNS0xMSAyNi0yNSAzMUMxOCA1NiA3IDQ1IDcgMzBWMTF6IiBmaWxsPSIjMWY0ZmZmIi8+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxeiIgZmlsbD0iIzAwMCIgb3BhY2l0eT0iLjE4Ii8+PHBhdGggZD0iTTMyIDdsMjEgNi44VjMwYzAgMTIuNi05IDIyLTIxIDI2LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9Ii4yNSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48dGV4dCB4PSIzMiIgeT0iMzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJCYXJsb3cgQ29uZGVuc2VkLEFyaWFsIE5hcnJvdyxzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIiBmb250LXNpemU9IjIwIiBmaWxsPSIjZmZmIiBsZXR0ZXItc3BhY2luZz0iLjUiPkRSWDwvdGV4dD48L3N2Zz4=" alt=""></span></li>
+            <li><span class="t"><img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJOUyBjcmVzdCI+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxQzE4IDU2IDcgNDUgNyAzMFYxMXoiIGZpbGw9IiNkNjAwMWMiLz48cGF0aCBkPSJNMzIgM2wyNSA4djE5YzAgMTUtMTEgMjYtMjUgMzF6IiBmaWxsPSIjMDAwIiBvcGFjaXR5PSIuMTgiLz48cGF0aCBkPSJNMzIgN2wyMSA2LjhWMzBjMCAxMi42LTkgMjItMjEgMjYuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utb3BhY2l0eT0iLjI1IiBzdHJva2Utd2lkdGg9IjEuNSIvPjx0ZXh0IHg9IjMyIiB5PSIzNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkJhcmxvdyBDb25kZW5zZWQsQXJpYWwgTmFycm93LHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iMjYiIGZpbGw9IiNmZmYiIGxldHRlci1zcGFjaW5nPSIuNSI+TlM8L3RleHQ+PC9zdmc+" alt="">NS</span><span class="at">vs</span><span class="t r">BRO<img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJCUk8gY3Jlc3QiPjxwYXRoIGQ9Ik0zMiAzbDI1IDh2MTljMCAxNS0xMSAyNi0yNSAzMUMxOCA1NiA3IDQ1IDcgMzBWMTF6IiBmaWxsPSIjN2EwMGZmIi8+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxeiIgZmlsbD0iIzAwMCIgb3BhY2l0eT0iLjE4Ii8+PHBhdGggZD0iTTMyIDdsMjEgNi44VjMwYzAgMTIuNi05IDIyLTIxIDI2LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9Ii4yNSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48dGV4dCB4PSIzMiIgeT0iMzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJCYXJsb3cgQ29uZGVuc2VkLEFyaWFsIE5hcnJvdyxzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIiBmb250LXNpemU9IjIwIiBmaWxsPSIjZmZmIiBsZXR0ZXItc3BhY2luZz0iLjUiPkJSTzwvdGV4dD48L3N2Zz4=" alt=""></span></li>
+          </ul>
+        </section>
+      </div>
+
+      <div class="col">
+        <section class="card" aria-labelledby="tb">
+          <div class="card-h"><h2 id="tb">LCK table</h2><a class="btn btn-quiet" href="standings.html">Full table</a></div>
+          <table class="table mini">
+            <caption class="sr-only">Top of the LCK table after week 2</caption>
+            <thead><tr><th scope="col">#</th><th scope="col">Team</th><th scope="col">W–L</th><th scope="col">Form</th></tr></thead>
+            <tbody>
+              <tr class="you"><td>1</td><td><span class="teamcell"><img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJUMSBjcmVzdCI+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxQzE4IDU2IDcgNDUgNyAzMFYxMXoiIGZpbGw9IiNlMjAxMmQiLz48cGF0aCBkPSJNMzIgM2wyNSA4djE5YzAgMTUtMTEgMjYtMjUgMzF6IiBmaWxsPSIjMDAwIiBvcGFjaXR5PSIuMTgiLz48cGF0aCBkPSJNMzIgN2wyMSA2LjhWMzBjMCAxMi42LTkgMjItMjEgMjYuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utb3BhY2l0eT0iLjI1IiBzdHJva2Utd2lkdGg9IjEuNSIvPjx0ZXh0IHg9IjMyIiB5PSIzNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkJhcmxvdyBDb25kZW5zZWQsQXJpYWwgTmFycm93LHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iMjYiIGZpbGw9IiNmZmYiIGxldHRlci1zcGFjaW5nPSIuNSI+VDE8L3RleHQ+PC9zdmc+" alt="">T1</span></td><td class="num">2–0</td><td><span class="pips"><span class="pip w">W</span><span class="pip w">W</span></span></td></tr>
+              <tr class="cut"><td>2</td><td><span class="teamcell"><img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJHRU4gY3Jlc3QiPjxwYXRoIGQ9Ik0zMiAzbDI1IDh2MTljMCAxNS0xMSAyNi0yNSAzMUMxOCA1NiA3IDQ1IDcgMzBWMTF6IiBmaWxsPSIjYWE4YTAwIi8+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxeiIgZmlsbD0iIzAwMCIgb3BhY2l0eT0iLjE4Ii8+PHBhdGggZD0iTTMyIDdsMjEgNi44VjMwYzAgMTIuNi05IDIyLTIxIDI2LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9Ii4yNSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48dGV4dCB4PSIzMiIgeT0iMzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJCYXJsb3cgQ29uZGVuc2VkLEFyaWFsIE5hcnJvdyxzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIiBmb250LXNpemU9IjIwIiBmaWxsPSIjZmZmIiBsZXR0ZXItc3BhY2luZz0iLjUiPkdFTjwvdGV4dD48L3N2Zz4=" alt="">Gen.G</span></td><td class="num">2–0</td><td><span class="pips"><span class="pip w">W</span><span class="pip w">W</span></span></td></tr>
+              <tr><td>3</td><td><span class="teamcell"><img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJITEUgY3Jlc3QiPjxwYXRoIGQ9Ik0zMiAzbDI1IDh2MTljMCAxNS0xMSAyNi0yNSAzMUMxOCA1NiA3IDQ1IDcgMzBWMTF6IiBmaWxsPSIjZmY3YTAwIi8+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxeiIgZmlsbD0iIzAwMCIgb3BhY2l0eT0iLjE4Ii8+PHBhdGggZD0iTTMyIDdsMjEgNi44VjMwYzAgMTIuNi05IDIyLTIxIDI2LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9Ii4yNSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48dGV4dCB4PSIzMiIgeT0iMzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJCYXJsb3cgQ29uZGVuc2VkLEFyaWFsIE5hcnJvdyxzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIiBmb250LXNpemU9IjIwIiBmaWxsPSIjZmZmIiBsZXR0ZXItc3BhY2luZz0iLjUiPkhMRTwvdGV4dD48L3N2Zz4=" alt="">HLE</span></td><td class="num">2–0</td><td><span class="pips"><span class="pip w">W</span><span class="pip w">W</span></span></td></tr>
+              <tr class="cut"><td>4</td><td><span class="teamcell"><img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJESyBjcmVzdCI+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxQzE4IDU2IDcgNDUgNyAzMFYxMXoiIGZpbGw9IiMwMDJmYTciLz48cGF0aCBkPSJNMzIgM2wyNSA4djE5YzAgMTUtMTEgMjYtMjUgMzF6IiBmaWxsPSIjMDAwIiBvcGFjaXR5PSIuMTgiLz48cGF0aCBkPSJNMzIgN2wyMSA2LjhWMzBjMCAxMi42LTkgMjItMjEgMjYuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utb3BhY2l0eT0iLjI1IiBzdHJva2Utd2lkdGg9IjEuNSIvPjx0ZXh0IHg9IjMyIiB5PSIzNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkJhcmxvdyBDb25kZW5zZWQsQXJpYWwgTmFycm93LHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iMjYiIGZpbGw9IiNmZmYiIGxldHRlci1zcGFjaW5nPSIuNSI+REs8L3RleHQ+PC9zdmc+" alt="">Dplus KIA</span></td><td class="num">1–1</td><td><span class="pips"><span class="pip l">L</span><span class="pip w">W</span></span></td></tr>
+            </tbody>
+          </table>
+          <p class="faint" style="font-size:var(--fs-12);margin-top:var(--sp-3)">Lines mark top 2 (MSI + Worlds) and top 4 (playoffs).</p>
+        </section>
+
+        <section class="card" aria-labelledby="ib">
+          <div class="card-h"><h2 id="ib">Inbox</h2><span class="chip">2 new</span></div>
+          <ul class="inbox">
+            <li><span class="ic"><svg aria-hidden="true"><use href="#i-club"/></svg></span><div><b>Board · trust 64</b><p>"Top two keeps us on track for the title." Target unchanged.</p></div></li>
+            <li><span class="ic"><svg aria-hidden="true"><use href="#i-mail"/></svg></span><div><b>Press request · optional</b><p>Reporters want a line on facing Gen.G.</p><div class="acts"><button class="btn">Answer</button><button class="btn btn-quiet">Skip</button></div></div></li>
+            <li><span class="ic"><svg aria-hidden="true"><use href="#i-search"/></svg></span><div><b>Scout report · Gen.G</b><p>Lehends (91) and Chovy (88) drive their late game.</p></div></li>
+          </ul>
+        </section>
+
+        <section class="card hype" aria-labelledby="hy">
+          <div class="card-h" style="margin-bottom:0"><h2 id="hy">Fan hype</h2><span class="num"><b>62</b> <span class="muted">/ 100</span></span></div>
+          <div class="meter" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="62" aria-valuetext="62, Buzzing" aria-labelledby="hy"><i style="width:62%"></i></div>
+          <div class="scale" aria-hidden="true"><span>Cold</span><span>Warm</span><span class="on">Buzzing</span><span>Electric</span></div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</div>
+<nav class="tabbar" aria-label="Primary"><a href="hub.html" aria-current="page"><svg aria-hidden="true"><use href="#i-hub"/></svg>Hub</a><a href="#team"><svg aria-hidden="true"><use href="#i-team"/></svg>Team</a><a href="standings.html"><svg aria-hidden="true"><use href="#i-compete"/></svg>Compete</a><a href="#club"><svg aria-hidden="true"><use href="#i-club"/></svg>Club</a><a href="#guide"><svg aria-hidden="true"><use href="#i-more"/></svg>Guide</a></nav>
+</body></html>

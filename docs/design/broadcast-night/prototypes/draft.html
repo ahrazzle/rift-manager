@@ -1,0 +1,422 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Draft · Rift Manager</title><meta name="description" content="Rift Manager UI prototype: Draft · Rift Manager"><meta name="theme-color" content="#0B0F15"><link rel="icon" href="data:,"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap"><style>/* ===== Rift Manager · "Broadcast Night" design system (prototype) ===== */
+:root{
+  /* color: surfaces */
+  --bg:#0B0F15; --s1:#121822; --s2:#18202C; --s3:#1F2936;
+  --line:#263040;            /* decorative dividers only */
+  --line-strong:#6B788B;     /* control borders, >=3:1 on s1/s2 */
+  /* color: text */
+  --text:#F2F5F8; --text-2:#B4BDC9; --text-3:#8E9AA8;
+  /* color: meaning (each has ONE job) */
+  --primary:#F2F5F8; --on-primary:#0B0F15;          /* the one action per view */
+  --blue:#5B9BFF; --blue-bg:#14243D;                /* blue side (draft/match only) */
+  --red:#FF6B6B;  --red-bg:#3A181C;                 /* red side (draft/match only) */
+  --win:#3DDC84;  --win-bg:#11301F;                 /* outcomes only */
+  --loss:#FF8577; --loss-bg:#3A1A17;
+  --warn:#FFC857;
+  --gold:#F2C14E; --gold-2:#FFE3A1; --gold-bg:#2E2512; /* reward/trophy only */
+  --focus:#7CC4FF;
+  --team:#e2012d;                                    /* user's team color: crests & thin accents only, never text */
+  /* type */
+  --font-display:"Barlow Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
+  --font-ui:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --fs-12:.75rem; --fs-14:.875rem; --fs-16:1rem; --fs-18:1.125rem; --fs-20:1.25rem; --fs-24:1.5rem; --fs-32:2rem; --fs-40:2.5rem; --fs-56:3.5rem; --fs-72:4.5rem;
+  /* space (4pt) */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px; --sp-12:48px; --sp-16:64px;
+  /* radius */
+  --r-sm:6px; --r-md:10px; --r-lg:16px; --r-pill:999px;
+  /* elevation */
+  --e1:0 1px 0 rgba(255,255,255,.04) inset, 0 1px 2px rgba(0,0,0,.4);
+  --e2:0 1px 0 rgba(255,255,255,.05) inset, 0 8px 24px rgba(0,0,0,.45);
+  --e3:0 1px 0 rgba(255,255,255,.06) inset, 0 24px 64px rgba(0,0,0,.6);
+  /* motion */
+  --d-instant:80ms; --d-fast:140ms; --d-base:220ms; --d-slow:360ms; --d-reward:1100ms;
+  --ease-out:cubic-bezier(.2,.8,.2,1); --ease-in-out:cubic-bezier(.65,0,.35,1); --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --rail:232px; --topbar:64px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:400 var(--fs-16)/1.5 var(--font-ui);font-feature-settings:"tnum" 1,"cv11" 1;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;line-height:1.15}
+p{margin:0}
+a{color:var(--focus)}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:var(--r-sm)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:8px;top:-60px;background:var(--primary);color:var(--on-primary);padding:8px 12px;border-radius:var(--r-sm);z-index:99}
+.skip:focus{top:8px}
+.display{font-family:var(--font-display);font-weight:700;letter-spacing:.01em;text-transform:uppercase}
+.label{font-size:var(--fs-12);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2)}
+.muted{color:var(--text-2)} .faint{color:var(--text-3)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- App shell ---------- */
+.shell{display:grid;grid-template-columns:var(--rail) 1fr;min-height:100vh}
+.rail{position:sticky;top:0;height:100vh;padding:var(--sp-5) var(--sp-4);border-right:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column;gap:var(--sp-6)}
+.brand{display:flex;align-items:center;gap:var(--sp-2);font-family:var(--font-display);font-weight:700;font-size:var(--fs-24);letter-spacing:.04em;text-transform:uppercase}
+.brand-mark{width:28px;height:28px;border-radius:7px;background:conic-gradient(from 210deg,var(--blue),#9b8cff,var(--red),var(--blue));display:grid;place-items:center}
+.brand-mark::after{content:"";width:12px;height:12px;border-radius:3px;background:var(--bg);transform:rotate(45deg)}
+.club{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3);border-radius:var(--r-md);background:var(--s1);border:1px solid var(--line)}
+.club img{width:36px;height:36px}
+.club b{display:block;font-size:var(--fs-14)} .club span{font-size:var(--fs-12);color:var(--text-2)}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:var(--sp-3);padding:10px var(--sp-3);border-radius:var(--r-md);color:var(--text-2);text-decoration:none;font-weight:500;font-size:var(--fs-14);min-height:44px}
+.nav a:hover{background:var(--s1);color:var(--text)}
+.nav a[aria-current="page"]{background:var(--s2);color:var(--text);box-shadow:inset 3px 0 0 var(--team)}
+.nav svg{width:20px;height:20px;flex:none}
+.rail-foot{margin-top:auto;display:flex;flex-direction:column;gap:var(--sp-2)}
+.main{min-width:0}
+.topbar{position:sticky;top:0;z-index:20;height:var(--topbar);display:flex;align-items:center;gap:var(--sp-4);padding:0 var(--sp-8);background:rgba(11,15,21,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar .ctx{display:flex;align-items:center;gap:var(--sp-3);min-width:0}
+.topbar .ctx b{font-size:var(--fs-16)} .topbar .ctx span{color:var(--text-2);font-size:var(--fs-14);white-space:nowrap}
+.topbar .spacer{flex:1}
+.mob-only{display:none}
+.content{padding:var(--sp-8);max-width:1360px;margin:0 auto}
+
+/* ---------- Progress track (season phase; not tabs) ---------- */
+.track{display:flex;align-items:center;gap:0;list-style:none;margin:0;padding:0}
+.track li{display:flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-12);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+.track li+li::before{content:"";width:28px;height:2px;background:var(--line);margin:0 var(--sp-2)}
+.track .dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--text-3)}
+.track .done{color:var(--text-2)} .track .done .dot{background:var(--text-2);border-color:var(--text-2)}
+.track .now{color:var(--text)} .track .now .dot{border-color:var(--text);box-shadow:0 0 0 3px rgba(242,245,248,.15)}
+
+/* ---------- Surfaces ---------- */
+.card{background:var(--s1);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--e1);padding:var(--sp-6)}
+.card-h{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-4)}
+.card-h h2{font-size:var(--fs-18);font-weight:600}
+.grid{display:grid;gap:var(--sp-6)}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);min-height:44px;padding:0 var(--sp-5);border-radius:var(--r-md);border:1px solid var(--line-strong);background:transparent;color:var(--text);font-weight:600;font-size:var(--fs-14);cursor:pointer;text-decoration:none;transition:background var(--d-fast) var(--ease-out),transform var(--d-fast) var(--ease-out),border-color var(--d-fast)}
+.btn:hover{background:var(--s2)}
+.btn:active{transform:translateY(1px)}
+.btn svg{width:18px;height:18px}
+.btn-primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.btn-primary:hover{background:#fff}
+.btn-lg{min-height:56px;padding:0 var(--sp-8);font-size:var(--fs-16);border-radius:12px}
+.btn-quiet{border-color:transparent;color:var(--text-2)} .btn-quiet:hover{color:var(--text)}
+.btn[disabled],.btn[aria-disabled="true"]{opacity:1;color:var(--text-3);border-color:var(--line);background:transparent;cursor:not-allowed}
+.icon-btn{width:44px;height:44px;padding:0;border-radius:var(--r-md)}
+
+/* ---------- Chips / badges ---------- */
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:var(--r-pill);background:var(--s2);border:1px solid var(--line);font-size:var(--fs-12);font-weight:600;color:var(--text-2);white-space:nowrap}
+.chip svg{width:14px;height:14px}
+.chip-win{background:var(--win-bg);color:var(--win);border-color:transparent}
+.chip-loss{background:var(--loss-bg);color:var(--loss);border-color:transparent}
+.chip-gold{background:var(--gold-bg);color:var(--gold);border-color:transparent}
+.chip-blue{background:var(--blue-bg);color:var(--blue);border-color:transparent}
+.chip-red{background:var(--red-bg);color:var(--red);border-color:transparent}
+.pips{display:inline-flex;gap:4px}
+.pip{width:22px;height:22px;border-radius:5px;display:grid;place-items:center;font-size:11px;font-weight:700}
+.pip.w{background:var(--win-bg);color:var(--win)} .pip.l{background:var(--loss-bg);color:var(--loss)} .pip.n{border:1px dashed var(--line-strong);color:var(--text-3)}
+
+/* ---------- Crest / champion glyph / role ---------- */
+.crest{width:var(--cs,48px);height:var(--cs,48px);flex:none}
+.role{width:16px;height:16px;color:var(--text-2);flex:none}
+.glyph{--h:200;position:relative;display:grid;place-items:center;aspect-ratio:1;border-radius:var(--r-md);background:linear-gradient(145deg,hsl(var(--h) 45% 26%),hsl(calc(var(--h) + 40) 40% 14%));color:#fff;font-family:var(--font-display);font-weight:700;font-size:var(--gfs,22px);letter-spacing:.02em;overflow:hidden}
+.glyph::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 25%,hsl(var(--h) 80% 70% / .35),transparent 55%)}
+.glyph::after{content:"";position:absolute;inset:auto -20% -40% auto;width:70%;height:70%;border:2px solid hsl(var(--h) 70% 70% / .25);border-radius:50%}
+.glyph span{position:relative;z-index:1;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+
+/* ---------- Meter ---------- */
+.meter{height:8px;border-radius:var(--r-pill);background:var(--s3);overflow:hidden}
+.meter > i{display:block;height:100%;border-radius:inherit;background:var(--text-2)}
+
+/* ---------- Table ---------- */
+.table{width:100%;border-collapse:collapse;font-size:var(--fs-14)}
+.table th{font-size:var(--fs-12);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);text-align:right;padding:var(--sp-2) var(--sp-3);border-bottom:1px solid var(--line)}
+.table td{padding:0 var(--sp-3);height:48px;text-align:right;border-bottom:1px solid var(--line)}
+.table th:nth-child(-n+2),.table td:nth-child(-n+2){text-align:left}
+.table tr.you td{background:var(--s2)}
+.table tr.you td:first-child{box-shadow:inset 3px 0 0 var(--team)}
+.table tr.cut td{border-bottom:2px solid var(--line-strong)}
+.teamcell{display:flex;align-items:center;gap:var(--sp-3)} .teamcell .crest{--cs:28px}
+
+/* ---------- Mobile tab bar ---------- */
+.tabbar{display:none}
+
+/* ---------- Dialog / sheet ---------- */
+.scrim{position:fixed;inset:0;background:rgba(5,8,12,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:var(--sp-4)}
+.scrim[data-open="true"]{display:flex}
+
+@media (max-width: 900px){
+  :root{--topbar:56px}
+  .shell{grid-template-columns:1fr}
+  .rail{display:none}
+  .topbar{padding:0 var(--sp-4)}
+  .mob-only{display:inline-flex}
+  .desk-only{display:none !important}
+  .content{padding:var(--sp-4) var(--sp-4) calc(var(--sp-16) + 40px)}
+  .card{padding:var(--sp-4);border-radius:var(--r-md)}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(11,15,21,.96);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+  .tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:60px;color:var(--text-2);text-decoration:none;font-size:11px;font-weight:600}
+  .tabbar a svg{width:22px;height:22px}
+  .tabbar a[aria-current="page"]{color:var(--text)}
+  .tabbar a[aria-current="page"] svg{color:var(--text)}
+  .tabbar a[aria-current="page"]::before{content:"";position:absolute;top:0;width:28px;height:3px;border-radius:0 0 3px 3px;background:var(--team)}
+  .tabbar a{position:relative}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:1ms !important;animation-iteration-count:1 !important;transition-duration:1ms !important;scroll-behavior:auto !important}
+}
+.select{min-height:44px;padding:0 36px 0 12px;border-radius:var(--r-md);border:1px solid var(--line-strong);background:var(--s1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23B4BDC9' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 12px center;appearance:none;color:var(--text);font-size:var(--fs-14)}
+.seg{display:inline-flex;padding:4px;gap:4px;border-radius:12px;background:var(--s1);border:1px solid var(--line)}
+.seg button,.seg a{min-height:36px;padding:0 var(--sp-4);border:0;border-radius:8px;background:transparent;color:var(--text-2);font-weight:600;font-size:var(--fs-14);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.seg [aria-pressed="true"],.seg [aria-selected="true"],.seg [aria-current="page"]{background:var(--s3);color:var(--text)}
+.topbar .mob-only{display:none}
+.table td.num,.table th{white-space:nowrap}
+@media (max-width:900px){ .topbar .mob-only{display:inline-flex} }
+</style>
+<style>
+body{overflow-x:hidden}
+.mode{min-height:100vh;display:flex;flex-direction:column}
+.mbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:var(--sp-4);height:var(--topbar);padding:0 var(--sp-8);background:rgba(11,15,21,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.mbar .ttl{display:flex;align-items:center;gap:var(--sp-3);font-weight:600}
+.mbar .spacer{flex:1}
+.board{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2.1fr) minmax(0,1fr);gap:var(--sp-6);padding:var(--sp-6) var(--sp-8);max-width:1600px;margin:0 auto;width:100%;flex:1}
+.team{display:grid;gap:var(--sp-3);align-content:start}
+.team-h{display:flex;align-items:center;gap:var(--sp-3);padding-bottom:var(--sp-3);border-bottom:2px solid var(--c)}
+.team-h .crest{--cs:40px}
+.team-h b{font-family:var(--font-display);font-size:var(--fs-24);text-transform:uppercase;letter-spacing:.02em}
+.team-h .chip{margin-left:auto}
+.blue{--c:var(--blue);--cbg:var(--blue-bg)} .red{--c:var(--red);--cbg:var(--red-bg)}
+.red .team-h{flex-direction:row-reverse} .red .team-h .chip{margin-left:0;margin-right:auto}
+.bans{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.ban{position:relative;aspect-ratio:1;border-radius:8px;border:1px dashed var(--line-strong);display:grid;place-items:center;color:var(--text-3)}
+.ban .glyph{width:100%;--gfs:15px;filter:grayscale(1) brightness(.7)}
+.ban.filled{border:0}
+.ban.filled::after{content:"";position:absolute;inset:0;border-radius:8px;background:linear-gradient(to top right,transparent calc(50% - 1.5px),var(--c) calc(50% - 1.5px),var(--c) calc(50% + 1.5px),transparent calc(50% + 1.5px))}
+.picks{display:grid;gap:var(--sp-2);list-style:none;margin:0;padding:0}
+.slot{display:grid;grid-template-columns:56px 1fr;align-items:center;gap:var(--sp-3);padding:var(--sp-2);border-radius:var(--r-md);background:var(--s1);border:1px solid var(--line);min-height:72px;transition:border-color var(--d-base) var(--ease-out),background var(--d-base) var(--ease-out)}
+.red .slot{grid-template-columns:1fr 56px;text-align:right}
+.red .slot .ph{order:2}
+.slot .ph{width:56px;height:56px;border-radius:8px;border:1px dashed var(--line-strong);display:grid;place-items:center;color:var(--text-3)}
+.slot .ph svg{width:22px;height:22px}
+.slot .ph .glyph{width:56px;--gfs:20px}
+.slot .who{display:grid;gap:2px;min-width:0}
+.slot .who small{font-size:var(--fs-12);color:var(--text-2);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.slot .who b{font-size:var(--fs-16);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .who span{font-size:var(--fs-14);color:var(--text-3)}
+.slot.active{border-color:var(--c);background:var(--cbg);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 25%,transparent)}
+.slot.active .ph{border-color:var(--c);color:var(--c)}
+.slot.locked .ph{border:0}
+.slot.just .ph .glyph{animation:lock var(--d-slow) var(--ease-spring)}
+@keyframes lock{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+.center{display:flex;flex-direction:column;gap:var(--sp-4);min-width:0}
+.turn{display:flex;align-items:center;gap:var(--sp-4);padding:var(--sp-4) var(--sp-5);border-radius:var(--r-lg);background:var(--s1);border:1px solid var(--line);border-left:4px solid var(--c)}
+.turn h1{font-family:var(--font-display);font-size:var(--fs-32);text-transform:uppercase;letter-spacing:.01em}
+.turn p{color:var(--text-2);font-size:var(--fs-14)}
+.turn .seq{margin-left:auto;display:flex;gap:3px;flex-wrap:nowrap;align-items:center;flex-shrink:0}
+.seq i{width:10px;height:18px;border-radius:3px;background:var(--s3);font-style:normal}
+.seq i.b{background:color-mix(in srgb,var(--blue) 35%,var(--s3))} .seq i.r{background:color-mix(in srgb,var(--red) 35%,var(--s3))}
+.seq i.ban{height:10px;align-self:center}
+.seq i.done{opacity:.35} .seq i.now{outline:2px solid var(--text);outline-offset:1px}
+.filters{display:flex;gap:var(--sp-3);flex-wrap:wrap;align-items:center}
+.search{position:relative;flex:1;min-width:180px}
+.search svg{position:absolute;left:12px;top:50%;width:18px;height:18px;transform:translateY(-50%);color:var(--text-2)}
+.search input{width:100%;min-height:44px;padding:0 12px 0 40px;border-radius:var(--r-md);border:1px solid var(--line-strong);background:var(--s1);font-size:var(--fs-14)}
+.seg svg{width:16px;height:16px;margin-right:6px}
+.pool{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:var(--sp-3);align-content:start}
+.tile{position:relative;display:grid;gap:6px;padding:6px;border-radius:12px;border:1px solid transparent;background:transparent;cursor:pointer;text-align:center;transition:background var(--d-fast),border-color var(--d-fast),transform var(--d-fast) var(--ease-out)}
+.tile:hover{background:var(--s1);border-color:var(--line)}
+.tile[aria-pressed="true"]{background:var(--s2);border-color:var(--text)}
+.tile .glyph{width:100%}
+.tile .nm{font-size:var(--fs-14);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .tag{position:absolute;top:10px;left:10px;z-index:2;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 5px;border-radius:4px;background:rgba(11,15,21,.8);color:var(--text)}
+.tile .rr{position:absolute;top:10px;right:10px;z-index:2;width:22px;height:22px;border-radius:5px;background:rgba(11,15,21,.8);display:grid;place-items:center}
+.tile .rr svg{width:14px;height:14px;color:var(--text)}
+.tile[disabled]{cursor:not-allowed}
+.tile[disabled] .glyph{filter:grayscale(1) brightness(.45)}
+.tile[disabled] .nm{color:var(--text-3);text-decoration:line-through}
+.tile .st{position:absolute;inset:6px 6px auto;aspect-ratio:1;display:grid;place-items:center;z-index:3;font-size:var(--fs-12);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text);background:rgba(11,15,21,.72);border-radius:10px}
+.detail{display:grid;grid-template-columns:auto 1fr auto;gap:var(--sp-4);align-items:center;padding:var(--sp-4);border-radius:var(--r-lg);background:var(--s1);border:1px solid var(--line-strong);position:sticky;bottom:var(--sp-4);z-index:10;box-shadow:var(--e3)}
+.detail .glyph{width:64px;--gfs:24px}
+.detail h2{font-size:var(--fs-20)}
+.detail .meta{display:flex;gap:var(--sp-2);flex-wrap:wrap;margin-top:6px}
+.detail .fit{font-size:var(--fs-14);color:var(--text-2);margin-top:6px}
+.detail .acts{display:flex;gap:var(--sp-2);align-items:center}
+.detail .rolepick{min-height:44px}
+.empty{padding:var(--sp-8);text-align:center;color:var(--text-2);border:1px dashed var(--line-strong);border-radius:var(--r-lg)}
+.waiting{display:flex;align-items:center;gap:var(--sp-3);color:var(--text-2)}
+.dots i{display:inline-block;width:6px;height:6px;margin:0 2px;border-radius:50%;background:var(--red);animation:blink 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes blink{50%{opacity:.25}}
+/* mobile */
+@media (max-width:900px){
+  .mbar{padding:0 var(--sp-4);gap:var(--sp-2)}
+  .board{grid-template-columns:1fr;padding:0;gap:0}
+  .team{display:none}
+  .strip{display:grid !important}
+  .center{padding:var(--sp-3) var(--sp-4) 200px;gap:var(--sp-3)}
+  .turn{padding:var(--sp-3) var(--sp-4);gap:var(--sp-3)} .turn h1{font-size:var(--fs-24)} .turn .seq{display:none}
+  .pool{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+  .tile{padding:3px} .tile .nm{font-size:var(--fs-12)} .tile .tag{display:none} .tile .rr{top:6px;right:6px;width:18px;height:18px} .tile .st{inset:3px 3px auto}
+  .detail{position:fixed;left:0;right:0;bottom:0;border-radius:var(--r-lg) var(--r-lg) 0 0;grid-template-columns:auto 1fr;padding:var(--sp-4) var(--sp-4) calc(var(--sp-4) + env(safe-area-inset-bottom));z-index:40;box-shadow:var(--e3)}
+  .detail .acts{grid-column:1/-1} .detail .acts .btn-primary{flex:1}
+  .detail .glyph{width:52px}
+  .filters{display:grid;grid-template-columns:1fr;gap:var(--sp-2)}
+  #roles{display:grid;grid-template-columns:repeat(6,1fr);width:100%}
+  #roles button{padding:0;justify-content:center;min-height:40px}
+  #roles button span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  #roles button svg{margin:0;width:20px;height:20px}
+  .detail .meta .chip:nth-child(n+4){display:none}
+  .detail{max-width:100vw}
+  .detail > div{min-width:0}
+}
+.strip{display:none;position:sticky;top:var(--topbar);z-index:15;background:var(--bg);padding:var(--sp-2) var(--sp-4);border-bottom:1px solid var(--line);gap:6px}
+.strip .row{display:grid;grid-template-columns:28px repeat(5,1fr) 6px repeat(3,22px);gap:4px;align-items:center}
+.strip .row{min-height:calc((100vw - 168px) / 5)}
+.picks{min-height:392px}.bans{min-height:40px}.pool{min-height:60vh}.turn{min-height:88px}
+.strip .sd{font-size:11px;font-weight:700;color:var(--c)}
+.strip .p{aspect-ratio:1;border-radius:6px;border:1px dashed var(--line-strong);overflow:hidden;display:grid;place-items:center}
+.strip .p .glyph{width:100%;height:100%;--gfs:13px;border-radius:0}
+.strip .p.active{border:2px solid var(--c)}
+.strip .b{aspect-ratio:1;border-radius:4px;overflow:hidden;background:var(--s2);position:relative}
+.strip .b .glyph{width:100%;height:100%;--gfs:9px;border-radius:0;filter:grayscale(1) brightness(.6)}
+.strip .b:empty{border:1px dashed var(--line)}
+</style>
+</head><body>
+<div hidden><svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  
+  <symbol id="i-hub" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-team" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5M15 14.6c2.8-.2 5 1.5 5.6 4.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-compete" viewBox="0 0 24 24"><path d="M4 5h5v5H4zM4 14h5v5H4zM9 7.5h4v9H9M13 12h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-club" viewBox="0 0 24 24"><path d="M7 4h10v4a5 5 0 01-10 0zM12 13v4M8 20h8M7 6H4v1a3 3 0 003 3M17 6h3v1a3 3 0 01-3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="16.6" r="1.3" fill="currentColor"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 7l8 6 8-6" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6.5 17.5l11-11" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.5 6 .8-4.4 4.1 1.1 5.9L12 17l-5.3 2.8 1.1-5.9L3.4 9.8l6-.8z" fill="currentColor"/></symbol>
+</svg>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  
+  <symbol id="role-TOP" viewBox="0 0 24 24"><path d="M4 4h16v4H8v12H4z" fill="currentColor"/><rect x="11" y="11" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="role-JNG" viewBox="0 0 24 24"><path d="M12 3l3 6-3 3-3-3zM5 13l5 1 2 7-5-3zM19 13l-5 1-2 7 5-3z" fill="currentColor"/></symbol>
+  <symbol id="role-MID" viewBox="0 0 24 24"><path d="M4 20L20 4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M4 4h6v2.5H6.5V10H4zM20 20h-6v-2.5h3.5V14H20z" fill="currentColor"/></symbol>
+  <symbol id="role-BOT" viewBox="0 0 24 24"><path d="M20 20H4v-4h12V4h4z" fill="currentColor"/><rect x="4" y="4" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="role-SUP" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+</svg>
+</div>
+<div class="mode">
+  <header class="mbar">
+    <a class="btn icon-btn btn-quiet" href="hub.html" aria-label="Leave draft (returns to match setup)"><svg aria-hidden="true" style="transform:rotate(180deg)"><use href="#i-arrow"/></svg></a>
+    <div class="ttl"><span>Draft</span><span class="chip">Game 1 of 3</span></div>
+    <span class="spacer"></span>
+    <span class="chip desk-only">T1 0 – 0 GEN</span>
+    <button class="btn btn-quiet desk-only" id="auto">Auto-draft rest</button>
+  </header>
+
+  <div class="strip" aria-hidden="true" id="strip">
+    <div class="row blue" id="sb"></div>
+    <div class="row red" id="sr"></div>
+  </div>
+
+  <main class="board" id="main">
+    <section class="team blue" aria-label="T1, blue side">
+      <div class="team-h"><img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJUMSBjcmVzdCI+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxQzE4IDU2IDcgNDUgNyAzMFYxMXoiIGZpbGw9IiNlMjAxMmQiLz48cGF0aCBkPSJNMzIgM2wyNSA4djE5YzAgMTUtMTEgMjYtMjUgMzF6IiBmaWxsPSIjMDAwIiBvcGFjaXR5PSIuMTgiLz48cGF0aCBkPSJNMzIgN2wyMSA2LjhWMzBjMCAxMi42LTkgMjItMjEgMjYuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utb3BhY2l0eT0iLjI1IiBzdHJva2Utd2lkdGg9IjEuNSIvPjx0ZXh0IHg9IjMyIiB5PSIzNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkJhcmxvdyBDb25kZW5zZWQsQXJpYWwgTmFycm93LHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtc2l6ZT0iMjYiIGZpbGw9IiNmZmYiIGxldHRlci1zcGFjaW5nPSIuNSI+VDE8L3RleHQ+PC9zdmc+" alt=""><b>T1</b><span class="chip chip-blue">Blue side · You</span></div>
+      <div class="bans" id="bb" aria-label="T1 bans"></div>
+      <ol class="picks" id="pb"></ol>
+    </section>
+
+    <section class="center" aria-label="Champion pool">
+      <div class="turn" id="turn" aria-live="polite"></div>
+      <div class="filters">
+        <div class="seg" role="group" aria-label="Filter by role" id="roles">
+          <button aria-pressed="true" data-r="ALL">All</button>
+          <button aria-pressed="false" data-r="TOP"><svg aria-hidden="true"><use href="#role-TOP"/></svg><span>Top</span></button>
+          <button aria-pressed="false" data-r="JNG"><svg aria-hidden="true"><use href="#role-JNG"/></svg><span>Jng</span></button>
+          <button aria-pressed="false" data-r="MID"><svg aria-hidden="true"><use href="#role-MID"/></svg><span>Mid</span></button>
+          <button aria-pressed="false" data-r="BOT"><svg aria-hidden="true"><use href="#role-BOT"/></svg><span>Bot</span></button>
+          <button aria-pressed="false" data-r="SUP"><svg aria-hidden="true"><use href="#role-SUP"/></svg><span>Sup</span></button>
+        </div>
+        <label class="search"><span class="sr-only">Search champions</span><svg aria-hidden="true"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Search champions" autocomplete="off"></label>
+      </div>
+      <div class="pool" id="pool" role="group" aria-label="Champions"></div>
+      <div class="detail" id="detail" aria-live="polite"></div>
+    </section>
+
+    <section class="team red" aria-label="Gen.G, red side">
+      <div class="team-h"><img class="crest" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJHRU4gY3Jlc3QiPjxwYXRoIGQ9Ik0zMiAzbDI1IDh2MTljMCAxNS0xMSAyNi0yNSAzMUMxOCA1NiA3IDQ1IDcgMzBWMTF6IiBmaWxsPSIjYWE4YTAwIi8+PHBhdGggZD0iTTMyIDNsMjUgOHYxOWMwIDE1LTExIDI2LTI1IDMxeiIgZmlsbD0iIzAwMCIgb3BhY2l0eT0iLjE4Ii8+PHBhdGggZD0iTTMyIDdsMjEgNi44VjMwYzAgMTIuNi05IDIyLTIxIDI2LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9Ii4yNSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48dGV4dCB4PSIzMiIgeT0iMzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJCYXJsb3cgQ29uZGVuc2VkLEFyaWFsIE5hcnJvdyxzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIiBmb250LXNpemU9IjIwIiBmaWxsPSIjZmZmIiBsZXR0ZXItc3BhY2luZz0iLjUiPkdFTjwvdGV4dD48L3N2Zz4=" alt=""><b>GEN</b><span class="chip chip-red">Red side</span></div>
+      <div class="bans" id="br" aria-label="Gen.G bans"></div>
+      <ol class="picks" id="pr"></ol>
+    </section>
+  </main>
+</div>
+<script>
+// Data shapes mirror src/data/champions.js (id, name, roles, phase, styles). Glyphs are original monograms; no game art.
+const CH=[["aatrox","Aatrox",["TOP"],"mid",["teamfight","engage"]],["camille","Camille",["TOP"],"late",["split","pick"]],["darius","Darius",["TOP"],"early",["engage","teamfight"]],["fiora","Fiora",["TOP"],"late",["split"]],["gnar","Gnar",["TOP"],"mid",["teamfight","engage","poke"]],["gragas","Gragas",["TOP","JNG"],"mid",["engage","pick"]],["jax","Jax",["TOP"],"late",["split","teamfight"]],["jayce","Jayce",["TOP","MID"],"early",["poke"]],["ksante","K'Sante",["TOP"],"mid",["engage","teamfight"]],["ornn","Ornn",["TOP"],"mid",["engage","teamfight"]],["renekton","Renekton",["TOP"],"early",["engage","split"]],["rumble","Rumble",["TOP","MID"],"mid",["teamfight","poke"]],["elise","Elise",["JNG"],"early",["pick","engage"]],["graves","Graves",["JNG"],"mid",["poke","teamfight"]],["jarvan","Jarvan IV",["JNG"],"early",["engage","teamfight"]],["kindred","Kindred",["JNG"],"late",["teamfight","protect"]],["leesin","Lee Sin",["JNG"],"early",["pick","engage"]],["lillia","Lillia",["JNG"],"mid",["teamfight","poke"]],["maokai","Maokai",["JNG","SUP"],"mid",["engage","teamfight"]],["nocturne","Nocturne",["JNG"],"mid",["pick","engage"]],["sejuani","Sejuani",["JNG"],"mid",["engage","teamfight"]],["viego","Viego",["JNG"],"mid",["pick","teamfight"]],["vi","Vi",["JNG"],"mid",["engage","pick"]],["wukong","Wukong",["JNG","TOP"],"mid",["engage","teamfight"]],["ahri","Ahri",["MID"],"mid",["pick","poke"]],["akali","Akali",["MID","TOP"],"mid",["pick","split"]],["azir","Azir",["MID"],"late",["teamfight","poke"]],["corki","Corki",["MID","BOT"],"mid",["poke","teamfight"]],["hwei","Hwei",["MID"],"mid",["poke","teamfight"]],["leblanc","LeBlanc",["MID"],"early",["pick","poke"]],["neeko","Neeko",["MID","SUP"],"mid",["engage","teamfight"]],["orianna","Orianna",["MID"],"mid",["teamfight","poke"]],["sylas","Sylas",["MID"],"mid",["teamfight","pick"]],["taliyah","Taliyah",["MID","JNG"],"mid",["poke","pick"]],["tristana","Tristana",["MID","BOT"],"mid",["poke","teamfight"]],["zed","Zed",["MID"],"mid",["pick","split"]],["aphelios","Aphelios",["BOT"],"late",["teamfight"]],["ashe","Ashe",["BOT","SUP"],"mid",["poke","engage"]],["caitlyn","Caitlyn",["BOT"],"early",["poke"]],["draven","Draven",["BOT"],"early",["teamfight"]],["ezreal","Ezreal",["BOT"],"mid",["poke"]],["jhin","Jhin",["BOT"],"mid",["poke","pick"]],["kaisa","Kai'Sa",["BOT"],"mid",["teamfight","pick"]],["kalista","Kalista",["BOT"],"early",["teamfight"]],["lucian","Lucian",["BOT","MID"],"early",["teamfight","poke"]],["senna","Senna",["BOT","SUP"],"late",["poke","protect"]],["varus","Varus",["BOT"],"mid",["poke","teamfight"]],["zeri","Zeri",["BOT"],"late",["teamfight"]],["alistar","Alistar",["SUP"],"mid",["engage","teamfight"]],["bard","Bard",["SUP"],"mid",["pick","poke"]],["blitzcrank","Blitzcrank",["SUP"],"early",["pick"]],["braum","Braum",["SUP"],"mid",["protect","teamfight"]],["karma","Karma",["SUP"],"early",["poke","protect"]],["leona","Leona",["SUP"],"early",["engage","teamfight"]],["lulu","Lulu",["SUP"],"mid",["protect","poke"]],["milio","Milio",["SUP"],"mid",["protect","teamfight"]],["nautilus","Nautilus",["SUP"],"early",["engage","pick"]],["rakan","Rakan",["SUP"],"mid",["engage","teamfight"]],["renata","Renata Glasc",["SUP"],"mid",["teamfight","protect"]],["thresh","Thresh",["SUP"],"mid",["pick","engage","protect"]]].map(([id,name,roles,phase,styles])=>({id,name,roles,phase,styles}));
+const BY=Object.fromEntries(CH.map(c=>[c.id,c]));
+const PLAYERS={B:{TOP:"Zeus",JNG:"Oner",MID:"Faker",BOT:"Gumayusi",SUP:"Keria"},R:{TOP:"Kiin",JNG:"Canyon",MID:"Chovy",BOT:"Peyz",SUP:"Lehends"}};
+// Tournament draft order: 6 bans, 6 picks, 4 bans, 4 picks
+const ORDER=[["B","ban"],["R","ban"],["B","ban"],["R","ban"],["B","ban"],["R","ban"],["B","pick"],["R","pick"],["R","pick"],["B","pick"],["B","pick"],["R","pick"],["R","ban"],["B","ban"],["R","ban"],["B","ban"],["R","pick"],["B","pick"],["B","pick"],["R","pick"]];
+const S={step:0,bans:{B:[],R:[]},picks:{B:[],R:[]},sel:null,role:"ALL",q:"",just:null};
+// Seed to the "your pick" moment shown in the brief: bans done, B1 + R1/R2 locked.
+[["azir"],["leesin"],["kalista"],["jayce"],["rakan"],["aphelios"]].forEach(([id],i)=>S.bans[ORDER[i][0]].push(id));
+S.picks.B.push({id:"ksante",role:"TOP"});S.picks.R.push({id:"vi",role:"JNG"},{id:"corki",role:"MID"});S.step=9;
+const hue=id=>{let h=0;for(const ch of id)h=(h*31+ch.charCodeAt(0))%360;return h};
+const mono=n=>n.replace(/[^A-Za-z ]/g,"").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()+(n.split(" ").length>1?"":n.replace(/[^a-z]/g,"")[0]||"");
+const glyph=(c,extra="")=>`<span class="glyph" style="--h:${hue(c.id)}" ${extra}><span>${mono(c.name).slice(0,2)}</span></span>`;
+const used=()=>new Set([...S.bans.B,...S.bans.R,...S.picks.B.map(p=>p.id),...S.picks.R.map(p=>p.id)]);
+const openRole=side=>["TOP","JNG","MID","BOT","SUP"].filter(r=>!S.picks[side].some(p=>p.role===r));
+const cur=()=>ORDER[S.step];
+const $=id=>document.getElementById(id);
+function renderSide(side){
+  const bans=$(side==="B"?"bb":"br"),picks=$(side==="B"?"pb":"pr");
+  bans.innerHTML=[0,1,2,3,4].map(i=>{const id=S.bans[side][i];const c=id&&BY[id];return `<div class="ban ${c?"filled":""}" title="${c?c.name+" (banned)":"Ban "+(i+1)}">${c?glyph(c):'<svg style="width:16px;height:16px" aria-hidden="true"><use href="#i-ban"/></svg>'}<span class="sr-only">${c?c.name+" banned":"Ban "+(i+1)+" open"}</span></div>`}).join("");
+  const [cs,ct]=cur()||[];const pickIdx=S.picks[side].length;
+  picks.innerHTML=[0,1,2,3,4].map(i=>{const p=S.picks[side][i];const c=p&&BY[p.id];const active=!p&&cs===side&&ct==="pick"&&i===pickIdx;const role=p?p.role:null;
+    return `<li class="slot ${active?"active":""} ${p?"locked":""} ${S.just===p?.id?"just":""}"><span class="ph">${c?glyph(c):'<svg aria-hidden="true"><use href="#i-search"/></svg>'}</span><span class="who"><small>Pick ${i+1}${active?" · now":""}</small><b>${c?c.name:(active?"Choosing…":"—")}</b><span>${role?PLAYERS[side][role]+" · "+role:""}</span></span></li>`}).join("");
+  const row=$(side==="B"?"sb":"sr");
+  row.innerHTML=`<span class="sd">${side==="B"?"T1":"GEN"}</span>`+[0,1,2,3,4].map(i=>{const p=S.picks[side][i];const active=!p&&cs===side&&ct==="pick"&&i===pickIdx;return `<span class="p ${active?"active":""}">${p?glyph(BY[p.id]):""}</span>`}).join("")+'<span></span>'+[0,1,2].map(i=>{const id=S.bans[side][i];return `<span class="b">${id?glyph(BY[id]):""}</span>`}).join("");
+}
+function renderTurn(){
+  const t=cur();const el=$("turn");
+  const seq=ORDER.map(([s,k],i)=>`<i class="${s==="B"?"b":"r"} ${k==="ban"?"ban":""} ${i<S.step?"done":""} ${i===S.step?"now":""}" title="${s==="B"?"T1":"GEN"} ${k}"></i>`).join("");
+  if(!t){el.className="turn";el.style.setProperty("--c","var(--win)");el.innerHTML=`<div><h1>Draft complete</h1><p>Both comps are locked. Take them onto the Rift.</p></div><a class="btn btn-primary" href="match.html" style="margin-left:auto">Start game 1</a>`;return}
+  const [s,k]=t;const you=s==="B";const n=ORDER.slice(0,S.step+1).filter(x=>x[1]===k&&x[0]===s).length;
+  el.className="turn "+(you?"blue":"red");
+  el.innerHTML=you?`<div><h1>Your ${k} · ${k==="pick"?"Pick":"Ban"} ${n} of 5</h1><p>${k==="pick"?"Open roles: "+openRole("B").join(" · ")+". GEN have "+S.picks.R.map(p=>BY[p.id].name).join(" + ")+".":"Remove a threat from the pool."}</p></div><div class="seq" aria-hidden="true">${seq}</div>`
+    :`<div><h1>GEN ${k==="pick"?"picking":"banning"}</h1><p class="waiting"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>Their coach is deciding.</p></div><div class="seq" aria-hidden="true">${seq}</div>`;
+}
+function renderPool(){
+  const u=used();const t=cur();const yours=t&&t[0]==="B";
+  const list=CH.filter(c=>(S.role==="ALL"||c.roles.includes(S.role))&&c.name.toLowerCase().includes(S.q));
+  $("pool").innerHTML=list.length?list.map(c=>{const dis=u.has(c.id);const st=S.bans.B.includes(c.id)||S.bans.R.includes(c.id)?"Banned":dis?"Picked":"";
+    return `<button class="tile" data-id="${c.id}" aria-pressed="${S.sel===c.id}" ${dis||!yours?"disabled":""}>${glyph(c,'aria-hidden="true"')}<span class="tag" aria-hidden="true">${c.phase}</span><span class="rr" aria-hidden="true"><svg><use href="#role-${c.roles[0]}"/></svg></span>${st?`<span class="st" aria-hidden="true">${st}</span>`:""}<span class="nm">${c.name}</span><span class="sr-only">, ${c.roles.join(" and ")}, ${c.phase} game${st?", "+st:""}</span></button>`}).join("")
+    :`<p class="empty" style="grid-column:1/-1">No champion matches “${S.q}”. Clear the search or pick another role.</p>`;
+}
+function fit(c){const mine=S.picks.B.map(p=>BY[p.id]);const counts={};mine.forEach(m=>m.styles.forEach(s=>counts[s]=(counts[s]||0)+1));const add=c.styles.filter(s=>!counts[s]);return add.length?`Adds ${add.join(" + ")} to your comp.`:`Doubles down on ${c.styles[0]}.`}
+function renderDetail(){
+  const t=cur();const el=$("detail");
+  if(!t||t[0]!=="B"){el.hidden=true;return}el.hidden=false;
+  const c=S.sel&&BY[S.sel];
+  if(!c){el.innerHTML=`<span class="glyph" style="--h:220;filter:grayscale(1);opacity:.4"><span>?</span></span><div><h2>Select a champion</h2><p class="fit">Tap a tile to see its fit, then lock it in.</p></div><div class="acts"><button class="btn btn-primary" disabled>${t[1]==="pick"?"Lock in":"Ban"}</button></div>`;return}
+  const roles=t[1]==="pick"?c.roles.filter(r=>openRole("B").includes(r)):[];const role=roles[0]||openRole("B")[0];
+  el.innerHTML=`${glyph(c)}<div><h2>${c.name}</h2><div class="meta">${c.roles.map(r=>`<span class="chip"><svg aria-hidden="true"><use href="#role-${r}"/></svg>${r}</span>`).join("")}<span class="chip">${c.phase} game</span>${c.styles.map(s=>`<span class="chip">${s}</span>`).join("")}</div>${t[1]==="pick"?`<p class="fit">${fit(c)} Goes to <b>${PLAYERS.B[role]}</b> (${role}).</p>`:""}</div>
+  <div class="acts">${t[1]==="pick"&&openRole("B").length>1?`<label class="sr-only" for="rp">Role</label><select class="select rolepick" id="rp">${openRole("B").map(r=>`<option ${r===role?"selected":""}>${r}</option>`).join("")}</select>`:""}<button class="btn btn-primary" id="lock">${t[1]==="pick"?"Lock in "+c.name:"Ban "+c.name}</button></div>`;
+  $("lock").onclick=()=>{const r=$("rp")?.value||role;commit("B",t[1],c.id,r)};
+}
+function commit(side,kind,id,role){
+  if(kind==="ban")S.bans[side].push(id);else S.picks[side].push({id,role});
+  S.just=id;S.sel=null;S.step++;render();
+  if(cur()&&cur()[0]==="R")setTimeout(ai,document.documentElement.dataset.fast?50:900);
+}
+function ai(){const t=cur();if(!t||t[0]!=="R")return;const u=used();
+  if(t[1]==="ban"){const c=CH.find(c=>!u.has(c.id)&&c.phase==="late");commit("R","ban",c.id)}
+  else{const r=openRole("R")[0];const c=CH.find(c=>!u.has(c.id)&&c.roles[0]===r)||CH.find(c=>!u.has(c.id));commit("R","pick",c.id,r)}}
+function render(){renderSide("B");renderSide("R");renderTurn();renderPool();renderDetail()}
+$("pool").addEventListener("click",e=>{const b=e.target.closest(".tile");if(!b||b.disabled)return;S.sel=b.dataset.id;S.just=null;renderPool();renderDetail();document.querySelector(`.tile[data-id="${S.sel}"]`)?.focus()});
+$("roles").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;S.role=b.dataset.r;[...$("roles").children].forEach(x=>x.setAttribute("aria-pressed",x===b));renderPool()});
+$("q").addEventListener("input",e=>{S.q=e.target.value.toLowerCase().trim();renderPool()});
+$("auto").onclick=()=>{document.documentElement.dataset.fast=1;const loop=()=>{const t=cur();if(!t)return;if(t[0]==="R"){ai()}else{const u=used();const r=openRole("B")[0];const c=t[1]==="ban"?CH.find(c=>!u.has(c.id)):(CH.find(c=>!u.has(c.id)&&c.roles[0]===r));commit("B",t[1],c.id,r)}setTimeout(loop,60)};loop()};
+// Preselect Orianna so the detail sheet is shown in the static capture
+S.sel="orianna";render();
+</script>
+</body></html>
