@@ -3,7 +3,7 @@
 .match-experience > .card { margin: 0; }
 .match-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .match-heading h1 { font-size: clamp(25px, 4vw, 42px); margin: 9px 0; }
-.match-series-score { color: var(--muted); font-size: .75em; margin: 0 12px; }
+.match-series-score { color: var(--text-2); font-size: .75em; margin: 0 12px; }
 .match-badges { display: flex; gap: 7px; flex-wrap: wrap; }
 .match-badges span { border: 1px solid #3c555c; background: #132f35; color: #a5e3e5; padding: 6px 10px; border-radius: 30px; font-size: 11px; }
 .match-options { border: 0; padding: 0; margin: 15px 0 28px; min-width: 0; }
@@ -25,7 +25,7 @@
 .match-starting-five > div { padding: 0 15px; border-left: 2px solid #66dbff; }
 .match-starting-five > div + div { border-color: #ff8a87; }
 .match-starting-five p { display: flex; gap: 15px; margin: 8px 0; font-size: 13px; }
-.match-starting-five p span { width: 35px; font-size: 10px; color: var(--muted); padding-top: 2px; }
+.match-starting-five p span { width: 35px; font-size: 10px; color: var(--text-2); padding-top: 2px; }
 .match-notice { color: #ddcaa0; line-height: 1.7; border-color: #4a4130; }
 .match-intermission { text-align: center; padding: 28px; }
 .match-intermission details { text-align: left; margin-top: 22px; }

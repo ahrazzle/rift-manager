@@ -127,6 +127,7 @@ export default function App() {
   if (!state.teamId && !isSeasonReplay) {
     return (
       <div className="app">
+        <a className="skip" href="#main-content">Skip to main content</a>
         <header className="topbar">
           <div className="brand">
             <span className="logo">RIFT</span> Manager
@@ -138,18 +139,20 @@ export default function App() {
         </header>
 
         <SaveError error={storageError} retrySave={retrySave} />
-        <NewGame state={state} dispatch={dispatch} />
+        <main id="main-content" className="content">
+          <NewGame state={state} dispatch={dispatch} />
 
-        <div className="card guide-cta">
-          <h3>New to Rift Manager?</h3>
-          <p className="tag">
-            A quick read of the How to Play guide saves you a lost week. It walks
-            through the season loop, tactics, and how to read a match.
-          </p>
-          <button className="primary" onClick={() => setGuideOpen(true)}>
-            Read the How to Play guide →
-          </button>
-        </div>
+          <div className="card guide-cta">
+            <h2>New to Rift Manager?</h2>
+            <p className="tag">
+              A quick read of the How to Play guide saves you a lost week. It walks
+              through the season loop, tactics, and how to read a match.
+            </p>
+            <button className="primary" onClick={() => setGuideOpen(true)}>
+              Read the How to Play guide →
+            </button>
+          </div>
+        </main>
 
         <SiteFooter />
         {guideOpen && <Guide onClose={() => setGuideOpen(false)} />}
@@ -206,6 +209,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <a className="skip" href="#main-content">Skip to main content</a>
       <header className="topbar">
         <div className="brand">
           <span className="logo">RIFT</span> Manager
@@ -221,7 +225,7 @@ export default function App() {
           ) : (
             <>
               <strong>{state.managerName}</strong> · managing{' '}
-              <span style={{ color: '#e2012d' }}>{state.teamId}</span>
+              <span style={{ color: 'var(--team)' }}>{state.teamId}</span>
               {state.league ? <> · {state.league}</> : null}
               {isCampaign ? (
                 <> · Scenario Mode</>
@@ -233,7 +237,9 @@ export default function App() {
             </>
           )}
         </div>
+        <label className="sr-only" htmlFor="sim-speed-select">Simulation speed</label>
         <select
+          id="sim-speed-select"
           className="year-select"
           value={state.simSpeed ?? 'normal'}
           onChange={(e) => dispatch({ type: 'SET_SIM_SPEED', speed: e.target.value })}
@@ -281,7 +287,7 @@ export default function App() {
         ))}
       </nav>
 
-      <main className="content">
+      <main id="main-content" className="content">
         {state.matchSession ? <MatchExperience state={state} dispatch={dispatch} /> : isRetired ? (
           <CareerEpitaph state={state} dispatch={dispatch} />
         ) : (

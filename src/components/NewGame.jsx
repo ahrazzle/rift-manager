@@ -140,9 +140,10 @@ export default function NewGame({ state, dispatch }) {
 
         {isSeasonLike ? (
           <>
-            <div className="field">
+            <label className="field" htmlFor="season-year-select">
               <span>Season year</span>
               <select
+                id="season-year-select"
                 className="year-select"
                 value={seasonYear}
                 onChange={(e) => pickYear(e.target.value)}
@@ -156,7 +157,7 @@ export default function NewGame({ state, dispatch }) {
               <p className="hint">
                 Rosters evoke that year's {league}. Ratings are game-balanced fictional values.
               </p>
-            </div>
+            </label>
 
             <div className="field">
               <span>Choose your team</span>
@@ -186,9 +187,10 @@ export default function NewGame({ state, dispatch }) {
           </>
         ) : mode === 'career' ? (
           <>
-            <div className="field">
+            <label className="field" htmlFor="career-year-select">
               <span>Starting year</span>
               <select
+                id="career-year-select"
                 className="year-select"
                 value={careerYear}
                 onChange={(e) => pickCareerYear(e.target.value)}
@@ -202,7 +204,7 @@ export default function NewGame({ state, dispatch }) {
               <p className="hint">
                 Start with that year’s {league} roster, then build your own timeline. Ratings are fictional; league and tournament formats are simplified.
               </p>
-            </div>
+            </label>
 
             <div className="field">
               <span>Choose your team ({league} {(SEASONS[careerYear] ?? SEASONS.present).label} — 10 seasons, one club)</span>
