@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Abstract three-lane map">
+  <!-- Original abstract three-lane diagram (generic MOBA topology). Not traced from any game map. -->
+  <rect width="400" height="400" rx="18" fill="#0F1620"/>
+  <path d="M0 400L400 0" stroke="#1C2734" stroke-width="70"/>
+  <g fill="none" stroke="#2C3A4C" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M58 342V58h284"/><path d="M58 342h284V58"/><path d="M70 330L330 70"/>
+  </g>
+  <g fill="none" stroke="#3A4A5F" stroke-width="2" stroke-dasharray="4 6"><path d="M58 342V58h284"/><path d="M58 342h284V58"/><path d="M70 330L330 70"/></g>
+  <circle cx="200" cy="200" r="20" fill="none" stroke="#2C3A4C" stroke-width="2"/>
+  <rect x="26" y="310" width="64" height="64" rx="12" fill="#183052" stroke="#5B9BFF" stroke-width="2"/>
+  <rect x="310" y="26" width="64" height="64" rx="12" fill="#4A1E24" stroke="#FF6B6B" stroke-width="2"/>
+</svg>

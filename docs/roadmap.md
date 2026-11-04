@@ -40,3 +40,6 @@
 - AI offseason roster churn (in current batch).
 - Champion mastery/comfort (see itero note above).
 - Scrim/prep week feeding match bonuses (shipped).
+
+## UI/UX overhaul (design proposal, 2026-11-03)
+- **Broadcast Night** direction approved after design-agent review; proposal, spec, prototypes, and assets live in `docs/design/broadcast-night/` (implementation not started — see `SPEC.md` migration phases).

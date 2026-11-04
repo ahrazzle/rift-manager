@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <!-- Original role glyphs for Rift Manager. Simple geometric marks, not derived from any game art. -->
+  <symbol id="role-TOP" viewBox="0 0 24 24"><path d="M4 4h16v4H8v12H4z" fill="currentColor"/><rect x="11" y="11" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="role-JNG" viewBox="0 0 24 24"><path d="M12 3l3 6-3 3-3-3zM5 13l5 1 2 7-5-3zM19 13l-5 1-2 7 5-3z" fill="currentColor"/></symbol>
+  <symbol id="role-MID" viewBox="0 0 24 24"><path d="M4 20L20 4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M4 4h6v2.5H6.5V10H4zM20 20h-6v-2.5h3.5V14H20z" fill="currentColor"/></symbol>
+  <symbol id="role-BOT" viewBox="0 0 24 24"><path d="M20 20H4v-4h12V4h4z" fill="currentColor"/><rect x="4" y="4" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="role-SUP" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+</svg>
