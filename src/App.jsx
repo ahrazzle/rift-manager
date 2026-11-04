@@ -225,7 +225,7 @@ export default function App() {
           ) : (
             <>
               <strong>{state.managerName}</strong> · managing{' '}
-              <span style={{ color: 'var(--team)' }}>{state.teamId}</span>
+              <span>{state.teamId}</span>
               {state.league ? <> · {state.league}</> : null}
               {isCampaign ? (
                 <> · Scenario Mode</>

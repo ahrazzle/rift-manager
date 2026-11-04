@@ -509,6 +509,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
   const probPct = Math.round((preview?.p ?? 0) * 100)
   return (
     <div className="stack">
+      <h1 className="sr-only">Dashboard</h1>
       <PhaseBanner phase={state.phase} />
       <div
         className="card matchup-card"
@@ -553,7 +554,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
           {riv && riv.played > 0 && (
             <span className="tale-chip">⚔️ H2H <b>{riv.myW}–{riv.oppW}</b> this season</span>
           )}
-          {probPct >= 65 && <span className="tale-chip edge">📈 Heavy favourite</span>}
+          {probPct >= 65 && <span className="tale-chip">📈 Heavy favourite</span>}
           {probPct < 40 && <span className="tale-chip risk">🎲 Underdog — steal one</span>}
           {state.seriesOptions?.fearless && <span className="tale-chip hot">🙈 Fearless draft ON</span>}
         </div>

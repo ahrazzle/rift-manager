@@ -45,11 +45,16 @@ async function startSeason(page) {
   })
   await page.getByRole('button', { name: /Start Season/i }).click()
   await page.getByRole('button', { name: /^Dashboard$/i }).waitFor({ timeout: 15000 })
+  await dismissOverlays(page)
+}
+
+async function hubDashboard(page) {
+  await startSeason(page)
 }
 
 const screens = [
   { name: 'new-game', path: './', setup: null },
-  { name: 'hub-dashboard', path: './', setup: startSeason },
+  { name: 'hub-dashboard', path: './', setup: hubDashboard },
   {
     name: 'standings',
     path: './',
@@ -83,7 +88,7 @@ const screens = [
 ]
 
 const axePages = [
-  { name: 'hub', setup: startSeason },
+  { name: 'hub', setup: hubDashboard },
   { name: 'new-game', setup: null },
   {
     name: 'standings',
@@ -119,8 +124,10 @@ async function main() {
           console.warn(`Setup failed for ${screen.name} @${width}:`, e.message)
         }
       }
-      const shot = path.join(outDir, `${screen.name}-${width}.png`)
-      await page.screenshot({ path: shot, fullPage: true })
+      const shotViewport = path.join(outDir, `${screen.name}-${width}.png`)
+      const shotFull = path.join(outDir, `${screen.name}-${width}-full.png`)
+      await page.screenshot({ path: shotViewport, fullPage: false })
+      await page.screenshot({ path: shotFull, fullPage: true })
       const sw = await page.evaluate(() => document.documentElement.scrollWidth)
       scrollChecks.push({ screen: screen.name, width, scrollWidth: sw, ok: sw === width })
       await context.close()
