@@ -108,8 +108,8 @@ code { background: #0b0e13; padding: 1px 5px; border-radius: 4px; color: #c9d1d9
   background: var(--s1); border-bottom: 1px solid var(--line);
 }
 .manager-strip strong { color: var(--text); }
-.manager-strip .ok { color: var(--win); }
-.manager-strip .warn { color: var(--warn); }
+.manager-strip .board-trust { color: var(--text); }
+.manager-strip .board-trust-warn { color: var(--warn); }
 .manager-strip .bad { color: var(--loss); font-weight: 700; }
 .top-progress span {
   display: block; height: 100%;

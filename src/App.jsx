@@ -268,7 +268,8 @@ export default function App() {
         {!isCampaign && !isSeasonReplay && state.board && (
           <div className="manager-strip">
             <span>🎯 <strong>{state.board.expectation}</strong></span>
-            <span className={state.board.confidence >= 70 ? 'ok' : state.board.confidence >= 40 ? 'warn' : 'bad'}>
+            {/* Warn below 40 matches BoardCard pressure band; sack at ≤0 in useGameState ADVANCE_SEASON */}
+            <span className={state.board.confidence < 40 ? 'board-trust-warn' : 'board-trust'}>
               Board {state.board.confidence}
             </span>
             {state.finance && <span>💰 {fmtMoney(state.finance.budget)}</span>}

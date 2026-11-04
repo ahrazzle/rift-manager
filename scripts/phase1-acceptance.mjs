@@ -52,9 +52,16 @@ async function hubDashboard(page) {
   await startSeason(page)
 }
 
+async function coachesOffice(page) {
+  await startSeason(page)
+  await page.locator('#weekly-preparation').scrollIntoViewIfNeeded()
+  await page.waitForTimeout(400)
+}
+
 const screens = [
   { name: 'new-game', path: './', setup: null },
   { name: 'hub-dashboard', path: './', setup: hubDashboard },
+  { name: 'coaches-office', path: './', setup: coachesOffice },
   {
     name: 'standings',
     path: './',
@@ -98,6 +105,7 @@ const axePages = [
       await page.getByRole('button', { name: /^Standings$/i }).click()
     },
   },
+  { name: 'coaches-office', setup: coachesOffice },
 ]
 
 async function main() {
@@ -126,6 +134,8 @@ async function main() {
       }
       const shotViewport = path.join(outDir, `${screen.name}-${width}.png`)
       const shotFull = path.join(outDir, `${screen.name}-${width}-full.png`)
+      await page.evaluate(() => window.scrollTo(0, 0))
+      await page.waitForTimeout(150)
       await page.screenshot({ path: shotViewport, fullPage: false })
       await page.screenshot({ path: shotFull, fullPage: true })
       const sw = await page.evaluate(() => document.documentElement.scrollWidth)
@@ -169,9 +179,9 @@ async function main() {
     const lh = spawnSync(
       process.execPath,
       [
-        path.join(root, 'scripts/run-lighthouse-mobile.mjs'),
+        path.join(root, 'scripts/run-lighthouse-hub.mjs'),
         '--out',
-        path.join(outDir, 'lighthouse-mobile.json'),
+        path.join(outDir, 'lighthouse-mobile-hub.json'),
       ],
       { encoding: 'utf8', env: { ...process.env, PREVIEW_URL: baseUrl } },
     )
