@@ -15,7 +15,7 @@ export default function ConfirmDialog({ title, children, confirmLabel, onConfirm
   }, [])
   return (
     <dialog ref={ref} className="card" aria-labelledby={titleId} aria-describedby={descriptionId}
-      style={{ width: 'min(460px, calc(100vw - 32px))', color: 'var(--text)', background: 'var(--bg1)' }}
+      style={{ width: 'min(460px, calc(100vw - 32px))', color: 'var(--text)', background: 'var(--s1)' }}
       onCancel={(event) => { event.preventDefault(); onCancel() }}>
       <h2 id={titleId}>{title}</h2>
       <p id={descriptionId}>{children}</p>

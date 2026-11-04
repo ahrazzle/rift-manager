@@ -20,8 +20,13 @@ export default function Standings({ state }) {
   return (
     <div className="card" ref={shotRef}>
       <span className="eyebrow">📊 League table{state.league ? ` · ${state.league}` : ''}</span>
-      <h2 style={{ marginTop: 4 }}>Standings</h2>
+      <h1 style={{ marginTop: 4, fontSize: '21px' }}>Standings</h1>
       <table className="table">
+        <caption className="standings-caption">
+          {regional
+            ? 'Playoff cut line after 4th place. Top 2 qualify for MSI and Worlds; top 4 enter the playoff bracket.'
+            : 'Current league standings.'}
+        </caption>
         <thead>
           <tr>
             <th>#</th>
@@ -35,8 +40,11 @@ export default function Standings({ state }) {
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={r.teamId} className={r.teamId === me ? 'me' : ''}>
-              <td className={regional && i < 2 ? 'pos-q' : regional && i < 4 ? 'pos-po' : ''}>{i + 1}</td>
+            <tr
+              key={r.teamId}
+              className={[r.teamId === me ? 'me' : '', regional && i === 3 ? 'cut' : ''].filter(Boolean).join(' ')}
+            >
+              <td>{i + 1}</td>
               <td className="tname">{nameOf(state, r.teamId)}</td>
               <td>{r.W}</td>
               <td>{r.L}</td>
@@ -49,8 +57,7 @@ export default function Standings({ state }) {
       </table>
       {regional && (
         <p className="hint">
-          <span className="pos-q">Top 2</span> → MSI + Worlds &nbsp;·&nbsp;{' '}
-          <span className="pos-po">Top 4</span> → playoffs
+          Top 2 → MSI + Worlds &nbsp;·&nbsp; Top 4 → playoffs (cut shown after 4th in the table)
         </p>
       )}
       <p className="hint">W = series wins, GW/GL = individual game wins/losses, Pts = series wins.</p>

@@ -67,7 +67,7 @@ export default function Gauntlet({ state, dispatch }) {
       <span className="eyebrow">⚔️ Gauntlet: Round {g.round + 1}</span>
       <div className="matchup" style={{ margin: '14px 0 8px' }}>
         <div className="side">
-          <div className="team-tag" style={{ background: 'var(--accent)' }}>YOU</div>
+          <div className="team-tag" style={{ background: 'var(--team)' }}>YOU</div>
           <div className="side-sub">Win or go home</div>
         </div>
         <div className="vs">

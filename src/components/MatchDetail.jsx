@@ -22,11 +22,11 @@ const ROLE_ORDER = ['TOP', 'JNG', 'MID', 'BOT', 'SUP']
 
 const EVENT_META = {
   tower: { icon: '■', color: '#eab308', label: 'Tower' },
-  dragon: { icon: '◆', color: 'var(--good)', label: 'Dragon' },
+  dragon: { icon: '◆', color: 'var(--win)', label: 'Dragon' },
   baron: { icon: '▲', color: '#a855f7', label: 'Baron' },
-  teamfight: { icon: '✖', color: 'var(--accent)', label: 'Teamfight' },
+  teamfight: { icon: '✖', color: 'var(--red)', label: 'Teamfight' },
   ace: { icon: '★', color: '#fff', label: 'Ace' },
-  kill: { icon: '●', color: 'var(--muted)', label: 'Kill' },
+  kill: { icon: '●', color: 'var(--text-2)', label: 'Kill' },
 }
 
 // Re-run the stored series inputs to recover the identical games[].
@@ -240,10 +240,10 @@ function GoldGraph({ timeline, events, durationMin, youAreA }) {
           </clipPath>
         </defs>
         <line x1={PL} y1={zeroY} x2={W - PR} y2={zeroY} stroke="#3a4150" strokeWidth={1} strokeDasharray="5 4" />
-        <path d={areaTop} fill="var(--good)" opacity={0.18} clipPath={`url(#${clipId}-a)`} />
-        <path d={areaTop} fill="var(--bad)" opacity={0.18} clipPath={`url(#${clipId}-b)`} />
-        <path d={line} fill="none" stroke="var(--good)" strokeWidth={2} clipPath={`url(#${clipId}-a)`} />
-        <path d={line} fill="none" stroke="var(--bad)" strokeWidth={2} clipPath={`url(#${clipId}-b)`} />
+        <path d={areaTop} fill="var(--win)" opacity={0.18} clipPath={`url(#${clipId}-a)`} />
+        <path d={areaTop} fill="var(--loss)" opacity={0.18} clipPath={`url(#${clipId}-b)`} />
+        <path d={line} fill="none" stroke="var(--win)" strokeWidth={2} clipPath={`url(#${clipId}-a)`} />
+        <path d={line} fill="none" stroke="var(--loss)" strokeWidth={2} clipPath={`url(#${clipId}-b)`} />
         <text x={PL - 5} y={PT + 10} textAnchor="end" className="md-axis">+{yLab}</text>
         <text x={PL - 5} y={zeroY + 4} textAnchor="end" className="md-axis">0</text>
         <text x={PL - 5} y={PT + ph - 2} textAnchor="end" className="md-axis">−{yLab}</text>
@@ -277,9 +277,9 @@ function GoldGraph({ timeline, events, durationMin, youAreA }) {
 
 // --- PlayerPerformance --------------------------------------------------------
 function ratingClass(r) {
-  if (r >= 8) return 'var(--good)'
+  if (r >= 8) return 'var(--win)'
   if (r >= 6) return 'var(--warn)'
-  return 'var(--muted)'
+  return 'var(--text-2)'
 }
 
 function PlayerCell({ p }) {
@@ -378,7 +378,7 @@ function EventList({ events, youAreA }) {
           const who = e.side === (youAreA ? 'A' : 'B') ? 'You' : 'Opp'
           return (
             <li key={i}>
-              <span className="md-evicon" style={{ color: meta.color === 'var(--good)' || meta.color === 'var(--accent)' || meta.color === 'var(--muted)' ? meta.color : meta.color }}>
+              <span className="md-evicon" style={{ color: meta.color === 'var(--win)' || meta.color === 'var(--red)' || meta.color === 'var(--text-2)' ? meta.color : meta.color }}>
                 {e.t}&prime; {meta.icon} {meta.label}
               </span>{' '}
               — {who} — {e.note}

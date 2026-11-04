@@ -159,7 +159,7 @@ export default function Draft({ draft, userSide, onBan, onPick, disabled, gameLa
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 background: i < draft.step ? '#1a2230' : i === draft.step ? SIDE_COLOR[s.side] : '#0b0e13',
                 color: i <= draft.step ? '#fff' : '#5b6474',
-                border: '1px solid var(--line-soft)',
+                border: '1px solid var(--line)',
               }}
             >
               {s.type[0].toUpperCase()}
@@ -203,7 +203,7 @@ export default function Draft({ draft, userSide, onBan, onPick, disabled, gameLa
             {debrief.map((e, i) => (
               <div key={i} className="tac" style={{ cursor: 'default' }}>
                 <span className="tac-name">
-                  {e.yourPick.name} <span style={{ color: 'var(--muted)', fontWeight: 400 }}>({e.yourPick.role})</span>
+                  {e.yourPick.name} <span style={{ color: 'var(--text-2)', fontWeight: 400 }}>({e.yourPick.role})</span>
                 </span>
                 {e.delta > 0 && e.optimalPick ? (
                   <span className="tac-blurb">

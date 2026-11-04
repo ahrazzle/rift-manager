@@ -22,7 +22,7 @@ export default function BoardCard({ state }) {
   const confidence = Math.max(0, Math.min(100, board.confidence ?? 50))
   const verdict = verdictFor(confidence)
   const barColor =
-    confidence >= 70 ? 'var(--good)' : confidence >= 40 ? 'var(--warn)' : 'var(--bad)'
+    confidence >= 70 ? 'var(--win)' : confidence >= 40 ? 'var(--warn)' : 'var(--loss)'
 
   return (
     <div className="card">
