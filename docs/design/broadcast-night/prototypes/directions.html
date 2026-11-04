@@ -1,0 +1,220 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Visual directions · Rift Manager</title><meta name="description" content="Rift Manager UI prototype: Visual directions · Rift Manager"><meta name="theme-color" content="#0B0F15"><link rel="icon" href="data:,"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap"><style>/* ===== Rift Manager · "Broadcast Night" design system (prototype) ===== */
+:root{
+  /* color: surfaces */
+  --bg:#0B0F15; --s1:#121822; --s2:#18202C; --s3:#1F2936;
+  --line:#263040;            /* decorative dividers only */
+  --line-strong:#6B788B;     /* control borders, >=3:1 on s1/s2 */
+  /* color: text */
+  --text:#F2F5F8; --text-2:#B4BDC9; --text-3:#8E9AA8;
+  /* color: meaning (each has ONE job) */
+  --primary:#F2F5F8; --on-primary:#0B0F15;          /* the one action per view */
+  --blue:#5B9BFF; --blue-bg:#14243D;                /* blue side (draft/match only) */
+  --red:#FF6B6B;  --red-bg:#3A181C;                 /* red side (draft/match only) */
+  --win:#3DDC84;  --win-bg:#11301F;                 /* outcomes only */
+  --loss:#FF8577; --loss-bg:#3A1A17;
+  --warn:#FFC857;
+  --gold:#F2C14E; --gold-2:#FFE3A1; --gold-bg:#2E2512; /* reward/trophy only */
+  --focus:#7CC4FF;
+  --team:#e2012d;                                    /* user's team color: crests & thin accents only, never text */
+  /* type */
+  --font-display:"Barlow Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
+  --font-ui:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --fs-12:.75rem; --fs-14:.875rem; --fs-16:1rem; --fs-18:1.125rem; --fs-20:1.25rem; --fs-24:1.5rem; --fs-32:2rem; --fs-40:2.5rem; --fs-56:3.5rem; --fs-72:4.5rem;
+  /* space (4pt) */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px; --sp-12:48px; --sp-16:64px;
+  /* radius */
+  --r-sm:6px; --r-md:10px; --r-lg:16px; --r-pill:999px;
+  /* elevation */
+  --e1:0 1px 0 rgba(255,255,255,.04) inset, 0 1px 2px rgba(0,0,0,.4);
+  --e2:0 1px 0 rgba(255,255,255,.05) inset, 0 8px 24px rgba(0,0,0,.45);
+  --e3:0 1px 0 rgba(255,255,255,.06) inset, 0 24px 64px rgba(0,0,0,.6);
+  /* motion */
+  --d-instant:80ms; --d-fast:140ms; --d-base:220ms; --d-slow:360ms; --d-reward:1100ms;
+  --ease-out:cubic-bezier(.2,.8,.2,1); --ease-in-out:cubic-bezier(.65,0,.35,1); --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --rail:232px; --topbar:64px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:400 var(--fs-16)/1.5 var(--font-ui);font-feature-settings:"tnum" 1,"cv11" 1;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;line-height:1.15}
+p{margin:0}
+a{color:var(--focus)}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:var(--r-sm)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:8px;top:-60px;background:var(--primary);color:var(--on-primary);padding:8px 12px;border-radius:var(--r-sm);z-index:99}
+.skip:focus{top:8px}
+.display{font-family:var(--font-display);font-weight:700;letter-spacing:.01em;text-transform:uppercase}
+.label{font-size:var(--fs-12);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2)}
+.muted{color:var(--text-2)} .faint{color:var(--text-3)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- App shell ---------- */
+.shell{display:grid;grid-template-columns:var(--rail) 1fr;min-height:100vh}
+.rail{position:sticky;top:0;height:100vh;padding:var(--sp-5) var(--sp-4);border-right:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column;gap:var(--sp-6)}
+.brand{display:flex;align-items:center;gap:var(--sp-2);font-family:var(--font-display);font-weight:700;font-size:var(--fs-24);letter-spacing:.04em;text-transform:uppercase}
+.brand-mark{width:28px;height:28px;border-radius:7px;background:conic-gradient(from 210deg,var(--blue),#9b8cff,var(--red),var(--blue));display:grid;place-items:center}
+.brand-mark::after{content:"";width:12px;height:12px;border-radius:3px;background:var(--bg);transform:rotate(45deg)}
+.club{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3);border-radius:var(--r-md);background:var(--s1);border:1px solid var(--line)}
+.club img{width:36px;height:36px}
+.club b{display:block;font-size:var(--fs-14)} .club span{font-size:var(--fs-12);color:var(--text-2)}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:var(--sp-3);padding:10px var(--sp-3);border-radius:var(--r-md);color:var(--text-2);text-decoration:none;font-weight:500;font-size:var(--fs-14);min-height:44px}
+.nav a:hover{background:var(--s1);color:var(--text)}
+.nav a[aria-current="page"]{background:var(--s2);color:var(--text);box-shadow:inset 3px 0 0 var(--team)}
+.nav svg{width:20px;height:20px;flex:none}
+.rail-foot{margin-top:auto;display:flex;flex-direction:column;gap:var(--sp-2)}
+.main{min-width:0}
+.topbar{position:sticky;top:0;z-index:20;height:var(--topbar);display:flex;align-items:center;gap:var(--sp-4);padding:0 var(--sp-8);background:rgba(11,15,21,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar .ctx{display:flex;align-items:center;gap:var(--sp-3);min-width:0}
+.topbar .ctx b{font-size:var(--fs-16)} .topbar .ctx span{color:var(--text-2);font-size:var(--fs-14);white-space:nowrap}
+.topbar .spacer{flex:1}
+.mob-only{display:none}
+.content{padding:var(--sp-8);max-width:1360px;margin:0 auto}
+
+/* ---------- Progress track (season phase; not tabs) ---------- */
+.track{display:flex;align-items:center;gap:0;list-style:none;margin:0;padding:0}
+.track li{display:flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-12);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+.track li+li::before{content:"";width:28px;height:2px;background:var(--line);margin:0 var(--sp-2)}
+.track .dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--text-3)}
+.track .done{color:var(--text-2)} .track .done .dot{background:var(--text-2);border-color:var(--text-2)}
+.track .now{color:var(--text)} .track .now .dot{border-color:var(--text);box-shadow:0 0 0 3px rgba(242,245,248,.15)}
+
+/* ---------- Surfaces ---------- */
+.card{background:var(--s1);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--e1);padding:var(--sp-6)}
+.card-h{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-4)}
+.card-h h2{font-size:var(--fs-18);font-weight:600}
+.grid{display:grid;gap:var(--sp-6)}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);min-height:44px;padding:0 var(--sp-5);border-radius:var(--r-md);border:1px solid var(--line-strong);background:transparent;color:var(--text);font-weight:600;font-size:var(--fs-14);cursor:pointer;text-decoration:none;transition:background var(--d-fast) var(--ease-out),transform var(--d-fast) var(--ease-out),border-color var(--d-fast)}
+.btn:hover{background:var(--s2)}
+.btn:active{transform:translateY(1px)}
+.btn svg{width:18px;height:18px}
+.btn-primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.btn-primary:hover{background:#fff}
+.btn-lg{min-height:56px;padding:0 var(--sp-8);font-size:var(--fs-16);border-radius:12px}
+.btn-quiet{border-color:transparent;color:var(--text-2)} .btn-quiet:hover{color:var(--text)}
+.btn[disabled],.btn[aria-disabled="true"]{opacity:1;color:var(--text-3);border-color:var(--line);background:transparent;cursor:not-allowed}
+.icon-btn{width:44px;height:44px;padding:0;border-radius:var(--r-md)}
+
+/* ---------- Chips / badges ---------- */
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:var(--r-pill);background:var(--s2);border:1px solid var(--line);font-size:var(--fs-12);font-weight:600;color:var(--text-2);white-space:nowrap}
+.chip svg{width:14px;height:14px}
+.chip-win{background:var(--win-bg);color:var(--win);border-color:transparent}
+.chip-loss{background:var(--loss-bg);color:var(--loss);border-color:transparent}
+.chip-gold{background:var(--gold-bg);color:var(--gold);border-color:transparent}
+.chip-blue{background:var(--blue-bg);color:var(--blue);border-color:transparent}
+.chip-red{background:var(--red-bg);color:var(--red);border-color:transparent}
+.pips{display:inline-flex;gap:4px}
+.pip{width:22px;height:22px;border-radius:5px;display:grid;place-items:center;font-size:11px;font-weight:700}
+.pip.w{background:var(--win-bg);color:var(--win)} .pip.l{background:var(--loss-bg);color:var(--loss)} .pip.n{border:1px dashed var(--line-strong);color:var(--text-3)}
+
+/* ---------- Crest / champion glyph / role ---------- */
+.crest{width:var(--cs,48px);height:var(--cs,48px);flex:none}
+.role{width:16px;height:16px;color:var(--text-2);flex:none}
+.glyph{--h:200;position:relative;display:grid;place-items:center;aspect-ratio:1;border-radius:var(--r-md);background:linear-gradient(145deg,hsl(var(--h) 45% 26%),hsl(calc(var(--h) + 40) 40% 14%));color:#fff;font-family:var(--font-display);font-weight:700;font-size:var(--gfs,22px);letter-spacing:.02em;overflow:hidden}
+.glyph::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 25%,hsl(var(--h) 80% 70% / .35),transparent 55%)}
+.glyph::after{content:"";position:absolute;inset:auto -20% -40% auto;width:70%;height:70%;border:2px solid hsl(var(--h) 70% 70% / .25);border-radius:50%}
+.glyph span{position:relative;z-index:1;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+
+/* ---------- Meter ---------- */
+.meter{height:8px;border-radius:var(--r-pill);background:var(--s3);overflow:hidden}
+.meter > i{display:block;height:100%;border-radius:inherit;background:var(--text-2)}
+
+/* ---------- Table ---------- */
+.table{width:100%;border-collapse:collapse;font-size:var(--fs-14)}
+.table th{font-size:var(--fs-12);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);text-align:right;padding:var(--sp-2) var(--sp-3);border-bottom:1px solid var(--line)}
+.table td{padding:0 var(--sp-3);height:48px;text-align:right;border-bottom:1px solid var(--line)}
+.table th:nth-child(-n+2),.table td:nth-child(-n+2){text-align:left}
+.table tr.you td{background:var(--s2)}
+.table tr.you td:first-child{box-shadow:inset 3px 0 0 var(--team)}
+.table tr.cut td{border-bottom:2px solid var(--line-strong)}
+.teamcell{display:flex;align-items:center;gap:var(--sp-3)} .teamcell .crest{--cs:28px}
+
+/* ---------- Mobile tab bar ---------- */
+.tabbar{display:none}
+
+/* ---------- Dialog / sheet ---------- */
+.scrim{position:fixed;inset:0;background:rgba(5,8,12,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:var(--sp-4)}
+.scrim[data-open="true"]{display:flex}
+
+@media (max-width: 900px){
+  :root{--topbar:56px}
+  .shell{grid-template-columns:1fr}
+  .rail{display:none}
+  .topbar{padding:0 var(--sp-4)}
+  .mob-only{display:inline-flex}
+  .desk-only{display:none !important}
+  .content{padding:var(--sp-4) var(--sp-4) calc(var(--sp-16) + 40px)}
+  .card{padding:var(--sp-4);border-radius:var(--r-md)}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(11,15,21,.96);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+  .tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:60px;color:var(--text-2);text-decoration:none;font-size:11px;font-weight:600}
+  .tabbar a svg{width:22px;height:22px}
+  .tabbar a[aria-current="page"]{color:var(--text)}
+  .tabbar a[aria-current="page"] svg{color:var(--text)}
+  .tabbar a[aria-current="page"]::before{content:"";position:absolute;top:0;width:28px;height:3px;border-radius:0 0 3px 3px;background:var(--team)}
+  .tabbar a{position:relative}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:1ms !important;animation-iteration-count:1 !important;transition-duration:1ms !important;scroll-behavior:auto !important}
+}
+.select{min-height:44px;padding:0 36px 0 12px;border-radius:var(--r-md);border:1px solid var(--line-strong);background:var(--s1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23B4BDC9' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 12px center;appearance:none;color:var(--text);font-size:var(--fs-14)}
+.seg{display:inline-flex;padding:4px;gap:4px;border-radius:12px;background:var(--s1);border:1px solid var(--line)}
+.seg button,.seg a{min-height:36px;padding:0 var(--sp-4);border:0;border-radius:8px;background:transparent;color:var(--text-2);font-weight:600;font-size:var(--fs-14);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.seg [aria-pressed="true"],.seg [aria-selected="true"],.seg [aria-current="page"]{background:var(--s3);color:var(--text)}
+.topbar .mob-only{display:none}
+.table td.num,.table th{white-space:nowrap}
+@media (max-width:900px){ .topbar .mob-only{display:inline-flex} }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&family=Rajdhani:wght@600;700&display=swap">
+<style>
+.wrap{max-width:1320px;margin:0 auto;padding:var(--sp-8)}
+h1{font-family:var(--font-display);font-size:var(--fs-40);text-transform:uppercase}
+.lead{color:var(--text-2);max-width:70ch;margin-top:var(--sp-2)}
+.dirs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-6);margin-top:var(--sp-8)}
+.dir{border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--line);background:var(--s1);display:flex;flex-direction:column}
+.dir.pick{border-color:var(--text);box-shadow:0 0 0 1px var(--text)}
+.sample{padding:var(--sp-6);min-height:260px;display:grid;gap:var(--sp-3);align-content:start}
+.body{padding:var(--sp-5) var(--sp-6);display:grid;gap:var(--sp-3);border-top:1px solid var(--line)}
+.body h2{font-size:var(--fs-20);display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
+.body p{color:var(--text-2);font-size:var(--fs-14)}
+.sw{display:flex;gap:6px}.sw i{flex:1;height:28px;border-radius:6px;border:1px solid rgba(255,255,255,.08)}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px var(--sp-3);font-size:var(--fs-14)} dt{color:var(--text-3)} dd{margin:0;color:var(--text-2)}
+/* A */
+.a{background:#0B0F15}.a .big{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:44px;text-transform:uppercase;line-height:1;color:#F2F5F8}.a .s{font-family:Inter,sans-serif;color:#B4BDC9}.a .b{justify-self:start;background:#F2F5F8;color:#0B0F15;padding:10px 16px;border-radius:10px;font-weight:600}.a .bar{height:8px;border-radius:99px;background:linear-gradient(90deg,#5B9BFF 54%,#3A181C 54%)}
+/* B */
+.b2{background:#17150F;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:24px 24px}.b2 .big{font-family:"IBM Plex Sans",sans-serif;font-weight:600;font-size:34px;color:#EDE6D6}.b2 .s{font-family:"IBM Plex Mono",monospace;color:#C9BFA8;font-size:14px}.b2 .b{justify-self:start;background:#D9A441;color:#17150F;padding:10px 16px;border-radius:4px;font-family:"IBM Plex Mono",monospace;font-weight:500}.b2 .bar{height:8px;background:repeating-linear-gradient(90deg,#8C9A5B 0 10px,transparent 10px 14px)}
+/* C */
+.c{background:radial-gradient(120% 90% at 20% 0%,#1B2450,#080A18 60%)}.c .big{font-family:Rajdhani,sans-serif;font-weight:700;font-size:42px;text-transform:uppercase;letter-spacing:.04em;color:#DDF6FF;text-shadow:0 0 18px rgba(0,229,255,.5)}.c .s{font-family:Rajdhani,sans-serif;color:#8FA3D9;font-size:16px}.c .b{justify-self:start;background:rgba(0,229,255,.12);border:1px solid #00E5FF;color:#9FF3FF;padding:10px 16px;border-radius:2px;backdrop-filter:blur(8px)}.c .bar{height:8px;background:linear-gradient(90deg,#00E5FF,#8B5CF6)}
+@media (max-width:900px){.wrap{padding:var(--sp-4)}.dirs{grid-template-columns:1fr}h1{font-size:var(--fs-32)}}
+</style>
+</head><body>
+<main class="wrap" id="main">
+<h1>Three directions</h1>
+<p class="lead">Same hub content, three moods. The pick is A, Broadcast Night. B and C are kept here so the decision can be revisited.</p>
+<div class="dirs">
+  <article class="dir pick" aria-labelledby="da">
+    <div class="sample a" aria-hidden="true"><span class="s">Next match · Week 3</span><span class="big">T1 vs GEN</span><span class="bar"></span><span class="b">Play week 3</span></div>
+    <div class="body"><h2 id="da">A · Broadcast Night <span class="chip chip-win">Pick</span></h2>
+      <p>A neutral dark set, like a TV broadcast graphics package: the content is lit, the chrome isn't. Every color has one job: side blue and red only in draft and match, green and red only for results, gold only for rewards, and team color only on crests.</p>
+      <div class="sw"><i style="background:#0B0F15"></i><i style="background:#18202C"></i><i style="background:#F2F5F8"></i><i style="background:#5B9BFF"></i><i style="background:#FF6B6B"></i><i style="background:#3DDC84"></i><i style="background:#F2C14E"></i></div>
+      <dl><dt>Display</dt><dd>Barlow Condensed 600/700</dd><dt>UI</dt><dd>Inter 400–700</dd><dt>Risk</dt><dd>Can feel plain. Rewards and matchday have to carry the excitement.</dd></dl></div>
+  </article>
+  <article class="dir" aria-labelledby="db">
+    <div class="sample b2" aria-hidden="true"><span class="s">// WEEK 3 · SCOUTING</span><span class="big">T1 vs GEN</span><span class="bar"></span><span class="b">PLAY WEEK 3</span></div>
+    <div class="body"><h2 id="db">B · War Room</h2>
+      <p>A coach's notebook: warm dark paper, a tactical grid, monospace data. It's calm, analytical and reads as a manager sim straight away.</p>
+      <div class="sw"><i style="background:#17150F"></i><i style="background:#25221A"></i><i style="background:#EDE6D6"></i><i style="background:#8C9A5B"></i><i style="background:#D9A441"></i><i style="background:#C2553F"></i></div>
+      <dl><dt>Display</dt><dd>IBM Plex Sans 600</dd><dt>Data</dt><dd>IBM Plex Mono 500</dd><dt>Risk</dt><dd>Amber clashes with the reward gold, olive and red look alike to deuteranopes, and it feels sleepy on matchday.</dd></dl></div>
+  </article>
+  <article class="dir" aria-labelledby="dc">
+    <div class="sample c" aria-hidden="true"><span class="s">NEXT MATCH · WEEK 3</span><span class="big">T1 vs GEN</span><span class="bar"></span><span class="b">PLAY WEEK 3</span></div>
+    <div class="body"><h2 id="dc">C · Hextech Glass</h2>
+      <p>Glass panels with neon cyan and violet glows. High energy, close to the in-game client's feel.</p>
+      <div class="sw"><i style="background:#080A18"></i><i style="background:#1B2450"></i><i style="background:#00E5FF"></i><i style="background:#8B5CF6"></i><i style="background:#DDF6FF"></i></div>
+      <dl><dt>Display</dt><dd>Rajdhani 600/700</dd><dt>UI</dt><dd>Exo 2</dd><dt>Risk</dt><dd>Blur and glow make AA contrast hard, it's heavy on low-end phones, and it sits too close to official game art.</dd></dl></div>
+  </article>
+</div>
+</main>
+</body></html>

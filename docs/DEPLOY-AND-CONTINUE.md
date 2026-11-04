@@ -1,6 +1,25 @@
 # Rift Manager — Deployment runbook
 
-## Project boundaries
+## Current Pages publication
+
+The canonical live game is https://www.rift.askaconsult.com/.
+The published static tree is on `gh-pages`; its verified head is recorded in
+[the release record](RELEASE-2026-11-03.md). `main` holds source, and PR #10
+reconciles the already-published social card. Do not replace `main` with the
+compiled Pages tree or overwrite its newer design proposals.
+
+Publishing to `gh-pages` changes the live site and needs separate release approval.
+Before an authorized release, test/build the exact reviewed source, compare the
+complete static output, preserve `CNAME` and `.nojekyll`, and record the previous
+Pages SHA for rollback. After publication, verify anonymous root and asset bytes.
+Do not change DNS, permissions, or Pages settings as part of source reconciliation.
+A source-only PR is not a request to publish a new build.
+
+The Vercel instructions below describe the separate staging environment and
+historical live host, not the current Pages release mechanism. Do not assume the
+old live hostname or proxy is a supported path on GitHub Pages.
+
+## Historical Vercel project boundaries
 
 | Target | Project | URL |
 | --- | --- | --- |
@@ -45,7 +64,7 @@ Live saves use `lck-manager-save-v1`; staging paths/hostnames use
 `lck-manager-staging-save-v1`. Staging can import a legacy save on first load, then
 writes only its own key. The two hostnames have separate browser storage origins.
 
-## Live promotion
+## Historical Vercel live promotion
 
 Live requires a separate explicit instruction. Verify its project ID before use,
 retain the staging proxy in its deployment config, and deploy from a git-free copy.

@@ -11,10 +11,11 @@ browser; there is no backend or account system. Read `docs/GUIDE.md` to play,
 
 ## Current release scope
 
-Production is https://lolsim.askaconsult.com/ (`lck-manager`). Staging is the separate
-`lck-manager-staging` project at https://lck-manager-staging.vercel.app/ and
-https://lolsim.askaconsult.com/staging/. Always verify the intended project before
-deploying; staging releases never imply permission to promote production.
+Production is https://www.rift.askaconsult.com/, served from `gh-pages`.
+Vercel `lck-manager-staging` at https://lck-manager-staging.vercel.app/ remains
+separate. The historical `lck-manager` Vercel project and its `/staging/` proxy
+are not the current Pages deployment mechanism. Verify the destination and
+obtain separate release approval before changing any live build or aliases.
 
 - Weekly coaching sessions in Season/Career: matchup scrims, lane mechanics,
   objective setup, or recovery. Visible form gains and bounded, one-match strength

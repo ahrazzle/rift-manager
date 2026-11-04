@@ -5,16 +5,16 @@ Build a roster, prepare your team, make tactical calls, and chase regional and
 international titles. Matches simulate themselves; your decisions happen in the
 coach’s office, on the draft board, and at key moments in a series.
 
-**[Play the live game](https://lolsim.askaconsult.com/)** ·
+**[Play the live game](https://www.rift.askaconsult.com/)** ·
 **[Staging snapshot](https://lck-manager-staging.vercel.app/)** ·
 [How to play](docs/GUIDE.md)
 
 ## Current release
 
 The latest released game includes historical rosters, Draft and IGL add-ons,
-and map presentation controls. Production and
-staging are separate Vercel projects; merging code does not deploy either one.
-The stable staging URL currently serves an older snapshot.
+and map presentation controls. The public www site is served from the repository’s
+`gh-pages` branch. Vercel staging remains a separate preview environment. Source
+changes on `main` and the published Pages build are reviewed separately.
 See the [release record](docs/RELEASE-2026-11-03.md) for the tested source and build.
 
 Features include:
@@ -50,7 +50,8 @@ npm run build
 npm run preview
 ```
 
-Run `npm test` to execute every `test/*.test.mjs` suite (25 suites in this release).
+Run `npm test` to execute every `test/*.test.mjs` suite. The game release has
+25 suites; the social-preview source reconciliation in PR #10 adds a 26th.
 
 ## How it works
 
