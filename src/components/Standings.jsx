@@ -20,7 +20,7 @@ export default function Standings({ state }) {
   return (
     <div className="card" ref={shotRef}>
       <span className="eyebrow">📊 League table{state.league ? ` · ${state.league}` : ''}</span>
-      <h2 style={{ marginTop: 4 }}>Standings</h2>
+      <h1 style={{ marginTop: 4, fontSize: '21px' }}>Standings</h1>
       <table className="table">
         <thead>
           <tr>

@@ -258,36 +258,36 @@ export default function App() {
           New Game
         </button>
       </header>
-      <SaveError error={storageError} retrySave={retrySave} />
-      {!isCampaign && state.teamId && (
-        <div className="top-progress" aria-hidden>
-          <span style={{ width: `${progress}%` }} />
-        </div>
-      )}
-      {!isCampaign && !isSeasonReplay && state.board && (
-        <div className="manager-strip">
-          <span>🎯 <strong>{state.board.expectation}</strong></span>
-          <span className={state.board.confidence >= 70 ? 'ok' : state.board.confidence >= 40 ? 'warn' : 'bad'}>
-            Board {state.board.confidence}
-          </span>
-          {state.finance && <span>💰 {fmtMoney(state.finance.budget)}</span>}
-          {state.sacked && <span className="bad">SACKED</span>}
-        </div>
-      )}
-
-      <nav className="tabs">
-        {nav.map(([id, label]) => (
-          <button
-            key={id}
-            className={activeTab === id ? 'tab active' : 'tab'}
-            disabled={!!state.matchSession} onClick={() => setTab(id)}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
-
       <main id="main-content" className="content">
+        <SaveError error={storageError} retrySave={retrySave} />
+        {!isCampaign && state.teamId && (
+          <div className="top-progress" aria-hidden>
+            <span style={{ width: `${progress}%` }} />
+          </div>
+        )}
+        {!isCampaign && !isSeasonReplay && state.board && (
+          <div className="manager-strip">
+            <span>🎯 <strong>{state.board.expectation}</strong></span>
+            <span className={state.board.confidence >= 70 ? 'ok' : state.board.confidence >= 40 ? 'warn' : 'bad'}>
+              Board {state.board.confidence}
+            </span>
+            {state.finance && <span>💰 {fmtMoney(state.finance.budget)}</span>}
+            {state.sacked && <span className="bad">SACKED</span>}
+          </div>
+        )}
+
+        <nav className="tabs" aria-label="Season navigation">
+          {nav.map(([id, label]) => (
+            <button
+              key={id}
+              className={activeTab === id ? 'tab active' : 'tab'}
+              disabled={!!state.matchSession} onClick={() => setTab(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+
         {state.matchSession ? <MatchExperience state={state} dispatch={dispatch} /> : isRetired ? (
           <CareerEpitaph state={state} dispatch={dispatch} />
         ) : (

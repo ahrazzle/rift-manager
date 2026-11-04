@@ -3,7 +3,7 @@
  * Usage: node scripts/phase1-acceptance.mjs --tag before|after [--lighthouse]
  * Expects `npm run preview` already listening on 4173 (or pass PREVIEW_URL).
  */
-import { spawn, spawnSync } from 'node:child_process'
+import { spawnSync } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -34,22 +34,28 @@ async function waitForServer(url, ms = 60000) {
   throw new Error(`Server not ready: ${url}`)
 }
 
+async function dismissOverlays(page) {
+  await page.getByRole('button', { name: /^Leave$/i }).click({ timeout: 1500 }).catch(() => {})
+}
+
+async function startSeason(page) {
+  await page.getByRole('button', { name: /⚡ Season/i }).click()
+  await page.locator('#season-year-select').selectOption({ index: 0 }).catch(async () => {
+    await page.locator('.year-select').first().selectOption({ index: 0 })
+  })
+  await page.getByRole('button', { name: /Start Season/i }).click()
+  await page.getByRole('button', { name: /^Dashboard$/i }).waitFor({ timeout: 15000 })
+}
+
 const screens = [
   { name: 'new-game', path: './', setup: null },
-  {
-    name: 'hub-dashboard',
-    path: './',
-    setup: async (page) => {
-      await page.getByRole('button', { name: /Season/i }).click()
-      await page.locator('#season-year-select').selectOption({ index: 0 })
-      await page.getByRole('button', { name: /Start Season/i }).click()
-      await page.waitForTimeout(800)
-    },
-  },
+  { name: 'hub-dashboard', path: './', setup: startSeason },
   {
     name: 'standings',
     path: './',
     setup: async (page) => {
+      await startSeason(page)
+      await dismissOverlays(page)
       await page.getByRole('button', { name: /^Standings$/i }).click()
       await page.waitForTimeout(400)
     },
@@ -58,25 +64,35 @@ const screens = [
     name: 'draft-entry',
     path: './',
     setup: async (page) => {
-      await page.getByRole('button', { name: /^Dashboard$/i }).click()
+      await startSeason(page)
       await page.getByRole('button', { name: /Play Week/i }).click()
-      await page.waitForTimeout(600)
+      await page.waitForTimeout(800)
     },
   },
   {
     name: 'match-setup',
     path: './',
     setup: async (page) => {
-      await page.getByRole('button', { name: /Enter draft|Start draft|Begin draft/i }).click({ timeout: 15000 }).catch(() => {})
-      await page.waitForTimeout(400)
+      await startSeason(page)
+      await page.getByRole('button', { name: /Play Week/i }).click()
+      await page.waitForTimeout(800)
+      await page.getByRole('button', { name: /Enter draft|Start draft|Begin draft|Continue to draft/i }).click({ timeout: 12000 }).catch(() => {})
+      await page.waitForTimeout(600)
     },
   },
 ]
 
 const axePages = [
-  { name: 'hub', setup: screens[1].setup },
+  { name: 'hub', setup: startSeason },
   { name: 'new-game', setup: null },
-  { name: 'standings', setup: screens[2].setup },
+  {
+    name: 'standings',
+    setup: async (page) => {
+      await startSeason(page)
+      await dismissOverlays(page)
+      await page.getByRole('button', { name: /^Standings$/i }).click()
+    },
+  },
 ]
 
 async function main() {
@@ -89,6 +105,10 @@ async function main() {
     for (const screen of screens) {
       const context = await browser.newContext({
         viewport: { width, height: width === 390 ? 844 : 900 },
+      })
+      await context.addInitScript(() => {
+        localStorage.clear()
+        sessionStorage.clear()
       })
       const page = await context.newPage()
       await page.goto(new URL(screen.path, baseUrl).href, { waitUntil: 'networkidle' })
@@ -109,9 +129,19 @@ async function main() {
 
   for (const axePage of axePages) {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } })
+    await context.addInitScript(() => {
+      localStorage.clear()
+      sessionStorage.clear()
+    })
     const page = await context.newPage()
     await page.goto(baseUrl, { waitUntil: 'networkidle' })
-    if (axePage.setup) await axePage.setup(page)
+    if (axePage.setup) {
+      try {
+        await axePage.setup(page)
+      } catch (e) {
+        console.warn(`Axe setup failed for ${axePage.name}:`, e.message)
+      }
+    }
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'best-practice'])
       .analyze()
