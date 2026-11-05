@@ -75,11 +75,11 @@ for details. Research notes and older changelog entries describe historical snap
 
 ## Contributing
 
-Open an issue with reproduction steps, expected behavior, and browser/device
-information, or propose a focused pull request against `main`. Run `npm test` and
-`npm run build` before submitting. Include screenshots for UI changes and a
-regression test for behavior changes. Never commit saves containing private data,
-credentials, `.env` files, build output, or `node_modules`.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup,
+how to propose a change, and what happens to your pull request. The short
+version: fork, branch from `main`, run `npm test` and `npm run build` before
+submitting, and include screenshots for UI changes and a regression test for
+behavior changes.
 
 The game uses Riot champion imagery and League of Legends names; these are not
 original project assets. No software license is currently included in this
