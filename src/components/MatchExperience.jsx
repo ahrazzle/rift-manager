@@ -27,6 +27,15 @@ export default function MatchExperience({ state, dispatch }) {
     if (stage === 'game') dispatch({ type: 'MATCH_FINISH_GAME' })
   }, [stage, dispatch])
   const liveMap = ['map', 'decision'].includes(stage)
+  // Draft ownership is relative to the coach; engine A/B remains home/away.
+  // Setup and series results have no single physical map side to advertise.
+  const draftHomeBlue =
+    stage === 'draft' && session.draft ? (session.draft.userSide === 'BLUE') === (c.userSide !== 'away') : null
+  const displayedGame = stage === 'between' ? session.games.at(-1) : current?.game
+  const homeBlue =
+    draftHomeBlue ??
+    (stage !== 'setup' && stage !== 'result' && displayedGame?.blueSide ? displayedGame.blueSide === 'A' : null)
+  const teamSide = (side) => (homeBlue == null ? 'neutral' : (side === 'home') === homeBlue ? 'blue' : 'red')
   const winnerSide = session.aWins > session.bWins ? 'home' : 'away'
   const winnerName = winnerSide === 'home' ? c.homeName : c.awayName
   const send = (type) => () => dispatch({ type })
@@ -67,7 +76,10 @@ export default function MatchExperience({ state, dispatch }) {
   const gameTape = (
     <div className="broadcast-game-tape" aria-label="Completed games">
       {session.games.map((game, index) => (
-        <div key={index} className={game.winner === 'A' ? 'home' : 'away'}>
+        <div
+          key={index}
+          className={game.blueSide ? (game.winner === game.blueSide ? 'side-blue' : 'side-red') : 'side-neutral'}
+        >
           <span>Game {index + 1}</span>
           <strong>{game.winner === 'A' ? c.homeName : c.awayName}</strong>
           <small>
@@ -89,14 +101,19 @@ export default function MatchExperience({ state, dispatch }) {
   }
   return (
     <div className={`match-experience broadcast-match stage-${stage}`} style={{ '--venue': `url(${venue})` }}>
-      {liveMap && (
-        <h1 className="sr-only">
-          {c.homeName} versus {c.awayName} · {c.label} · Game {session.games.length + 1}
-          {stage === 'decision' ? ' · Tactical pause' : ' · Live match'}
-        </h1>
-      )}
+      <h1 className="sr-only">
+        {c.homeName} versus {c.awayName} · {c.label}
+        {stage === 'setup'
+          ? ' · Match setup'
+          : stage === 'result'
+            ? ' · Match result'
+            : ` · Game ${session.games.length + (stage === 'between' ? 0 : 1)}`}
+        {stage === 'decision' ? ' · Tactical pause' : ''}
+      </h1>
       {!liveMap && (
-        <header className={`match-heading broadcast-billboard ${stage === 'setup' ? 'is-prematch' : ''}`}>
+        <header
+          className={`match-heading broadcast-billboard home-${teamSide('home')} ${stage === 'setup' ? 'is-prematch' : ''}`}
+        >
           <div className="broadcast-context">
             <span className="eyebrow">{c.label}</span>
             <span>
@@ -105,10 +122,10 @@ export default function MatchExperience({ state, dispatch }) {
             </span>
           </div>
           <div className="broadcast-faceoff">
-            <div className="broadcast-club home">
+            <div className={`broadcast-club side-${teamSide('home')}`}>
               <TeamCrest teamId={c.homeId} name={c.homeName} size={76} />
-              <h1>{c.homeName}</h1>
-              <span>Home side</span>
+              <strong className="broadcast-club-name">{c.homeName}</strong>
+              <span>{homeBlue == null ? 'Home team' : `${homeBlue ? 'Blue' : 'Red'} side`}</span>
             </div>
             <div className="broadcast-series">
               <span className="eyebrow">{stage === 'setup' ? 'Series preview' : 'Series score'}</span>
@@ -121,10 +138,10 @@ export default function MatchExperience({ state, dispatch }) {
                     : `Game ${session.games.length + (stage === 'between' ? 0 : 1)}`}
               </span>
             </div>
-            <div className="broadcast-club away">
+            <div className={`broadcast-club side-${teamSide('away')}`}>
               <TeamCrest teamId={c.awayId} name={c.awayName} size={76} />
-              <h1>{c.awayName}</h1>
-              <span>Away side</span>
+              <strong className="broadcast-club-name">{c.awayName}</strong>
+              <span>{homeBlue == null ? 'Away team' : `${homeBlue ? 'Red' : 'Blue'} side`}</span>
             </div>
           </div>
           <div className="match-badges">

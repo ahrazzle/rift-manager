@@ -504,13 +504,13 @@ export default function AnimatedRift({
         <button
           type="button"
           className="ghost rift-settings"
-          title="Map display"
+          aria-label="Map display"
           aria-expanded={settingsOpen}
           aria-controls={`${id}-display`}
           onClick={() => setSettingsOpen(!settingsOpen)}
         >
           <MatchIcon name="settings" size={14} />
-          <span className="sr-only">Map display</span>
+          <span>Display</span>
         </button>
       </div>
       <fieldset id={`${id}-display`} className="rift-display-controls" hidden={!settingsOpen}>

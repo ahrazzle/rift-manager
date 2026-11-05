@@ -53,13 +53,13 @@
   min-width: 0;
   text-align: center;
 }
-.broadcast-club.home {
+.broadcast-club.side-blue {
   color: var(--match-cyan);
 }
-.broadcast-club.away {
+.broadcast-club.side-red {
   color: var(--match-coral);
 }
-.broadcast-club h1 {
+.broadcast-club .broadcast-club-name {
   margin: 0;
   font-family: 'Barlow Condensed', sans-serif;
   font-size: clamp(32px, 4.6vw, 64px);
@@ -473,7 +473,7 @@
     width: 48px !important;
     height: 48px !important;
   }
-  .broadcast-club h1 {
+  .broadcast-club .broadcast-club-name {
     font-size: 32px;
   }
   .broadcast-club > span,
@@ -552,7 +552,7 @@
 .broadcast-match .broadcast-billboard {
   display: block;
 }
-.broadcast-match .broadcast-club h1 {
+.broadcast-match .broadcast-club .broadcast-club-name {
   margin: 0;
 }
 .broadcast-game-tape {
@@ -571,7 +571,7 @@
   border-top: 2px solid var(--match-cyan);
   background: #08121de0;
 }
-.broadcast-game-tape > .away {
+.broadcast-game-tape > .side-red {
   border-top-color: var(--match-coral);
 }
 .broadcast-game-tape > div > span {
@@ -593,4 +593,37 @@
   gap: 4px;
   color: #9daec3;
   font-size: 10px;
+}
+
+.broadcast-club.side-neutral {
+  color: #d7e3ef;
+}
+.broadcast-game-tape > .side-neutral {
+  border-top-color: #9aafc4;
+}
+.broadcast-match.stage-setup .match-starting-five > div {
+  border-top-color: #7c93aa;
+  border-left-color: #7c93aa;
+}
+.broadcast-match.stage-setup .match-starting-five p > span {
+  color: #a9c2d7;
+}
+
+.broadcast-billboard.home-red {
+  background:
+    linear-gradient(90deg, #21131bea, #111322db 48%, #081320ed),
+    var(--venue) center 45% / cover;
+}
+.broadcast-billboard.home-red::before {
+  background: linear-gradient(100deg, #ff786c15, transparent 42%, transparent 58%, #4dd9ed13);
+  border-image: linear-gradient(90deg, var(--match-coral), #344151, var(--match-cyan)) 1;
+}
+.broadcast-billboard.home-neutral::before {
+  background: linear-gradient(100deg, #a9bdd20b, transparent 50%, #a9bdd20b);
+  border-image: linear-gradient(90deg, #7c93aa, #344151, #7c93aa) 1;
+}
+.broadcast-billboard.home-neutral {
+  background:
+    linear-gradient(90deg, #101a28e8, #101724c9 48%, #101a28e8),
+    var(--venue) center 45% / cover;
 }

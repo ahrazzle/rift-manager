@@ -613,12 +613,21 @@
     gap: 7px;
     padding: 10px;
     order: 2;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .rift-arena .rift-seek {
-    min-width: 140px;
+    grid-column: span 3;
+    min-width: 0;
+    order: 0;
+    min-height: 44px;
   }
   .rift-arena .rift-controls button {
-    padding: 8px;
+    padding: 7px 5px;
+    min-height: 44px;
+    min-width: 44px;
+    font-size: 10px;
+    gap: 4px;
   }
   .rift-arena.rift-view {
     display: flex;
@@ -626,6 +635,20 @@
   }
   .rift-arena .rift-caption {
     order: 4;
+  }
+  .rift-arena .rift-controls button.rift-settings {
+    order: 0;
+    min-width: 44px;
+    padding: 8px;
+  }
+  .rift-arena .rift-speed select {
+    width: 100%;
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .rift-arena .rift-seek input {
+    height: 44px;
+    min-height: 44px;
   }
 }
 @media (max-width: 420px) {
@@ -657,15 +680,6 @@
   .rift-arena .rift-objective-score svg {
     width: 11px;
   }
-  .rift-arena .rift-controls .rift-seek {
-    order: 3;
-    flex-basis: 100%;
-    flex: 1 1 calc(100% - 44px);
-    min-width: 0;
-  }
-  .rift-arena .rift-controls button {
-    font-size: 9px;
-  }
   .rift-arena .rift-broadcast-label {
     font-size: 8px;
     padding: 8px 10px;
@@ -684,10 +698,6 @@
   }
   .rift-impact-callout span {
     font-size: 8px;
-  }
-  .rift-arena .rift-controls button.rift-settings {
-    order: 4;
-    flex: 0 0 32px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -730,5 +740,16 @@
   }
   .rift-arena .rift-layout {
     grid-template-columns: minmax(0, 1fr) 265px;
+  }
+}
+@media (max-width: 700px), (pointer: coarse) {
+  .rift-arena .rift-controls button,
+  .rift-arena .rift-speed select,
+  .rift-arena .rift-display-controls select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .rift-arena .rift-seek input {
+    min-height: 44px;
   }
 }
