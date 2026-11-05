@@ -58,6 +58,26 @@
   line-height: 1.6;
   color: #c8d7e6;
 }
+.newgame .broadcast-entry .entry-community {
+  margin: 14px 0 0;
+  max-width: 420px;
+  font-size: var(--fs-13);
+  line-height: 1.55;
+}
+.newgame .broadcast-entry .entry-community a {
+  color: #a0f4f7;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.newgame .broadcast-entry .entry-community a:hover {
+  color: #fff;
+}
+.newgame .broadcast-entry .entry-community a:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
 .entry-begin {
   margin-top: 24px;
   display: inline-flex;

@@ -210,8 +210,30 @@ button { font-family: inherit; }
   font-size: 13px;
   color: var(--text-2);
 }
+.footer-contribute { max-width: 520px; margin: 0 auto 12px; }
+.footer-contribute .label { margin: 0 0 6px; }
+.footer-contribute-copy { margin: 0; font-size: var(--fs-14); line-height: 1.55; }
+.footer-contribute-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0 0;
+}
+.footer-contribute-links .btn { min-height: 40px; font-size: var(--fs-13); }
+.footer-disclaimer {
+  max-width: 520px;
+  margin: 0 auto 14px;
+  font-size: var(--fs-12);
+  line-height: 1.5;
+}
 .site-footer a { color: var(--text); text-decoration: underline; font-weight: 600; }
 .site-footer a:hover { color: var(--text-2); }
+.site-footer .footer-contribute-links a.btn {
+  text-decoration: none;
+  font-weight: 600;
+}
+.site-footer .footer-contribute-links a.btn:hover { color: var(--text); }
 .site-footer .aska-signature {
   display: inline-block;
   padding: 6px 10px;

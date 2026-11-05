@@ -22,6 +22,7 @@ import { EventModal, PromotionModal } from './components/CareerModals.jsx'
 import PressModal from './components/PressModal.jsx'
 import { fmtMoney } from './game/economy.js'
 import ConfirmDialog from './components/ConfirmDialog.jsx'
+import SiteFooter from './components/SiteFooter.jsx'
 
 function Brand({ compact = false }) {
   return <div className={`broadcast-brand${compact ? ' broadcast-brand-compact' : ''}`}>
@@ -113,22 +114,6 @@ function CareerEpitaph({ state, dispatch }) {
     </div>
   )
 }
-function SiteFooter() {
-  return (
-    <footer className="site-footer">
-      <a className="aska-signature" href="https://digital.askaconsult.com/" target="_blank" rel="noreferrer">
-        <span>Made by</span> Aska Digital
-      </a>
-      <span className="footer-credit">
-        Created by{' '}
-        <a href="https://github.com/ahrazzle" target="_blank" rel="noreferrer">
-          @ahrazzle
-        </a>
-      </span>
-    </footer>
-  )
-}
-
 export default function App() {
   const { state, dispatch: gameDispatch, TOTAL_ROUNDS, storageError, retrySave, loadError, retryLoad, replaceSave } = useGameState()
   const [tab, setTabRaw] = useState('dashboard')
