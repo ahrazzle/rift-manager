@@ -15,10 +15,8 @@ import Results from './components/Results.jsx'
 import Market from './components/Market.jsx'
 import Squad from './components/Squad.jsx'
 import Guide from './components/Guide.jsx'
-import TutorialCoach from './components/TutorialCoach.jsx'
 import { exportPng } from './utils/exportPng.js'
 import { scrollContentToTop } from './utils/scrollToTop.js'
-import { shouldShowTutorial } from './game/tutorial.js'
 import { streakOf } from './game/hype.js'
 import { EventModal, PromotionModal } from './components/CareerModals.jsx'
 import PressModal from './components/PressModal.jsx'
@@ -209,8 +207,6 @@ export default function App() {
     prevActiveTab.current = activeTab
   }, [activeTab])
 
-  const showTutorial = !onNewGameScreen && shouldShowTutorial(state, { resetPending, guideOpen })
-
   if (onNewGameScreen) {
     return (
       <div className="app broadcast-shell">
@@ -366,9 +362,6 @@ export default function App() {
         This replaces your current saved session. Your progress will be lost.
       </ConfirmDialog>}
       {guideOpen && <Guide onClose={() => setGuideOpen(false)} />}
-      {showTutorial && (
-        <TutorialCoach state={state} dispatch={dispatch} activeTab={activeTab} setTab={setTab} />
-      )}
     </div>
   )
 }
