@@ -40,3 +40,7 @@ Append-only per the project-files SOP. One line per change:
 2026-10-22 | codex | src/App.jsx, src/styles.css | Added the owner's requested Made by Aska Digital footer signature, linking to digital.askaconsult.com alongside the original creator credit; included in the staging update PR.
 
 2026-10-22 | codex | map presentation polish | Add persisted player/champion/both/hidden map names and role/player-initial/champion portrait choices, using real draft picks with image failure fallbacks. Replace all-player event magnets and default center calls with role-specific rotations, smooth event transitions and separated markers. Correct Kai’Sa and LeBlanc portrait filenames against Riot metadata. Preserve match outcomes and saved game data.
+
+2026-11-04T02:23:00Z | GPT-Forge | README.md, HANDOFF.md, docs/RELEASE-2026-11-03.md, docs/DEPLOY-AND-CONTINUE.md | reconcile current GitHub Pages publication and social-card evidence, preserve newer Broadcast Night proposal and historical Vercel receipt; source/docs only, no deployment
+
+2026-11-05 | gpt-forge | contributor and release docs | retain PR #9 contributor work; document main-triggered Pages publication, Vercel redirect/staging boundaries and origin-local saves; record social source landed via PR #14; replace obsolete social-preview access/release instructions with current validation guidance
