@@ -76,10 +76,17 @@ for details. Research notes and older changelog entries describe historical snap
 ## Contributing
 
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup,
-how to propose a change, and what happens to your pull request. The short
-version: fork, branch from `main`, run `npm test` and `npm run build` before
-submitting, and include screenshots for UI changes and a regression test for
-behavior changes.
+how to propose a change, and what happens to your pull request. Read
+[docs/GUIDE.md](docs/GUIDE.md) and [docs/roadmap.md](docs/roadmap.md) for how
+the game works and where it is headed. Use
+[Discussions](https://github.com/ahrazzle/rift-manager/discussions) for ideas
+and questions; use issues for bugs and concrete work.
+
+The short version: fork, branch from `main`, run `npm test` and `npm run
+build` before submitting, include desktop and mobile screenshots for UI
+changes, and add a regression test for behavior changes. Play-affecting pull
+requests should name the player decision and the visible consequence; blocked
+actions should explain why in the UI.
 
 The game uses Riot champion imagery and League of Legends names; these are not
 original project assets. No software license is currently included in this

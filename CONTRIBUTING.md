@@ -6,12 +6,17 @@ browser: React 18 and Vite, no backend, no accounts. Saves live in the browser's
 local storage.
 
 Play the live game at https://www.rift.askaconsult.com/ and read the
-[player guide](docs/GUIDE.md) before changing how the game plays.
+[player guide](docs/GUIDE.md) and [roadmap](docs/roadmap.md) before changing
+how the game plays.
 
 ## Before you start
 
-- Check the [open issues](https://github.com/ahrazzle/rift-manager/issues).
-  If one describes your idea or bug, work there instead of opening a duplicate.
+- Use [GitHub Discussions](https://github.com/ahrazzle/rift-manager/discussions)
+  for open-ended questions, ideas, and feedback that do not need a tracked fix.
+  Use [issues](https://github.com/ahrazzle/rift-manager/issues) for bugs,
+  concrete feature requests, and work you plan to implement.
+- Check the open issues. If one describes your idea or bug, work there instead
+  of opening a duplicate.
 - For a large change, open an issue first and describe what you want to do.
   A short discussion up front saves a rejected pull request later.
 - Small fixes (typos, a broken link, a small bug with a clear fix) can go
@@ -50,6 +55,14 @@ npm run preview
   request.
 - Write game text in plain language. Short sentences, common words, no jargon
   a new player would have to look up.
+- If your change affects how the game plays, name the **player decision** and
+  the **visible consequence** in the pull request description.
+- Prefer no silent failure. When the player cannot act (budget, blocked action,
+  invalid choice), the UI should say why.
+- Ratings and match history are fictional game values with honesty tags. Do not
+  present them as live telemetry or rewrite fixed historical losses.
+- Prefer tuning magnitudes and data balance over opaque formula rewrites when
+  you can.
 
 ## Checks before you submit
 
@@ -60,8 +73,10 @@ npm test
 npm run build
 ```
 
-Include screenshots for any change you can see. In the pull request, say what
-changed and how you checked it.
+Include screenshots for any change you can see: one at desktop width and one
+at about mobile width (~390px). If you touch animation, respect reduced motion
+(`prefers-reduced-motion`) the way nearby styles already do. In the pull
+request, say what changed and how you checked it.
 
 Never commit saves that contain private data, credentials, `.env` files,
 build output (`dist/`), or `node_modules/`.
