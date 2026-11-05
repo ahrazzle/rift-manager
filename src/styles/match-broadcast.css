@@ -245,6 +245,18 @@
   background: linear-gradient(110deg, #0b1c2b, #101521);
   padding: 24px;
 }
+.broadcast-match .rift-coaching .igl-decision {
+  border-top: 0;
+  padding: 0;
+  background: none;
+}
+.broadcast-match .rift-coaching .igl-call-option > strong {
+  font-size: clamp(17px, 2vw, 21px);
+}
+.broadcast-match .rift-coaching .igl-decision h2 {
+  font-size: clamp(20px, 2.4vw, 28px);
+  margin: 6px 0 4px;
+}
 .broadcast-match .igl-decision .eyebrow {
   color: var(--match-cyan);
   display: flex;

@@ -61,3 +61,5 @@ Append-only per the project-files SOP. One line per change:
 2026-11-05T19:55:00Z | mithrax | src/styles.css, scripts/lineup-scroll-check.mjs | Fix Lineup horizontal overflow at 375px: flex-wrap on .plrow, stack bars/tags on narrow widths; keep age/outlook chips.
 
 2026-11-05T20:00:00Z | grk-smith | src/components/AboutCommunity.jsx, SiteFooter.jsx, test/about-community.test.mjs, CHANGELOG.md | Address grk-proof CHANGES_REQUESTED on #35: Esc closes About modal; focus into dialog + trap + restore trigger (ConfirmDialog-style); align player copy with docs/design/about-community-copy.md (no chemistry-meter writing aside); footer disclaimer matches design doc.
+
+2026-11-05T20:30:00Z | mithrax | src/components/AnimatedRift.jsx, src/match.css, src/styles/rift-arena.css, src/styles/match-broadcast.css, CHANGELOG.md | IGL tactical pause layout: cap coaching sidebar to square-map height, scroll call list inside panel (overflow-y auto), rift-layout--decision container query; removes dead void under map during stage decision.

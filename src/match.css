@@ -110,11 +110,29 @@
 .match-heading.compact h1 { font-size: 28px; margin: 5px 0; }
 .match-heading.compact .hint { margin: 0; }
 .rift-coaching { background: #22271f; }
-.rift-coaching .igl-decision { background: none; }
+.rift-coaching .igl-decision {
+  background: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
 .rift-coaching h2 { font-size: 18px; margin: 8px 0; }
 .rift-coaching .eyebrow { font-size: 9px; color: #edce8c; }
 .rift-coaching p { font-size: 11px; line-height: 1.6; }
-.rift-coaching .igl-call-grid { grid-template-columns: 1fr; gap: 7px; margin: 14px 0; }
+.rift-coaching .igl-call-grid {
+  grid-template-columns: 1fr;
+  gap: 7px;
+  margin: 14px 0 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+}
+.rift-coaching .igl-decision > .hint { flex-shrink: 0; margin-top: 10px; }
 .rift-coaching .igl-call-option { padding: 10px; }
 .rift-coaching .igl-call-option strong { font-size: 12px; margin-bottom: 4px; }
 .rift-coaching .igl-call-option span { font-size: 10px; }
