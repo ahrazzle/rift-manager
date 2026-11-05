@@ -1277,8 +1277,17 @@ function baseReducer(state, action) {
         return { ...prospect, team: 'FA' }
       })
       fa.push(...newcomers)
+      const newcomerIds = new Set(newcomers.map((p) => p.id))
       if (fa.length > 20) {
-        fa = [...fa].sort((a, b) => (b.ovr ?? 0) - (a.ovr ?? 0)).slice(0, 20)
+        // Keep every offseason newcomer; trim lowest-OVR veterans so the
+        // report and Market both show the promised new faces.
+        const keptNewcomers = fa.filter((p) => newcomerIds.has(p.id))
+        const veterans = fa.filter((p) => !newcomerIds.has(p.id))
+        const vetSlots = Math.max(0, 20 - keptNewcomers.length)
+        const keptVets = [...veterans]
+          .sort((a, b) => (b.ovr ?? 0) - (a.ovr ?? 0))
+          .slice(0, vetSlots)
+        fa = [...keptVets, ...keptNewcomers]
       }
       const developedPairs = preManaged.map((before) => {
         const afterDevelop = (teams[state.teamId] || []).find((p) => p.id === before.id)

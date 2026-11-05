@@ -67,3 +67,5 @@ Append-only per the project-files SOP. One line per change:
 2026-11-05T20:38:00Z | amp-cayde | src/game/useGameState.js, src/components/Dashboard.jsx, docs/GUIDE.md, test/transfers-offseason.test.mjs, test/p0-engine.test.mjs | Transfers Near: offseason FA refresh (5 new prospects, one per role, pool capped at 20) + sponsorship/prize income each Advance Season, shown in the offseason report; document Squad trades, coaches, and academy in GUIDE.
 
 2026-11-05T21:55:00Z | mithrax | src/game/useGameState.js, test/transfers-offseason.test.mjs, CHANGELOG.md | Offseason money report honesty: capture budgetBefore before wages/renewals so Hub Budget A→B reconciles with the wage/renewal/income lines; budgetAfter remains end-of-offseason budget.
+
+2026-11-05T22:05:00Z | mithrax | src/game/useGameState.js, test/transfers-offseason.test.mjs, CHANGELOG.md | FA pool cap: when trimming to 20, always keep the five offseason newcomers and cut lowest-OVR veterans so report newFreeAgents match the Market pool.

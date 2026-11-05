@@ -70,6 +70,24 @@ check(
   'newcomers survive the trim (stronger than the weak pool)',
 )
 
+// Full pool: 20 elite FAs — trim must evict veterans, not drop newcomers from the pool.
+const elitePool = Array.from({ length: 20 }, (_, i) => ({
+  ...pre.faPool[i % pre.faPool.length],
+  id: `FA-elite-${i}`,
+  ovr: 95 - (i % 5),
+}))
+const fullElite = reducer({ ...pre, faPool: elitePool }, { type: 'ADVANCE_SEASON' })
+check(fullElite.faPool.length === 20, 'elite full pool trims to exactly 20')
+check(fullElite.offseasonReport.newFreeAgents.length === 5, 'elite trim still reports 5 newcomers')
+check(
+  fullElite.offseasonReport.newFreeAgents.every((p) => fullElite.faPool.some((q) => q.id === p.id)),
+  'all reported newcomers stay in faPool when pool was already full',
+)
+check(
+  elitePool.some((p) => !fullElite.faPool.some((q) => q.id === p.id)),
+  'elite trim drops weakest veterans to make room',
+)
+
 // ---------- Budget income ----------
 check(rep.finance != null, 'report carries a finance summary')
 check(rep.finance.sponsorship === 90 * 6000, 'sponsorship scales with tier (T1 tier 90)')
