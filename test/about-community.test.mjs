@@ -34,9 +34,9 @@ try {
     loader: { '.md': 'text', '.webp': 'file', '.svg': 'file' },
   })
 
-  const { default: AboutCommunity } = await import(`${temp}/AboutCommunity.js`)
-  const { default: SiteFooter } = await import(`${temp}/SiteFooter.js`)
-  const { default: NewGame } = await import(`${temp}/NewGame.js`)
+  const { default: AboutCommunity } = await import(`${temp}/components/AboutCommunity.js`)
+  const { default: SiteFooter } = await import(`${temp}/components/SiteFooter.js`)
+  const { default: NewGame } = await import(`${temp}/components/NewGame.js`)
   const { default: App } = await import(`${temp}/App.js`)
 
   let closed = false
