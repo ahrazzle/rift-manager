@@ -21,7 +21,7 @@ function parseGuideSections(md) {
       const title = line.slice(3).trim()
       current = { id: slug(title), title, body: '' }
     } else if (line.startsWith('# ')) {
-      intro.push(line.slice(2))
+      /* Document title — modal header already shows How to Play */
     } else if (current) {
       current.body += `${line}\n`
     } else if (line.trim()) {
