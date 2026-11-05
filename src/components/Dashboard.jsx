@@ -14,6 +14,7 @@ import Preparation from './Preparation.jsx'
 import MatchReview from './MatchReview.jsx'
 import TeamCrest from './TeamCrest.jsx'
 import MatchIcon from './MatchIcon.jsx'
+import { fmtMoney } from '../game/economy.js'
 
 const FALLBACK_SCHEDULE = buildLCKSchedule()
 const STATIC_NAME = Object.fromEntries(TEAMS.map((t) => [t.id, t.name]))
@@ -120,7 +121,7 @@ function Toasts({ toasts }) {
 
 function OffseasonReportPanel({ report, dispatch }) {
   if (!report) return null
-  const { seasonIndexCompleted, roster, lineupChanges, released, aiChurn } = report
+  const { seasonIndexCompleted, roster, lineupChanges, released, aiChurn, newFreeAgents, finance } = report
   return (
     <div className="card offseason-panel" aria-label="Off-season development report">
       <div className="offseason-head">
@@ -182,6 +183,34 @@ function OffseasonReportPanel({ report, dispatch }) {
             </li>
           ))}
         </ul>
+      )}
+      {newFreeAgents?.length > 0 && (
+        <>
+          <h3>New free agents</h3>
+          <ul className="offseason-list">
+            {newFreeAgents.map((p) => (
+              <li key={p.id}>
+                {p.name} ({ROLE_LABEL[p.role] ?? p.role}, OVR {p.ovr}, age {p.age})
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {finance && (
+        <>
+          <h3>Money</h3>
+          <ul className="offseason-list">
+            <li>
+              Sponsorship {fmtMoney(finance.sponsorship)} + prize {fmtMoney(finance.prize)} = {fmtMoney(finance.income)} in
+            </li>
+            <li>
+              Wages −{fmtMoney(finance.wages)} · renewals −{fmtMoney(finance.renewals)}
+            </li>
+            <li>
+              Budget {fmtMoney(finance.budgetBefore)} → {fmtMoney(finance.budgetAfter)}
+            </li>
+          </ul>
+        </>
       )}
     </div>
   )

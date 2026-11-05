@@ -66,11 +66,23 @@ The header strip always shows what the board expects of you (from "Avoid last pl
 
 **Press conferences** pop up after matches. Answer boldly, measuredly, or deflect. Your answers move player morale and board confidence. Talking big on a losing streak backfires in the locker room.
 
-**Money.** Signing a free agent costs a fee from your budget. Every player also earns an annual wage, deducted each offseason. Star players cost more. If you can't afford a signing, the deal dies.
+**Money.** Signing a free agent costs a fee from your budget. Every player also earns an annual wage, deducted each offseason. Star players cost more. If you can't afford a signing, the deal dies. Each offseason brings sponsorship (scaled to your tier) plus prize money for a title, a final, or a playoff finish, so a Career budget is topped up every year instead of only draining.
 
 **Contracts and morale.** Every player has a contract length and morale. Contracts tick down each season. Expired players must be re-signed (cheaper than a new signing) or they walk to free agency. Starters are never released. Morale rises with wins and titles, falls with losses and bench time, and feeds slightly into form.
 
 Miss the board's expectation and confidence drops. Beat it and confidence rises. Hit zero and **you're sacked**. In Career mode that ends the run.
+
+## Transfers, trades, coaches, and academy (Career)
+
+Career mode adds a front office. Season mode has the Market but no trades, coach moves, or academy offers.
+
+**Free agents (Market).** Sign any free agent for a one-time fee of four times their annual wage. A signed player joins on a two-year deal and becomes the starter for their role. Each offseason, five new prospects — one per role, ages 17–19 — enter free agency, and the pool is capped at 20, so the Market keeps turning over instead of going stale. The offseason report on the Dashboard lists the new faces and the money in and out.
+
+**Player trades (Squad).** Swap one of your players for a player on another club, one for one. Both players must play the same role. The other club refuses a deal that loses it more than 3 OVR. If the player you trade away is a starter, the player you get takes their lineup spot.
+
+**Coaches (Squad).** Your head coach adds a flat bonus to match strength: (rating − 75) × 0.15, so a 90-rated coach is worth +2.25 and a 60-rated coach costs −2.25. Hire any coach from the free-agent pool for free; your old coach joins the pool. You can also trade coaches one for one with another club, but the other club refuses if your coach is 6 or more rating points below theirs.
+
+**Academy.** After Advance Season there is a roughly 30% chance an academy prospect is offered. Prospects are 17–19 with potential 8 above their OVR. Promoting one cuts your weakest bench player to make room; starters are never cut. Declining leaves the prospect in the academy for another split.
 
 ## The screens
 

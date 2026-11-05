@@ -127,7 +127,10 @@ for (const tid of Object.keys(s.teams)) for (const pl of s.teams[tid]) {
   if (pl.age !== preAll.get(pl.id) + 1) devOk = false
   if (pl.potential !== prePotAll.get(pl.id)) devOk = false
 }
-for (const pl of s.faPool) { if (pl.age !== preAll.get(pl.id) + 1) devOk = false }
+for (const pl of s.faPool) {
+  if (!preAll.has(pl.id)) continue // offseason refresh adds new prospects
+  if (pl.age !== preAll.get(pl.id) + 1) devOk = false
+}
 assert(devOk, 'ADVANCE_SEASON applies developPlayer to teams+faPool (age+1, potential fixed)')
 assert(s.offseasonReport && s.offseasonReport.roster.length > 0, 'ADVANCE_SEASON captures offseasonReport roster')
 assert(s.lineup && Object.keys(s.lineup).length === 5, 'lineup rebuilt after development')
