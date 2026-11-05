@@ -1,6 +1,6 @@
 # Source recovery — 2026-10-22
 
-The GitHub repository now separates the deployed production source from staging.
+This historical record describes recovery of production and staging source in October 2026.
 This recovery does not deploy or promote either Vercel project.
 
 ## Production baseline
@@ -20,8 +20,8 @@ passed. Generated JS and CSS byte-match https://lolsim.askaconsult.com/:
 
 ## Staging update
 
-Branch `update/staging` imports the 129 files from the owner's
-[Drive vault](https://drive.google.com/drive/folders/1-SHUV7zfFa2465XtQrW_apwnb8ki60G8).
+Branch `update/staging` imports the 129 files from the owner's private working-file
+archive.
 The vault contains staging, not the older production release. Downloads used raw
 files and all sizes matched Drive metadata. Application source was not rewritten.
 
@@ -43,12 +43,13 @@ creator credit. Builds containing that signature will have different asset hashe
 
 ## Documentation and deployment
 
-The original handoff, changelog and deployment runbook are preserved. Their old
-machine paths, local Git commit IDs, and statements about having no GitHub remote
-are historical. The repository is now https://github.com/ahrazzle/rift-manager.
+The original recovery retained historical handoff and deployment notes. Current
+contributor documentation has since been refreshed; old changelog entries, local
+commit IDs, and statements about having no GitHub remote describe past snapshots. The repository is now https://github.com/ahrazzle/rift-manager.
 
 Keep production and staging release decisions separate. Neither Vercel project
 was connected to this GitHub repository during recovery. The legacy `deploy.sh`
 uses whichever project is locally linked; use the pinned staging script and
-existing deployment runbook for staging work. Merging the source PR does not
-itself promote a Vercel deployment.
+existing deployment runbook for staging work. Merging source does not itself promote a Vercel deployment. Since November 5,
+pushes to `main` do trigger GitHub Pages publication; consult the current
+[runbook](DEPLOY-AND-CONTINUE.md) before merging.

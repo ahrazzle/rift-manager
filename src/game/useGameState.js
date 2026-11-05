@@ -105,6 +105,16 @@ function applyUserSeriesResult(state, form, standings, results, homeId, awayId, 
   return { results, standings, form }
 }
 
+// null means a legacy save no longer contains evidence of the regional final.
+function regionalFinalist(state) {
+  if (typeof state.playoffFinalist === 'boolean') return state.playoffFinalist
+  const t = state.tournament
+  const final = t?.kind === 'playoffs' ? t.rounds?.at(-1)?.matches?.[0] : null
+  if (final?.homeId && final?.awayId) return final.homeId === state.teamId || final.awayId === state.teamId
+  if (state.teamId && state.playoffChampionId === state.teamId) return true
+  return null
+}
+
 // Interactive modes share the ordinary split -> playoff transition.
 function finishInteractiveRound(state, updates) {
   const next = { ...state, ...updates, round: state.round + 1, press: { pending: true } }
@@ -115,6 +125,7 @@ function finishInteractiveRound(state, updates) {
       const { semis } = buildPlayoffs(ordered, 4)
       next.phase = 'playoffs'
       next.playoffChampionId = null
+      next.playoffFinalist = null
       next.tournament = { kind: 'playoffs', rounds: [
         { name: 'Semifinal', matches: semis.map(([h, a]) => tournamentMatch(h, a, state.teamId)) },
         { name: 'Final', matches: [tournamentMatch(null, null, state.teamId)] },
@@ -209,6 +220,7 @@ function freshState(seasonYear = 'present') {
     league: season.league ?? 'LCK',
     phase: 'regional', // 'regional' | 'playoffs' | 'msi' | 'worlds' | 'done'
     tournament: null, // Tournament | null (multileague-design §4)
+    playoffFinalist: null,
     playoffChampionId: null, // P1 item 11: playoff winner (top-level, survives bracket replace)
     seriesOptions: { fearless: false }, // P1 item 10: global series toggles
     pendingPromotion: null, // P1 item 8: { player, teamId } | null (academy offer)
@@ -830,6 +842,7 @@ function baseReducer(state, action) {
             phase: 'playoffs',
             tournament,
             playoffChampionId: null,
+            playoffFinalist: null,
             press: { pending: true },
           }
         }
@@ -1182,10 +1195,10 @@ function baseReducer(state, action) {
       if (board) {
         const exp = board.expectation
         const met = exp === 'Win the title' ? champ
-          : exp === 'Reach the final' ? champ || place <= 2
+          : exp === 'Reach the final' ? regionalFinalist(state)
           : exp === 'Make the playoffs' ? place <= 4
           : place < ordered.length
-        board.confidence = Math.max(0, Math.min(100, board.confidence + (met ? 15 : -20)))
+        board.confidence = Math.max(0, Math.min(100, board.confidence + (met == null ? 0 : met ? 15 : -20)))
         if (board.confidence <= 0) sacked = true
       }
       if (sacked) return {
@@ -1262,6 +1275,7 @@ function baseReducer(state, action) {
         trainedRound: 0,
         tournament: null,
         phase: 'regional',
+        playoffFinalist: null,
         playoffChampionId: null, // P1 item 11: cleared with the season reset
         teams,
         faPool: fa,
@@ -1338,7 +1352,7 @@ function baseReducer(state, action) {
       const { tournament, teamMeta } = buildTournamentObject(state, kind)
       const rv = action.resolver ?? 'biased'
       tournament.resolver = rv === 'biased' || rv === 'random' || rv === 'manual' ? rv : 'biased'
-      return { ...state, tournament, teamMeta, phase: kind }
+      return { ...state, playoffFinalist: regionalFinalist(state), tournament, teamMeta, phase: kind }
     }
 
     case 'SET_RESOLVER': {
@@ -1426,14 +1440,19 @@ function baseReducer(state, action) {
       let championId = null
       let phase = state.phase
       let playoffChampionId = state.playoffChampionId ?? null
+      let playoffFinalist = state.playoffFinalist ?? null
       if (ri === rounds.length - 1) {
         status = 'done'
         championId = played[0].winner
         if (t.kind === 'worlds') phase = 'done'
         // P1 item 11: stamp the playoff winner on state when the final resolves.
-        if (t.kind === 'playoffs') playoffChampionId = championId
+        if (t.kind === 'playoffs') {
+          playoffChampionId = championId
+          const final = played[0]
+          playoffFinalist = final.homeId === state.teamId || final.awayId === state.teamId
+        }
       }
-      return { ...state, tournament: { ...t, rounds, status, championId, revealedRounds: Math.min((t.revealedRounds ?? 1) + 1, rounds.length), resolver: t.resolver }, phase, playoffChampionId }
+      return { ...state, tournament: { ...t, rounds, status, championId, revealedRounds: Math.min((t.revealedRounds ?? 1) + 1, rounds.length), resolver: t.resolver }, phase, playoffChampionId, playoffFinalist }
     }
 
     case 'RESOLVE_EVENT': {
@@ -1897,10 +1916,19 @@ function migrateMatchExperience(parsed) {
   return parsed
 }
 
-export function load() {
+function isOnboardingSave(parsed) {
+  return parsed.teamId === null && parsed.mode === 'season' &&
+    parsed.round === 1 && parsed.results.length === 0 &&
+    parsed.managerName === '' && parsed.finished === false &&
+    parsed.campaign === null && parsed.career === null &&
+    Object.keys(parsed.teams).length > 0
+}
+
+// Standalone callers keep their fallback contract; recovery needs the failure.
+export function load({ strict = false } = {}) {
   try {
     const raw = readSave()
-    if (!raw) return freshState()
+    if (raw == null) return freshState()
     const parsed = JSON.parse(raw)
     if (!parsed || parsed.version !== 1 || !parsed.teams || typeof parsed.teams !== 'object' ||
         Array.isArray(parsed.teams) || !Object.values(parsed.teams).every((players) =>
@@ -1908,27 +1936,27 @@ export function load() {
         !Array.isArray(parsed.results) || !Array.isArray(parsed.faPool) ||
         !Number.isInteger(parsed.round) || parsed.round < 1 ||
         !['standings', 'lineup', 'form', 'tactic'].every((key) => parsed[key] &&
-          typeof parsed[key] === 'object' && !Array.isArray(parsed[key]))) return freshState()
+          typeof parsed[key] === 'object' && !Array.isArray(parsed[key]))) throw new Error('The saved game is invalid.')
     // Old season saves predate campaign mode: default to season.
     if (parsed.mode == null) parsed.mode = 'season'
-    if (!['season', 'campaign', 'career', 'draft', 'igl', 'gauntlet'].includes(parsed.mode)) return freshState()
+    if (!['season', 'campaign', 'career', 'draft', 'igl', 'gauntlet'].includes(parsed.mode)) throw new Error('The saved game is invalid.')
     if (parsed.mode === 'campaign') {
       const progress = parsed.campaign
       const campaign = campaignById(progress?.campaignId)
       if (!campaign || !Number.isInteger(progress.nodeIndex) || progress.nodeIndex < 0 ||
-          !['active', 'failed', 'cleared'].includes(progress.status) || !Array.isArray(progress.nodeResults)) return freshState()
+          !['active', 'failed', 'cleared'].includes(progress.status) || !Array.isArray(progress.nodeResults)) throw new Error('The saved game is invalid.')
       if ((campaign.kind ?? 'series') === 'season') {
         if (parsed.teamId != null || parsed.seasonYear !== campaign.seasonYear ||
-            progress.nodeIndex !== 0 || progress.nodeResults.length || progress.status === 'failed') return freshState()
+            progress.nodeIndex !== 0 || progress.nodeResults.length || progress.status === 'failed') throw new Error('The saved game is invalid.')
       } else {
         if (parsed.teamId !== campaign.playerTeamId || progress.nodeIndex > campaign.nodes.length ||
             (progress.status === 'active' && progress.nodeIndex === campaign.nodes.length) ||
             !progress.nodeResults.every((r) => r && campaign.nodes.some((n) => n.id === r.nodeId) &&
-              Number.isInteger(r.slot) && r.slot >= 1 && r.slot <= CAMPAIGN_SLOTS)) return freshState()
+              Number.isInteger(r.slot) && r.slot >= 1 && r.slot <= CAMPAIGN_SLOTS)) throw new Error('The saved game is invalid.')
       }
-    } else if (!parsed.teamId || !Array.isArray(parsed.teams[parsed.teamId])) return freshState()
-    if (parsed.mode === 'campaign' && parsed.teamId && !Array.isArray(parsed.teams[parsed.teamId])) return freshState()
-    if (parsed.mode === 'career' && (!parsed.career || typeof parsed.career !== 'object')) return freshState()
+    } else if (parsed.teamId === null ? !isOnboardingSave(parsed) : (typeof parsed.teamId !== 'string' || !parsed.teamId || !Array.isArray(parsed.teams[parsed.teamId]))) throw new Error('The saved game is invalid.')
+    if (parsed.mode === 'campaign' && parsed.teamId && !Array.isArray(parsed.teams[parsed.teamId])) throw new Error('The saved game is invalid.')
+    if (parsed.mode === 'career' && (!parsed.career || typeof parsed.career !== 'object')) throw new Error('The saved game is invalid.')
     if (!('campaign' in parsed)) parsed.campaign = null
     // Old saves predate career mode: null unless a career save.
     if (!('career' in parsed)) parsed.career = null
@@ -2003,27 +2031,58 @@ export function load() {
     else if (typeof parsed.seriesOptions.fearless !== 'boolean') parsed.seriesOptions.fearless = false
     if (!('pendingPromotion' in parsed)) parsed.pendingPromotion = null
     if (!('playoffChampionId' in parsed)) parsed.playoffChampionId = null
+    if (typeof parsed.playoffFinalist !== 'boolean') parsed.playoffFinalist = regionalFinalist(parsed)
     return migrateMatchExperience(parsed)
-  } catch {
+  } catch (error) {
+    if (strict) throw error
     return freshState()
   }
 }
 
-export function useGameState() {
-  const [state, dispatch] = useReducer(reducer, undefined, load)
-  const [storageError, setStorageError] = useState(null)
+const LOAD_ERROR = 'Your saved game could not be loaded. The existing save has been kept. Retry loading, or explicitly replace it to start over.'
+const SAVE_ERROR = 'Progress could not be saved in this browser. Free some storage, then retry saving.'
+function initialLoad() {
+  try { return { state: load({ strict: true }), loadError: null } }
+  catch { return { state: freshState(), loadError: LOAD_ERROR } }
+}
 
+function recoveryReducer(snapshot, action) {
+  if (action.type === '__RESTORE_SAVE') return { state: action.state, loadError: null }
+  if (action.type === '__LOAD_FAILED') return { ...snapshot, loadError: LOAD_ERROR }
+  if (snapshot.loadError) return snapshot
+  return { ...snapshot, state: reducer(snapshot.state, action) }
+}
+
+export function useGameState() {
+  const [{ state, loadError }, dispatch] = useReducer(recoveryReducer, undefined, initialLoad)
+  const [storageError, setStorageError] = useState(null)
+  const retryLoad = useCallback(() => {
+    try {
+      dispatch({ type: '__RESTORE_SAVE', state: load({ strict: true }) })
+      setStorageError(null)
+    } catch { dispatch({ type: '__LOAD_FAILED' }) }
+  }, [])
+  const replaceSave = useCallback(() => {
+    const replacement = freshState()
+    try {
+      // Only unlock the game after explicit replacement has actually succeeded.
+      writeSave(replacement)
+      dispatch({ type: '__RESTORE_SAVE', state: replacement })
+      setStorageError(null)
+    } catch {
+      setStorageError('The saved game could not be replaced. Restore browser storage access or free some storage, then choose Replace saved game again. You can also retry loading to recover the existing save.')
+    }
+  }, [])
   const retrySave = useCallback(() => {
+    if (loadError) return
     try {
       writeSave(state)
       setStorageError(null)
-    } catch {
-      setStorageError('Progress could not be saved in this browser. Free some storage, then retry saving.')
-    }
-  }, [state])
+    } catch { setStorageError(SAVE_ERROR) }
+  }, [state, loadError])
   useEffect(() => { retrySave() }, [retrySave])
 
-  return { state, dispatch, TOTAL_ROUNDS, storageError, retrySave }
+  return { state, dispatch, TOTAL_ROUNDS, storageError, retrySave, loadError, retryLoad, replaceSave }
 }
 
 export { TOTAL_ROUNDS, reducer }
