@@ -50,7 +50,7 @@ Captured from live feedback: development, transfers, and chemistry would deepen 
 ### Player development
 - **Shipped (Career):** annual age/potential growth (`developPlayer`), traits, academy offers, prep that lifts form (not permanent OVR).
 - **Gap:** visibility and agency more than a missing engine.
-- **Near:** surface age/potential in lineup; offseason growth/regression summary after Advance Season.
+- **Near:** visibility build per `docs/design/development-visibility.md`. Age and exact Pot on Squad, Market, and academy. Lineup outlook hint only (Career-honest). Dismissible Hub offseason report after Advance Season. No new growth rules.
 - **Mid:** richer academy choice without a second career sim.
 - **Later:** playing-time / mentoring OVR paths only if they stay office decisions.
 
