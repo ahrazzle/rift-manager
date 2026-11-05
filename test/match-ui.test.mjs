@@ -17,7 +17,7 @@ const click = async label => {
 }
 try {
   await build({ entryPoints: ['src/components/NewGame.jsx', 'src/components/MatchExperience.jsx', 'src/components/AnimatedRift.jsx'], outdir: temp,
-    bundle: true, format: 'esm', platform: 'node', packages: 'external', jsx: 'automatic', loader: { '.md': 'text' } })
+    bundle: true, format: 'esm', platform: 'node', packages: 'external', jsx: 'automatic', loader: { '.md': 'text', '.webp': 'file' } })
   const { default: NewGame } = await import(`${temp}/NewGame.js`)
   const { default: MatchExperience } = await import(`${temp}/MatchExperience.js`)
   const { default: AnimatedRift } = await import(`${temp}/AnimatedRift.js`)

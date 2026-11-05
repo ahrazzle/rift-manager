@@ -1,0 +1,464 @@
+/* Entry and matchday: the same arena, before and after a coach's decisions. */
+.newgame {
+  max-width: 1120px;
+  margin: 24px auto 48px;
+}
+.newgame .broadcast-entry {
+  position: relative;
+  isolation: isolate;
+  min-height: 430px;
+  border: 1px solid #354a62;
+  border-radius: 4px;
+  padding: 44px 44px 76px;
+  text-align: left;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(6, 16, 31, 0.98), rgba(6, 16, 31, 0.64) 44%, rgba(6, 16, 31, 0.05) 80%),
+    url('../assets/rift-venue.webp') center 56% / cover;
+  box-shadow: 0 24px 80px #0005;
+}
+.newgame .broadcast-entry::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: linear-gradient(90deg, #58e8ee 0 38%, transparent 38% 40%, #ff836f 40% 100%);
+}
+.entry-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 530px;
+}
+.entry-kicker {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #9cb7cb;
+  letter-spacing: 0.2em;
+}
+.entry-live-dot {
+  width: 6px;
+  height: 6px;
+  background: #58e8ee;
+  box-shadow: 0 0 14px #58e8ee;
+}
+.newgame .broadcast-entry h1 {
+  font:
+    800 clamp(64px, 8vw, 108px) / 0.88 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: -0.015em;
+  margin: 28px 0 20px;
+  text-transform: uppercase;
+  color: #f2f6fb;
+}
+.newgame .broadcast-entry h1 span {
+  display: block;
+  color: #58e8ee;
+}
+.newgame .broadcast-entry .tag {
+  margin: 0;
+  max-width: 350px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #c8d7e6;
+}
+.entry-begin {
+  margin-top: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+  padding: 11px 16px;
+  background: #58e8ee;
+  color: #06101f;
+  text-decoration: none;
+  font-weight: 750;
+  border-radius: 2px;
+}
+.entry-begin:hover {
+  background: #a0f4f7;
+}
+.entry-begin:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 4px;
+}
+.entry-bottom {
+  position: absolute;
+  bottom: 20px;
+  left: 44px;
+  right: 32px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #a6b8ca;
+}
+.entry-bottom span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #9cf2f3;
+}
+.newgame .entry-setup {
+  margin-top: 22px;
+  padding: clamp(20px, 4vw, 40px);
+  background: #101c2d;
+  border: 1px solid #293b52;
+  border-radius: 4px;
+  scroll-margin-top: 20px;
+}
+.entry-section-heading {
+  padding-bottom: 20px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid #2a3a50;
+}
+.entry-section-heading .eyebrow {
+  color: #58e8ee;
+  letter-spacing: 0.15em;
+}
+.entry-section-heading h2 {
+  font:
+    700 38px/1.1 'Barlow Condensed',
+    sans-serif;
+  text-transform: uppercase;
+  margin: 8px 0 0;
+}
+.entry-setup .field > span {
+  font-weight: 650;
+  color: #dbe5f1;
+}
+.entry-setup .team-grid {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+.entry-setup .team-pick {
+  min-height: 88px;
+  border-radius: 3px;
+  background: #132237;
+  border-color: #304259;
+  transition:
+    background 0.16s,
+    border-color 0.16s;
+}
+.entry-setup .team-pick:hover {
+  background: #1c3049;
+}
+.entry-setup .team-pick.active {
+  background: #173642;
+  box-shadow: inset 0 0 0 1px #58e8ee;
+}
+.entry-setup .team-pick .tp-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #f0f5fa;
+}
+.entry-setup .team-pick .tp-tier {
+  color: #a6b7ca;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.entry-setup .team-pick .tp-selected {
+  color: #58e8ee;
+}
+.entry-setup .team-pick .team-crest {
+  flex-shrink: 0;
+}
+.entry-setup .match-options {
+  padding: 20px;
+  background: #091524;
+  border-color: #334b60;
+  border-radius: 3px;
+  margin: 24px 0;
+}
+.entry-setup .match-options legend {
+  color: #58e8ee;
+  font-weight: 700;
+}
+.entry-setup .match-option {
+  background: #132338;
+  border-radius: 3px;
+}
+.entry-setup .match-option.enabled {
+  border-color: #58e8ee;
+  background: #15313e;
+}
+.entry-setup .match-option:last-child {
+  border-color: #688aa1;
+}
+.entry-setup .primary.big {
+  min-width: 240px;
+  padding: 15px 28px;
+  background: #58e8ee;
+  border-color: #58e8ee;
+  color: #081525;
+  border-radius: 3px;
+}
+.broadcast-next-match {
+  background:
+    linear-gradient(180deg, #0c1a2ac9, #0c1a2af5),
+    url('../assets/rift-venue.webp') center 48% / cover !important;
+  border: 1px solid #3c536b;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.broadcast-next-match .eyebrow {
+  color: #92dbe2;
+}
+.broadcast-next-match .side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.broadcast-next-match .side-sub {
+  margin-top: 12px;
+}
+.broadcast-next-match .vs-label {
+  color: #ff9988;
+  font-family: 'Barlow Condensed', sans-serif;
+}
+.broadcast-next-match .prob {
+  color: #7eeef2;
+}
+.broadcast-watch-option {
+  margin-top: 22px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #102b3b;
+  border: 1px solid #385d70;
+  border-radius: 3px;
+  color: #79e9ef;
+  cursor: pointer;
+}
+.broadcast-watch-option span {
+  flex: 1;
+}
+.broadcast-watch-option strong {
+  display: block;
+  color: #e0f7fb;
+  font-size: 14px;
+}
+.broadcast-watch-option small {
+  display: block;
+  margin-top: 3px;
+  color: #a9c6d4;
+  font-size: 12px;
+}
+.broadcast-watch-option input {
+  accent-color: #58e8ee;
+  width: 21px;
+  height: 21px;
+  flex-shrink: 0;
+}
+.broadcast-watch-option:focus-within {
+  outline: 2px solid #58e8ee;
+  outline-offset: 3px;
+}
+.broadcast-matchday {
+  background:
+    linear-gradient(180deg, #06101dd9, #06101ded),
+    url('../assets/rift-venue.webp') center / cover;
+}
+.broadcast-matchday .mw-stage {
+  width: min(880px, 100%);
+  padding: 48px 20px 30px;
+}
+.broadcast-matchday .mw-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+}
+.broadcast-matchday .mw-name {
+  font:
+    600 clamp(18px, 3vw, 28px) / 1.2 'Barlow Condensed',
+    sans-serif;
+  text-transform: uppercase;
+  color: #e9f3fc;
+}
+.broadcast-matchday .mw-vs {
+  font:
+    600 40px 'Barlow Condensed',
+    sans-serif;
+  color: #ff9988;
+}
+.broadcast-matchday .mw-bo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #9bbbcf;
+}
+.broadcast-matchday .mw-speed {
+  width: auto;
+  max-width: calc(100vw - 130px);
+  position: absolute;
+  top: 16px;
+  right: 100px;
+  z-index: 5;
+  font-size: 12px;
+  padding: 7px 10px;
+}
+.broadcast-matchday .mw-skip {
+  top: 16px;
+  right: 16px;
+}
+.broadcast-matchday .mw-verdict-word {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(64px, 12vw, 120px);
+  letter-spacing: 0.02em;
+}
+.broadcast-matchday .mw-verdict-word.win {
+  color: #72edf0;
+  text-shadow: 0 0 50px #58e8ee33;
+}
+.broadcast-matchday .mw-verdict-word.loss {
+  color: #ff9988;
+  text-shadow: 0 0 50px #ff836f22;
+}
+.broadcast-matchday .mw-game {
+  background: #102137ed;
+  border-radius: 3px;
+}
+.broadcast-matchday .mw-game.won {
+  border-color: #56d6dc;
+  box-shadow: none;
+}
+.broadcast-matchday .mw-game.lost {
+  border-color: #cb7a70;
+  box-shadow: none;
+}
+@media (max-width: 640px) {
+  .newgame {
+    margin-top: 8px;
+  }
+  .newgame .broadcast-entry {
+    padding: 32px 24px 76px;
+    min-height: 420px;
+    background-position: 60% center;
+  }
+  .newgame .broadcast-entry h1 {
+    font-size: 78px;
+  }
+  .entry-bottom {
+    left: 24px;
+    right: 24px;
+    flex-direction: column;
+    gap: 7px;
+    font-size: 9px;
+  }
+  .entry-setup .team-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .entry-setup .team-pick {
+    padding: 12px;
+  }
+  .entry-setup .team-pick .tp-name {
+    font-size: 15px;
+  }
+  .entry-setup .match-options {
+    padding: 14px;
+  }
+  .entry-setup .match-option-grid {
+    grid-template-columns: 1fr;
+  }
+  .entry-setup .primary.big {
+    width: 100%;
+    min-width: 0;
+  }
+  .broadcast-matchday .mw-walkout {
+    gap: 10px;
+  }
+  .broadcast-matchday .mw-team svg {
+    max-width: 80px;
+    height: auto;
+  }
+  .broadcast-matchday .mw-stage {
+    padding: 48px 0 20px;
+  }
+  .broadcast-matchday .mw-game {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .broadcast-matchday .mw-name {
+    font-size: 21px;
+  }
+  .broadcast-matchday .mw-bo {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .entry-setup .team-pick,
+  .broadcast-matchday,
+  .broadcast-matchday .mw-team,
+  .broadcast-matchday .mw-vs,
+  .broadcast-matchday .mw-game,
+  .broadcast-matchday .mw-verdict {
+    animation: none !important;
+    transition: none !important;
+  }
+  .broadcast-matchday .confetti {
+    display: none;
+  }
+  html:has(.newgame) {
+    scroll-behavior: auto;
+  }
+}
+/* Club labels stay legible in the two-column mobile picker. */
+.entry-setup .team-pick:has(> .team-crest) {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 12px;
+  grid-template-rows: auto auto;
+  column-gap: 9px;
+  row-gap: 2px;
+  text-align: left;
+}
+.entry-setup .team-pick > .team-crest {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  width: 38px;
+  height: 38px;
+}
+.entry-setup .team-pick:has(> .team-crest) .tp-name {
+  grid-column: 2;
+  grid-row: 1;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.25;
+}
+.entry-setup .team-pick:has(> .team-crest) .tp-tier {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 11px;
+}
+.entry-setup .team-pick:has(> .team-crest) .tp-selected {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  font-size: 14px;
+}
+@media (max-width: 440px) {
+  .entry-setup .team-pick:has(> .team-crest) {
+    grid-template-columns: 31px minmax(0, 1fr);
+    column-gap: 7px;
+    padding: 10px 8px;
+    position: relative;
+    min-height: 86px;
+  }
+  .entry-setup .team-pick > .team-crest {
+    width: 31px;
+    height: 36px;
+  }
+  .entry-setup .team-pick:has(> .team-crest) .tp-name {
+    font-size: 12px;
+    padding-right: 3px;
+  }
+  .entry-setup .team-pick:has(> .team-crest) .tp-selected {
+    position: absolute;
+    bottom: 4px;
+    right: 5px;
+  }
+}

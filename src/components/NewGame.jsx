@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import TeamCrest from './TeamCrest.jsx'
+import MatchIcon from './MatchIcon.jsx'
 import { SEASONS, SEASON_ORDER, LEAGUES, PRESENT_BY_LEAGUE, seasonsForLeague } from '../data/seasons.js'
 import MatchOptions from './MatchOptions.jsx'
 import { matchOptions } from '../game/matchSession.js'
@@ -54,19 +56,16 @@ export default function NewGame({ state, dispatch }) {
 
   return (
     <div className="newgame">
-      <div className="card hero">
-        <span className="eyebrow"><span className="hot">●</span> Live from the arena</span>
-        <h1>
-          <span className="logo">RIFT</span> Manager
-        </h1>
-        <p className="tag">
-          The dugout is yours. Draft the roster, set the tactics, train your
-          five, then take on the split, the playoffs, MSI and Worlds.
-          No mechanics, no grinding: <strong>pure head-coach craft</strong>.
-        </p>
-      </div>
+      <section className="card hero broadcast-entry" aria-labelledby="entry-title">
+        <div className="entry-copy">
+          <h1 id="entry-title"><span>RIFT</span> MANAGER</h1>
+          <p className="tag">Pick a roster and coach your team through the split.</p>
+          <a className="entry-begin" href="#club-setup">Choose your club <MatchIcon name="chevron" size={18} /></a>
+        </div>
+      </section>
 
-      <div className="card">
+      <div className="card entry-setup" id="club-setup">
+        <div className="entry-section-heading"><h2>Set up your team</h2></div>
         <label className="field">
           <span>Your name (coach)</span>
           <input
@@ -77,37 +76,37 @@ export default function NewGame({ state, dispatch }) {
         </label>
 
         <div className="field">
-          <span>Story mode</span>
+          <span>Choose your run</span>
           <div className="team-grid">
             <button
               className={mode === 'season' ? 'team-pick active mode-card' : 'team-pick mode-card'}
-              onClick={() => pickMode('season')}
+              aria-pressed={mode === 'season'} onClick={() => pickMode('season')}
             >
-              <span className="tp-name">⚡ Season</span>
+              <span className="tp-name"><MatchIcon name="flag" size={22} /> Season</span>
               <span className="tp-tier">One full split: draft, train, and chase the title.</span>
               {mode === 'season' && <span className="tp-selected">✓</span>}
             </button>
             <button
               className={mode === 'career' ? 'team-pick active mode-card' : 'team-pick mode-card'}
-              onClick={() => pickMode('career')}
+              aria-pressed={mode === 'career'} onClick={() => pickMode('career')}
             >
-              <span className="tp-name">🏆 Career</span>
+              <span className="tp-name"><MatchIcon name="trophy" size={22} /> Career</span>
               <span className="tp-tier">Ten seasons, one club. Build a dynasty.</span>
               {mode === 'career' && <span className="tp-selected">✓</span>}
             </button>
             <button
               className={mode === 'campaign' ? 'team-pick active mode-card' : 'team-pick mode-card'}
-              onClick={() => pickMode('campaign')}
+              aria-pressed={mode === 'campaign'} onClick={() => pickMode('campaign')}
             >
-              <span className="tp-name">📜 Scenario</span>
+              <span className="tp-name"><MatchIcon name="clock" size={22} /> Scenario</span>
               <span className="tp-tier">Relive legendary runs, series by series.</span>
               {mode === 'campaign' && <span className="tp-selected">✓</span>}
             </button>
             <button
               className={mode === 'gauntlet' ? 'team-pick active mode-card' : 'team-pick mode-card'}
-              onClick={() => pickMode('gauntlet')}
+              aria-pressed={mode === 'gauntlet'} onClick={() => pickMode('gauntlet')}
             >
-              <span className="tp-name">🔥 Gauntlet</span>
+              <span className="tp-name"><MatchIcon name="shield" size={22} /> Gauntlet</span>
               <span className="tp-tier">Five escalating series. One loss ends the run.</span>
               {mode === 'gauntlet' && <span className="tp-selected">✓</span>}
             </button>
@@ -166,10 +165,10 @@ export default function NewGame({ state, dispatch }) {
                   <button
                     key={t.id}
                     className={teamId === t.id ? 'team-pick active' : 'team-pick'}
-                    onClick={() => setTeamId(t.id)}
+                    aria-pressed={teamId === t.id} onClick={() => setTeamId(t.id)}
                     style={{ borderColor: t.color }}
                   >
-                    <span className="dot" style={{ background: t.color }} />
+                    <TeamCrest teamId={t.id} name={t.name} size={42} />
                     <span className="tp-name">{t.name}</span>
                     <span className="tp-tier">tier {t.tier}</span>
                     {teamId === t.id && <span className="tp-selected">✓</span>}
@@ -213,10 +212,10 @@ export default function NewGame({ state, dispatch }) {
                   <button
                     key={t.id}
                     className={teamId === t.id ? 'team-pick active' : 'team-pick'}
-                    onClick={() => setTeamId(t.id)}
+                    aria-pressed={teamId === t.id} onClick={() => setTeamId(t.id)}
                     style={{ borderColor: t.color }}
                   >
-                    <span className="dot" style={{ background: t.color }} />
+                    <TeamCrest teamId={t.id} name={t.name} size={42} />
                     <span className="tp-name">{t.name}</span>
                     <span className="tp-tier">tier {t.tier}</span>
                     {teamId === t.id && <span className="tp-selected">✓</span>}
@@ -275,8 +274,7 @@ export default function NewGame({ state, dispatch }) {
         )}
       </div>
       <p className="foot">
-        Ratings are game-balanced fictional values for simulation. All names live in
-        <code> src/data/lck.js</code> and are easy to edit.
+        Historical names. Fictional, game-balanced ratings. Your own timeline.
       </p>
     </div>
   )

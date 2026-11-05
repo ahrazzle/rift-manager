@@ -12,6 +12,8 @@ import Tournament, { phaseLabel } from './Tournament.jsx'
 import Matchday from './Matchday.jsx'
 import Preparation from './Preparation.jsx'
 import MatchReview from './MatchReview.jsx'
+import TeamCrest from './TeamCrest.jsx'
+import MatchIcon from './MatchIcon.jsx'
 
 const FALLBACK_SCHEDULE = buildLCKSchedule()
 const STATIC_NAME = Object.fromEntries(TEAMS.map((t) => [t.id, t.name]))
@@ -512,7 +514,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
       <h1 className="sr-only">Dashboard</h1>
       <PhaseBanner phase={state.phase} />
       <div
-        className="card matchup-card"
+        className="card matchup-card broadcast-next-match"
         style={{
           '--glow-a': `${colorOf(state, state.teamId)}33`,
           '--glow-b': `${colorOf(state, oppId)}2e`,
@@ -522,9 +524,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
         {myMatch ? (
           <div className="matchup">
             <div className="side">
-              <div className="team-tag" style={{ background: colorOf(state, state.teamId) }}>
-                {state.teamId}
-              </div>
+              <TeamCrest teamId={state.teamId} name={nameOf(state, state.teamId)} size={88} />
               <div className="side-sub"><strong>{nameOf(state, state.teamId)}</strong> · You</div>
             </div>
             <div className="vs">
@@ -535,9 +535,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
               </div>
             </div>
             <div className="side">
-              <div className="team-tag" style={{ background: colorOf(state, oppId) }}>
-                {oppId}
-              </div>
+              <TeamCrest teamId={oppId} name={nameOf(state, oppId)} size={88} />
               <div className="side-sub">{nameOf(state, oppId)}</div>
             </div>
           </div>
@@ -576,6 +574,13 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
           </details>
         )}
 
+        <label className="broadcast-watch-option">
+          <MatchIcon name="eye" size={22} />
+          <span><strong>Show simulation</strong><small>Watch your next series on the animated Rift.</small></span>
+          <input type="checkbox" role="switch" checked={!!state.matchOptions?.showSimulation || !!state.matchOptions?.igl}
+            disabled={!!state.matchOptions?.igl}
+            onChange={(e) => dispatch({ type: 'SET_MATCH_OPTION', key: 'showSimulation', value: e.target.checked })} />
+        </label>
         <div className="actions" style={{ marginTop: 14 }}>
           <button
             className="primary big"

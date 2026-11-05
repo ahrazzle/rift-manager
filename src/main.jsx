@@ -7,5 +7,8 @@ import './styles/primitives.css'
 import './styles.css'
 import './management.css'
 import './match.css'
+import './styles/matchday-broadcast.css'
+import './styles/match-broadcast.css'
+import './styles/rift-arena.css'
 
 createRoot(document.getElementById('root')).render(<App />)

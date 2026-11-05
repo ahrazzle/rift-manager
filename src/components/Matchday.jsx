@@ -7,14 +7,16 @@
 // ============================================================================
 import { useEffect, useMemo, useState } from 'react'
 import {
-  teamName, teamColor, seriesWon, seriesScore, streakOf,
+  teamName, seriesWon, seriesScore, streakOf,
   mvpOfGames, fmtKDA, coachNote,
 } from '../game/hype.js'
+import TeamCrest from './TeamCrest.jsx'
+import MatchIcon from './MatchIcon.jsx'
 import { SIM_SPEEDS } from '../game/useGameState.js'
 
 function Confetti({ n = 70 }) {
   const pieces = useMemo(() => {
-    const colors = ['#e2012d', '#f5b301', '#22c55e', '#3b82f6', '#ffffff', '#ff7ab0']
+    const colors = ['#58e8ee', '#ff836f', '#e9f4ff', '#2b8eac']
     return Array.from({ length: n }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
@@ -107,7 +109,7 @@ export default function Matchday({ state, result, games, onDone, roundLabel, onS
   const runningLosses = revealed - runningWins
 
   return (
-    <div className="matchday" role="dialog" aria-label="Matchday reveal">
+    <div className="matchday broadcast-matchday" role="dialog" aria-label="Matchday reveal">
       {phase !== 'verdict' && (
         <button className="mw-skip" onClick={skip}>Skip ▸▸</button>
       )}
@@ -115,8 +117,7 @@ export default function Matchday({ state, result, games, onDone, roundLabel, onS
         className="year-select mw-speed"
         value={state?.simSpeed ?? 'normal'}
         onChange={(e) => onSpeedChange?.(e.target.value)}
-        title="Sim speed"
-        style={{ position: 'absolute', top: 12, right: 90, fontSize: 12, padding: '4px 8px', zIndex: 5 }}
+        aria-label="Reveal speed" title="Sim speed"
       >
         {Object.keys(SIM_SPEEDS).map((k) => (
           <option key={k} value={k}>{SIM_SPEEDS[k].label}</option>
@@ -130,16 +131,16 @@ export default function Matchday({ state, result, games, onDone, roundLabel, onS
             </div>
             <div className="mw-walkout">
               <div className="mw-team">
-                <div className="mw-tag" style={{ background: teamColor(state, me) }}>{me}</div>
+                <TeamCrest teamId={me} name={teamName(state, me)} size={104} />
                 <div className="mw-name">{teamName(state, me)} · You</div>
               </div>
               <div className="mw-vs">VS</div>
               <div className="mw-team right">
-                <div className="mw-tag" style={{ background: teamColor(state, oppId) }}>{oppId}</div>
+                <TeamCrest teamId={oppId} name={teamName(state, oppId)} size={104} />
                 <div className="mw-name">{teamName(state, oppId)}</div>
               </div>
             </div>
-            <div className="mw-bo">Best of {isBO}</div>
+            <div className="mw-bo"><MatchIcon name="trophy" size={18} /> Best of {isBO} <span>·</span> {state.league ?? "Regional"} series</div>
           </>
         )}
 

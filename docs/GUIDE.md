@@ -26,7 +26,9 @@ Draft and IGL are toggles within Season, Career, Scenario and Gauntlet. Set your
 
 The map is a stylized illustration of generated match events. Positions and rotations are animated interpretations, not live League telemetry or a full movement/combat engine. The scoreboard reveals kills, deaths and objectives as events occur. The saved game is the one you see in the final detail and review.
 
-Use **Map display** to show player names, champion names, both, or no labels. Choose role icons, player initials, or champion portraits. Champion names and portraits use the actual draft picks; games without a draft retain player names and role icons. Player initials stand in for unavailable player photos. These display preferences survive refreshes and apply to later games. If a champion image cannot load, its role icon remains visible.
+The large numbers beside the teams count kills in the current game. **Games won** tracks the series. The clock shows the current gold lead. During playback, an elimination or secured objective briefly highlights the team responsible.
+
+Open **Map display** in the playback controls to show player names, champion names, both, or no labels. Choose role icons, player initials, or champion portraits. Champion names and portraits use the actual draft picks; games without a draft retain player names and role icons. Player initials stand in for unavailable player photos. These display preferences survive refreshes and apply to later games. If a champion image cannot load, its role icon remains visible.
 
 Laners hold their lanes while junglers patrol. Recorded skirmishes and objectives draw the relevant players into rotations; uninvolved lanes keep farming. Coaching calls guide the appropriate players, and marker spacing keeps grouped teams readable.
 
