@@ -630,10 +630,14 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
 .role-block { margin-bottom: 16px; }
 .role-head { border-left: 3px solid var(--team); padding-left: 10px; margin-bottom: 8px; }
 .role-label { font-weight: 800; letter-spacing: 0.1em; font-size: 12.5px; color: var(--text-2); text-transform: uppercase; }
-.plrows { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.plrows { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; min-width: 0; }
 @media (max-width: 640px) { .plrows { grid-template-columns: 1fr; } }
 .plrow {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start;
+  gap: 8px 10px;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   background: var(--s2);
   border: 1px solid var(--line);
   border-radius: 11px;
@@ -645,12 +649,45 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
 }
 .plrow:hover { border-color: #3a4560; transform: translateY(-1px); }
 .plrow.starter { border-color: var(--team); background: linear-gradient(180deg, rgba(226,1,45,0.10), var(--s2)); box-shadow: 0 0 0 1px rgba(226,1,45,0.3); }
-.pl-name { font-weight: 700; flex: 1; font-size: 14.5px; }
+.pl-name {
+  font-weight: 700;
+  flex: 1 1 5.5rem;
+  min-width: 0;
+  font-size: 14.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .pl-ovr {
+  flex-shrink: 0;
   background: #0b0e13; border: 1px solid var(--line); border-radius: 7px;
   padding: 3px 9px; font-weight: 800; font-size: 13px; font-variant-numeric: tabular-nums;
 }
-.bars { display: flex; gap: 7px; }
+.plrow > .pl-age,
+.plrow > .outlook-chip { flex-shrink: 0; max-width: 100%; }
+.plrow > .bars {
+  flex: 1 1 10rem;
+  min-width: 0;
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+.plrow > .tale {
+  flex: 1 1 11rem;
+  min-width: 0;
+  flex-wrap: wrap !important;
+  row-gap: 4px;
+}
+.plrow > .badge { flex-shrink: 0; margin-left: auto; }
+@media (max-width: 480px) {
+  .plrow > .bars,
+  .plrow > .tale {
+    flex-basis: 100%;
+    width: 100%;
+    margin-left: 0;
+  }
+  .plrow > .badge { margin-left: 0; }
+}
+.bars { display: flex; gap: 7px; flex-wrap: wrap; }
 .mini { display: flex; align-items: center; gap: 4px; }
 .mini-l { color: var(--text-3); font-size: 10px; font-weight: 700; }
 .mini-bar { width: 36px; height: 6px; background: #0b0e13; border-radius: 3px; overflow: hidden; }
