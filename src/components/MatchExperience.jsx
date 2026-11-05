@@ -9,10 +9,15 @@ import MatchIcon from './MatchIcon.jsx'
 import TeamCrest from './TeamCrest.jsx'
 import venue from '../assets/rift-venue.webp'
 import { simSpeedMs } from '../game/useGameState.js'
+import { scrollContentToTop } from '../utils/scrollToTop.js'
 
 export default function MatchExperience({ state, dispatch }) {
   const session = state.matchSession
   const { context: c, stage, options, current } = session
+
+  useEffect(() => {
+    scrollContentToTop()
+  }, [stage])
   const callHeading = useRef(null)
   useEffect(() => {
     if (stage === 'decision') callHeading.current?.focus({ preventScroll: true })
