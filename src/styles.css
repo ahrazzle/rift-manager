@@ -781,23 +781,6 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
 .guide-section .markdown h3 { font-size: 15px; margin-top: 12px; }
 .guide-footer p { margin: 0; color: var(--text-2); font-size: var(--fs-14); }
 
-.tutorial-coach {
-  position: fixed; inset: auto 16px 16px 16px; z-index: 90; display: flex; justify-content: center;
-  pointer-events: none;
-}
-.tutorial-card {
-  pointer-events: auto; width: min(480px, 100%);
-  border: 1px solid var(--line-strong); box-shadow: var(--e3);
-  animation: mw-verdict-in var(--d-base) var(--ease-out) both;
-}
-.tutorial-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
-.tutorial-kicker { font-size: var(--fs-12); color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
-.tutorial-card h2 { margin: 0 0 8px; font-family: var(--font-display); font-size: var(--fs-24); }
-.tutorial-note { font-size: var(--fs-14); color: var(--win); margin: 0 0 8px; }
-.tutorial-foot { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
-@media (max-width: 480px) {
-  .tutorial-coach { inset: auto 8px 72px 8px; }
-}
 .guide-cta { text-align: center; background: linear-gradient(180deg, #171320, var(--s1)); }
 .guide-cta h3 { margin: 0 0 6px; }
 .guide-cta .tag { color: var(--text-2); margin: 0 auto 14px; max-width: 560px; }
