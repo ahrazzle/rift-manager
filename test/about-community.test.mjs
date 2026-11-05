@@ -1,6 +1,6 @@
 // About / Community surfaces: reachable from footer + New Game, never a main nav tab.
 import assert from 'node:assert/strict'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { build } from 'esbuild'
 import React from 'react'
 import { create, act } from 'react-test-renderer'
@@ -13,6 +13,13 @@ assert.match(GITHUB_REPO, /ahrazzle\/rift-manager/)
 assert.match(GITHUB_CONTRIBUTING, /CONTRIBUTING\.md/)
 assert.match(GITHUB_DISCUSSIONS, /discussions/)
 assert.match(LIVE_PLAY_URL, /rift\.askaconsult\.com/)
+
+const aboutSource = await readFile(new URL('../src/components/AboutCommunity.jsx', import.meta.url), 'utf8')
+assert.match(aboutSource, /Escape/)
+assert.match(aboutSource, /addEventListener\('keydown'/)
+assert.match(aboutSource, /previouslyFocused/)
+assert.match(aboutSource, /focusables/)
+assert.doesNotMatch(aboutSource, /We are not building a chemistry meter/)
 
 const temp = await mkdtemp(new URL('./.about-community-', import.meta.url).pathname)
 const textOf = (node) => typeof node === 'string' ? node : (node.children || []).map(textOf).join('')
@@ -45,16 +52,24 @@ try {
   })
   const aboutText = textOf(tree.root)
   assert.match(aboutText, /About \/ Community/)
+  assert.match(aboutText, /through the loop/)
   assert.match(aboutText, /prepare → decide → watch → adjust/)
+  assert.match(aboutText, /Play at/)
+  assert.doesNotMatch(aboutText, /Play free at/)
   assert.match(aboutText, /Season/)
   assert.match(aboutText, /Career/)
   assert.match(aboutText, /Scenario/)
   assert.match(aboutText, /Gauntlet/)
-  assert.match(aboutText, /Draft \/ IGL/)
+  assert.match(aboutText, /BO ladder/)
+  assert.doesNotMatch(aboutText, /best-of ladder/i)
+  assert.match(aboutText, /Draft \/ IGL \(add-ons\)/)
+  assert.match(aboutText, /Pull requests, issues, and discussions are welcome/)
+  assert.match(aboutText, /Keep PRs focused/)
+  assert.match(aboutText, /Keep old saves loading/)
   assert.match(aboutText, /public repository/i)
   assert.doesNotMatch(aboutText, /open source/i)
   assert.match(aboutText, /Data Dragon/)
-  assert.match(aboutText, /not building a chemistry meter/i)
+  assert.doesNotMatch(aboutText, /chemistry meter/i)
   assert.match(aboutText, /Original champion icons/)
   assert.ok(aboutText.includes(GITHUB_REPO.replace(/^https:\/\//, '')) || aboutText.includes('github.com/ahrazzle/rift-manager'))
   await act(async () => tree.root.findAllByType('button').find((b) => /Close/.test(textOf(b))).props.onClick())
@@ -69,8 +84,11 @@ try {
   const footerText = textOf(tree.root)
   assert.match(footerText, /Help shape the game/)
   assert.match(footerText, /prepare, decide, watch, adjust/)
+  assert.match(footerText, /Champion portraits, when shown in draft or map display/)
+  assert.match(footerText, /Club crests and many UI glyphs are original project art/)
+  assert.match(footerText, /Original champion icons and crests are welcome/)
+  assert.doesNotMatch(footerText, /see About \/ Community/)
   assert.match(footerText, /Data Dragon/)
-  assert.match(footerText, /Original champion icons/)
   assert.doesNotMatch(footerText, /open source/i)
   const aboutBtn = tree.root.findAllByType('button').find((b) => textOf(b).includes('About / Community'))
   assert.ok(aboutBtn, 'footer exposes About / Community button')

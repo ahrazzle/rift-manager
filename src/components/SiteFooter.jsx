@@ -27,9 +27,9 @@ export default function SiteFooter({ onOpenAbout }) {
       </section>
       <p className="footer-disclaimer faint">
         League of Legends names are Riot Games trademarks used as third-party references.
-        Champion portraits (draft / map display) load from Riot&apos;s Data Dragon CDN with
-        initials or role-icon fallbacks; club crests and many UI glyphs are original. Not
-        affiliated with Riot. Original champion icons and crests welcome — see About / Community.
+        Champion portraits, when shown in draft or map display, load from Riot&apos;s Data Dragon
+        CDN with initials or role-icon fallbacks. Club crests and many UI glyphs are original
+        project art. Not affiliated with Riot. Original champion icons and crests are welcome.
       </p>
       <a className="aska-signature" href="https://digital.askaconsult.com/" target="_blank" rel="noreferrer">
         <span>Made by</span> Aska Digital

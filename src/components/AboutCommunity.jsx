@@ -1,20 +1,80 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import MatchIcon from './MatchIcon.jsx'
 import { GITHUB_CONTRIBUTING, GITHUB_DISCUSSIONS, GITHUB_REPO, LIVE_PLAY_URL } from '../siteLinks.js'
 import { scrollContentToTop } from '../utils/scrollToTop.js'
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+
 export default function AboutCommunity({ onClose }) {
+  const dialogRef = useRef(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
   useEffect(() => {
     scrollContentToTop()
+  }, [])
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return undefined
+
+    const trigger = document.activeElement
+    const previouslyFocused =
+      trigger && typeof trigger.focus === 'function' ? trigger : null
+
+    const focusables = () =>
+      [...dialog.querySelectorAll(FOCUSABLE)].filter(
+        (el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true',
+      )
+
+    const initial = focusables()[0] || dialog
+    initial.focus({ preventScroll: true })
+
+    function onKeyDown(event) {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        event.stopPropagation()
+        onCloseRef.current()
+        return
+      }
+      if (event.key !== 'Tab') return
+      const items = focusables()
+      if (!items.length) {
+        event.preventDefault()
+        dialog.focus({ preventScroll: true })
+        return
+      }
+      const first = items[0]
+      const last = items[items.length - 1]
+      const active = document.activeElement
+      if (event.shiftKey) {
+        if (active === first || !dialog.contains(active)) {
+          event.preventDefault()
+          last.focus({ preventScroll: true })
+        }
+      } else if (active === last || !dialog.contains(active)) {
+        event.preventDefault()
+        first.focus({ preventScroll: true })
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      if (previouslyFocused?.isConnected) previouslyFocused.focus({ preventScroll: true })
+    }
   }, [])
 
   return (
     <div className="modal-backdrop about-backdrop" onClick={onClose}>
       <div
+        ref={dialogRef}
         className="modal about-modal broadcast-guide"
         role="dialog"
         aria-modal="true"
         aria-labelledby="about-community-title"
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-head guide-modal-head">
@@ -32,8 +92,8 @@ export default function AboutCommunity({ onClose }) {
             <h3>What it is</h3>
             <p>
               Rift Manager is a free browser League of Legends esports management sim.
-              You coach a club through <strong>prepare → decide → watch → adjust</strong>.
-              Play free at{' '}
+              You coach a club through the loop <strong>prepare → decide → watch → adjust</strong>.
+              Play at{' '}
               <a href={LIVE_PLAY_URL} target="_blank" rel="noreferrer">{LIVE_PLAY_URL.replace(/^https:\/\//, '')}</a>.
             </p>
           </article>
@@ -44,18 +104,18 @@ export default function AboutCommunity({ onClose }) {
               <li><strong>Season</strong> — one full split: weeks, playoffs, MSI, Worlds.</li>
               <li><strong>Career</strong> — multi-season dynasty with aging, contracts, and board pressure.</li>
               <li><strong>Scenario</strong> — short authored story campaigns.</li>
-              <li><strong>Gauntlet</strong> — escalating best-of ladder; one loss ends the run.</li>
-              <li><strong>Draft / IGL</strong> — optional pick/ban and one macro call per game. Show simulation watches the map without changing the result.</li>
+              <li><strong>Gauntlet</strong> — escalating BO ladder; one loss ends the run.</li>
+              <li><strong>Draft / IGL (add-ons)</strong> — optional pick/ban and one macro call per game; Show simulation watches the map without changing the result.</li>
             </ul>
           </article>
 
           <article className="guide-section card accent-win">
             <h3>Public repository</h3>
             <p>
-              Source lives on GitHub at{' '}
+              Source lives at{' '}
               <a href={GITHUB_REPO} target="_blank" rel="noreferrer">{GITHUB_REPO.replace(/^https:\/\//, '')}</a>.
-              The repository is public. Issues, discussions, and pull requests are welcome.
-              There is no license file yet — treat this as a public repository on GitHub.
+              The repository is public. Pull requests, issues, and discussions are welcome.
+              Until a license file exists, treat this as a public repository on GitHub.
             </p>
             <p className="footer-contribute-links about-links">
               <a className="btn btn-quiet" href={GITHUB_REPO} target="_blank" rel="noreferrer">GitHub repository</a>
@@ -67,9 +127,9 @@ export default function AboutCommunity({ onClose }) {
           <article className="guide-section card accent-neutral">
             <h3>How to contribute</h3>
             <p>
-              Read <strong>CONTRIBUTING.md</strong> first. Use Discussions for open-ended ideas;
-              open issues for bugs and concrete work. Keep each pull request focused. Add or update
-              tests when behavior changes. Keep old browser saves loading across versions.
+              Read <strong>CONTRIBUTING.md</strong> first. Prefer Discussions for open-ended ideas;
+              issues for bugs and concrete work. Keep PRs focused. Add or update tests for behavior
+              changes. Keep old saves loading.
             </p>
           </article>
 
@@ -78,7 +138,7 @@ export default function AboutCommunity({ onClose }) {
             <p>
               Tell us what hurt, what sang, and what would keep you coaching: draft feel,
               player development visibility, transfers with real tradeoffs, morale and board
-              consequences. We are not building a chemistry meter.
+              consequences.
             </p>
           </article>
 
