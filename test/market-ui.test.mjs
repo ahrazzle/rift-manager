@@ -4,7 +4,7 @@ import { build } from 'esbuild'
 import React from 'react'
 import { create, act } from 'react-test-renderer'
 import { reducer } from '../src/game/useGameState.js'
-import { signingFee, playerWage, fmtMoney } from '../src/game/economy.js'
+import { signingFee, playerWage, fmtMoney, fmtMoneyExact } from '../src/game/economy.js'
 
 const temp = await mkdtemp(new URL('./.market-ui-', import.meta.url).pathname)
 const textOf = (node) => typeof node === 'string' ? node : (node.children || []).map(textOf).join('')
@@ -21,12 +21,18 @@ try {
     if (tree) tree.update(view)
     else tree = create(view)
   })
+  // #28: one dollar short must not read as affordable. The rounded budget
+  // label and the exact fee must differ, and the card states the shortfall.
+  assert.equal(fmtMoney(0), '$0', 'zero budget never reads as $0K')
+  assert.notEqual(fmtMoney(fee - 1), fmtMoneyExact(fee), 'test data really collides when rounded')
   state = { ...state, finance: { budget: fee - 1 }, faPool: [player] }
   await render()
   assert.equal(tree.root.findByType('button').props.disabled, true)
   assert.match(textOf(tree.root), /Insufficient budget/)
-  assert.ok(textOf(tree.root).includes(`Signing fee: ${fmtMoney(fee)}`))
-  assert.ok(textOf(tree.root).includes(`Annual wage: ${fmtMoney(playerWage(player))}`))
+  assert.ok(textOf(tree.root).includes(`Transfer budget: ${fmtMoney(fee - 1)}`))
+  assert.ok(textOf(tree.root).includes(`Signing fee: ${fmtMoneyExact(fee)}`))
+  assert.ok(textOf(tree.root).includes(`Annual wage: ${fmtMoneyExact(playerWage(player))}`))
+  assert.ok(textOf(tree.root).includes('Short by $1'))
   const blocked = state
   assert.equal(reducer(state, { type: 'SIGN', playerId: player.id }), blocked, 'reducer still rejects unaffordable signings')
 
@@ -39,6 +45,14 @@ try {
   assert.equal(state.lineup[player.role], player.id)
   await render()
   assert.match(textOf(tree.root), /No free agents available/)
+
+  // Zero budget reads "$0", never "$0K", and the shortfall is exact.
+  state = { ...blocked, finance: { budget: 0 } }
+  await render()
+  assert.equal(tree.root.findByType('button').props.disabled, true)
+  assert.ok(textOf(tree.root).includes('Transfer budget: $0'))
+  assert.ok(!textOf(tree.root).includes('$0K'))
+  assert.ok(textOf(tree.root).includes(`Short by ${fmtMoneyExact(fee)}`))
 
   state = { ...blocked, finance: null }
   await render()

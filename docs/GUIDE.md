@@ -96,7 +96,7 @@ Early beats Late and Late beats Early, so phase is a guessing game against the e
 
 **Results.** Every played series, newest first, with the score and a short match log. Your games carry a WIN or LOSS tag.
 
-**Market.** A pool of free agents across all roles. Each listing shows the signing fee and annual wage. Sign only when your transfer budget covers the fee — unaffordable deals stay disabled. Signed players join your roster as starters in their role. The pool only shrinks, so sign early if a role needs help.
+**Market.** A pool of free agents across all roles. Each listing shows the exact signing fee and annual wage. Sign only when your transfer budget covers the fee — unaffordable deals stay disabled, and the card shows exactly how much you are short. Signed players join your roster as starters in their role. The pool only shrinks, so sign early if a role needs help.
 
 ## How a match simulates
 
