@@ -1,4 +1,4 @@
-# Rift Manager
+<h1><img src="public/brand/rift-signature.svg" alt="Rift Manager" width="320" height="135" /></h1>
 
 A League of Legends esports management sim by [Aska Digital](https://digital.askaconsult.com/).
 Build a roster, prepare your team, make tactical calls, and chase regional and

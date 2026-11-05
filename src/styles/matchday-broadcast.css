@@ -43,17 +43,13 @@
   box-shadow: 0 0 14px #58e8ee;
 }
 .newgame .broadcast-entry h1 {
-  font:
-    800 clamp(64px, 8vw, 108px) / 0.88 'Barlow Condensed',
-    sans-serif;
-  letter-spacing: -0.015em;
-  margin: 28px 0 20px;
-  text-transform: uppercase;
-  color: #f2f6fb;
+  margin: 28px 0 24px;
+  line-height: 0;
 }
-.newgame .broadcast-entry h1 span {
+.entry-brand {
   display: block;
-  color: #58e8ee;
+  width: min(448px, 100%);
+  height: auto;
 }
 .newgame .broadcast-entry .tag {
   margin: 0;
@@ -341,7 +337,7 @@
     background-position: 60% center;
   }
   .newgame .broadcast-entry h1 {
-    font-size: 78px;
+    margin-top: 24px;
   }
   .entry-bottom {
     left: 24px;

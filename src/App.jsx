@@ -22,13 +22,14 @@ import PressModal from './components/PressModal.jsx'
 import { fmtMoney } from './game/economy.js'
 import ConfirmDialog from './components/ConfirmDialog.jsx'
 
-function Brand() {
-  return <div className="broadcast-brand">
-    <svg width="32" height="32" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
-      <path fill="#71e7ef" d="M2 33 13 7h18l-5 8H17l-2 5h13L16 33h-6l8-9h-5l-4 9z"/>
-      <path fill="#ff826d" d="m24 33 11-15-5 15z"/>
-    </svg>
-    <span>RIFT <b>MANAGER</b></span>
+function Brand({ compact = false }) {
+  return <div className={`broadcast-brand${compact ? ' broadcast-brand-compact' : ''}`}>
+    <img
+      src={`${(import.meta.env?.BASE_URL ?? '/')}brand/${compact ? 'rift-mark.svg' : 'rift-manager.svg'}`}
+      width={compact ? 40 : 140}
+      height={compact ? 40 : 50}
+      alt="Rift Manager"
+    />
   </div>
 }
 
@@ -149,7 +150,7 @@ export default function App() {
       <div className="app broadcast-shell">
         <a className="skip" href="#main-content">Skip to main content</a>
         <header className="topbar">
-          <Brand />
+          <Brand compact />
           <div className="topbar-spacer" />
           <button className="ghost" onClick={() => setGuideOpen(true)}>
             How to Play
