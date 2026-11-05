@@ -118,6 +118,75 @@ function Toasts({ toasts }) {
   )
 }
 
+function OffseasonReportPanel({ report, dispatch }) {
+  if (!report) return null
+  const { seasonIndexCompleted, roster, lineupChanges, released, aiChurn } = report
+  return (
+    <div className="card offseason-panel" aria-label="Off-season development report">
+      <div className="offseason-head">
+        <span className="eyebrow">📋 Off-season report · split {seasonIndexCompleted} complete</span>
+        <button type="button" className="ghost" onClick={() => dispatch({ type: 'DISMISS_OFFSEASON_REPORT' })}>
+          Dismiss
+        </button>
+      </div>
+      <p className="hint">Career-only annual growth from Advance Season. Potential is a fixed cap — not chemistry or mentoring.</p>
+      <h3>Roster development</h3>
+      <ul className="offseason-roster">
+        {roster.map((p) => {
+          const delta = p.ovrAfter - p.ovrBefore
+          const deltaStr = delta === 0 ? '±0' : `${delta > 0 ? '+' : ''}${delta}`
+          return (
+            <li key={p.id}>
+              <span className="os-name">{p.name}</span>
+              <span className="os-meta">{ROLE_LABEL[p.role] ?? p.role}</span>
+              <span className="os-meta">Age {p.ageBefore}→{p.ageAfter}</span>
+              <span className="os-delta">{deltaStr} OVR ({p.ovrBefore}→{p.ovrAfter})</span>
+              {p.atCeiling && <span className="tale-chip outlook-ceiling">At ceiling (Pot {p.potential})</span>}
+              {p.oswSpike != null && (
+                <span className="tale-chip hot" title="Revealed one-season-wonder spike">OSW +{p.oswSpike}</span>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+      {lineupChanges.length > 0 && (
+        <>
+          <h3>Starter changes</h3>
+          <ul className="offseason-list">
+            {lineupChanges.map((c) => (
+              <li key={c.role}>
+                {ROLE_LABEL[c.role] ?? c.role}: {c.outName} → {c.inName}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {released.length > 0 && (
+        <>
+          <h3>Released (contracts)</h3>
+          <ul className="offseason-list">
+            {released.map((p) => (
+              <li key={p.id}>{p.name} ({ROLE_LABEL[p.role] ?? p.role}, OVR {p.ovr})</li>
+            ))}
+          </ul>
+        </>
+      )}
+      <h3>League churn</h3>
+      {aiChurn.length === 0 ? (
+        <p className="hint">No AI churn this off-season.</p>
+      ) : (
+        <ul className="offseason-list">
+          {aiChurn.map((c, i) => (
+            <li key={i}>
+              {c.teamId}: cut {c.cutName}, signed {c.signedName} ({ROLE_LABEL[c.role] ?? c.role})
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
   const [busy, setBusy] = useState(false)
   // view: 'preview' shows the upcoming week's matchup; 'result' shows the
@@ -513,6 +582,9 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
     <div className="stack">
       <h1 className="sr-only">Dashboard</h1>
       <PhaseBanner phase={state.phase} />
+      {state.mode === 'career' && state.offseasonReport && (
+        <OffseasonReportPanel report={state.offseasonReport} dispatch={dispatch} />
+      )}
       <div
         className="card matchup-card broadcast-next-match"
         style={{

@@ -169,5 +169,20 @@ for (const e of DILEMMA_EVENTS) {
   assert(rs.tournament.resolver === 'manual', 'engine SET_RESOLVER preserved')
 }
 
+// ---------- offseason report dismiss (Hub panel, not modal) ----------
+{
+  let base = finishRegional()
+  let pg = 0
+  while (base.phase === 'playoffs' && base.tournament?.status === 'active' && pg++ < 10) {
+    base = reducer(base, { type: 'PLAY_TOURNAMENT_ROUND' })
+  }
+  base = { ...base, board: { ...base.board, confidence: 100, expectation: 'Avoid last place' } }
+  const adv = reducer(base, { type: 'ADVANCE_SEASON' })
+  assert(adv.offseasonReport != null, 'ADVANCE leaves offseasonReport for Hub panel')
+  const cleared = reducer(adv, { type: 'DISMISS_OFFSEASON_REPORT' })
+  assert(cleared.offseasonReport === null, 'DISMISS_OFFSEASON_REPORT clears report')
+  assert(cleared.pendingEvent === adv.pendingEvent, 'dismiss does not block dilemma modal state')
+}
+
 console.log(failures === 0 ? '\nALL P0-UX TESTS PASSED' : `\n${failures} FAILURES`)
 process.exit(failures ? 1 : 0)

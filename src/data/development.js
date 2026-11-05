@@ -23,6 +23,21 @@ export function ageCeiling(age, potential) {
   return Math.min(POTENTIAL_CEILING, potential)
 }
 
+// Pure growth hint for UI (Career lineup / squad). No RNG. Potential is a fixed
+// cap (ageCeiling ignores age). Labels: rising | steady | declining | at ceiling.
+export function growthOutlook(player) {
+  const age = player?.age ?? 21
+  const ovr = player?.ovr ?? 70
+  const potential = player?.potential ?? Math.min(POTENTIAL_CEILING, ovr + 5)
+  const ceiling = ageCeiling(age, potential)
+  if (ovr >= ceiling) return 'at ceiling'
+  const bandAge = Math.max(16, Math.min(34, age + 1))
+  const [min, max] = growthByAge[bandAge]
+  if (max >= 3) return 'rising'
+  if (max <= 0 && min <= -2) return 'declining'
+  return 'steady'
+}
+
 // One annual delta for `age`, drawn from growthByAge via injected rng.
 // Pure + rng: integer uniform in [min, max] for growthByAge[clamp(age,16,34)]
 // (35+ uses the 34 band; <16 uses the 16 band).

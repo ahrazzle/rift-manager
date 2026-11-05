@@ -1,7 +1,7 @@
 // P0 engine tests (items 2/3/5): resolver modes, per-game array, development.
 // Run: node test/p0-engine.test.mjs
 import { simulateSeries } from '../src/engine/sim.js'
-import { growthByAge, POTENTIAL_CEILING, ageCeiling, growthRoll, developPlayer } from '../src/data/development.js'
+import { growthByAge, POTENTIAL_CEILING, ageCeiling, growthRoll, developPlayer, growthOutlook } from '../src/data/development.js'
 import { makePlayer } from '../src/data/lck.js'
 import { reducer } from '../src/game/useGameState.js'
 
@@ -82,6 +82,8 @@ const old = developPlayer(vet, rng32(7))
 assert(old.ovr <= 90 && old.ovr >= 82, `34yo declines (90 -> ${old.ovr})`)
 const capped = developPlayer({ ...teen, age: 20, ovr: 94, potential: 95 }, () => 0.999)
 assert(capped.ovr <= 95, `ovr capped at potential ceiling (${capped.ovr} <= 95)`)
+assert(growthOutlook({ age: 17, ovr: 70, potential: 90 }) === 'rising', 'growthOutlook rising for teen headroom')
+assert(growthOutlook({ age: 24, ovr: 90, potential: 90 }) === 'at ceiling', 'growthOutlook at ceiling when ovr >= potential')
 
 // ---------- makePlayer age/potential ----------
 const np = makePlayer('T1', 'Rookie', 'MID', 85, true)
@@ -127,6 +129,7 @@ for (const tid of Object.keys(s.teams)) for (const pl of s.teams[tid]) {
 }
 for (const pl of s.faPool) { if (pl.age !== preAll.get(pl.id) + 1) devOk = false }
 assert(devOk, 'ADVANCE_SEASON applies developPlayer to teams+faPool (age+1, potential fixed)')
+assert(s.offseasonReport && s.offseasonReport.roster.length > 0, 'ADVANCE_SEASON captures offseasonReport roster')
 assert(s.lineup && Object.keys(s.lineup).length === 5, 'lineup rebuilt after development')
 
 if (failures > 0) { console.error(`${failures} FAILURE(S)`); process.exit(1) }

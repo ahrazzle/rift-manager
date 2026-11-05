@@ -27,6 +27,8 @@ export default function Market({ state, dispatch }) {
             </div>
             <div className="fa-stats">
               <span title="Overall">OVR {p.ovr}</span>
+              <span title="Age">Age {p.age ?? 21}</span>
+              <span title="Fixed rating cap (unchanged each off-season)">Pot {p.potential ?? Math.min(99, p.ovr + 5)}</span>
               <span title="Mechanics">MEC {p.mech}</span>
               <span title="Macro">MAC {p.macro}</span>
               <span title="Consistency">CON {p.consist}</span>
