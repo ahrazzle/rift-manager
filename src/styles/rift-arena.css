@@ -166,6 +166,7 @@
   color: #768da7;
 }
 .rift-arena .rift-display-controls {
+  order: 2;
   padding: 10px 14px;
   background: #101d2d;
   border: 0;
@@ -174,9 +175,6 @@
   gap: 14px;
 }
 .rift-arena .rift-display-controls[hidden] {
-  display: none;
-}
-.rift-arena .rift-display-controls legend {
   display: none;
 }
 .rift-arena .rift-display-controls label {
@@ -502,7 +500,7 @@
 .rift-arena.reduce-motion .rift-impact-callout {
   display: none;
 }
-.rift-arena .rift-controls button:nth-child(2) {
+.rift-arena .rift-controls .rift-playback-toggle {
   color: #081522;
   background: #8bdef4;
   border-color: #8bdef4;

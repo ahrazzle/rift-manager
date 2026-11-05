@@ -243,38 +243,6 @@ export default function AnimatedRift({
           </small>
         </div>
       </div>
-      <fieldset id={`${id}-display`} className="rift-display-controls" hidden={!settingsOpen}>
-        <legend>Map display</legend>
-        <label>
-          Names{' '}
-          <select
-            aria-label="Names"
-            value={display.names}
-            onChange={(e) => changeDisplay('names', e.target.value)}
-          >
-            <option value="players">Players</option>
-            <option value="champions">Champions</option>
-            <option value="both">Players + champions</option>
-            <option value="hidden">Hidden</option>
-          </select>
-        </label>
-        <label>
-          Portraits{' '}
-          <select
-            aria-label="Portraits"
-            value={display.portraits}
-            onChange={(e) => changeDisplay('portraits', e.target.value)}
-          >
-            <option value="roles">Role icons</option>
-            <option value="players">Player initials</option>
-            <option value="champions">Champions</option>
-          </select>
-        </label>
-        {!game.picks &&
-          (display.names === 'champions' || display.names === 'both' || display.portraits === 'champions') && (
-            <span className="hint">Champion names and portraits appear after a draft.</span>
-          )}
-      </fieldset>
       <div className="rift-layout">
         <div className="rift-map-wrap">
           <svg className="rift-map" viewBox="0 0 100 100" role="img" aria-labelledby={`${id}-title ${id}-desc`}>
@@ -489,18 +457,7 @@ export default function AnimatedRift({
       <div className="rift-controls">
         <button
           type="button"
-          className="ghost rift-settings"
-          title="Map display"
-          aria-expanded={settingsOpen}
-          aria-controls={`${id}-display`}
-          onClick={() => setSettingsOpen(!settingsOpen)}
-        >
-          <MatchIcon name="settings" size={14} />
-          <span className="sr-only">Map display</span>
-        </button>
-        <button
-          type="button"
-          className="ghost"
+          className="ghost rift-playback-toggle"
           disabled={decision}
           onClick={() => {
             setPaused(!paused)
@@ -544,7 +501,50 @@ export default function AnimatedRift({
             ))}
           </select>
         </label>
+        <button
+          type="button"
+          className="ghost rift-settings"
+          title="Map display"
+          aria-expanded={settingsOpen}
+          aria-controls={`${id}-display`}
+          onClick={() => setSettingsOpen(!settingsOpen)}
+        >
+          <MatchIcon name="settings" size={14} />
+          <span className="sr-only">Map display</span>
+        </button>
       </div>
+      <fieldset id={`${id}-display`} className="rift-display-controls" hidden={!settingsOpen}>
+        <legend className="sr-only">Map display</legend>
+        <label>
+          Names{' '}
+          <select
+            aria-label="Names"
+            value={display.names}
+            onChange={(e) => changeDisplay('names', e.target.value)}
+          >
+            <option value="players">Players</option>
+            <option value="champions">Champions</option>
+            <option value="both">Players + champions</option>
+            <option value="hidden">Hidden</option>
+          </select>
+        </label>
+        <label>
+          Portraits{' '}
+          <select
+            aria-label="Portraits"
+            value={display.portraits}
+            onChange={(e) => changeDisplay('portraits', e.target.value)}
+          >
+            <option value="roles">Role icons</option>
+            <option value="players">Player initials</option>
+            <option value="champions">Champions</option>
+          </select>
+        </label>
+        {!game.picks &&
+          (display.names === 'champions' || display.names === 'both' || display.portraits === 'champions') && (
+            <span className="hint">Champion names and portraits appear after a draft.</span>
+          )}
+      </fieldset>
       <p className="hint rift-caption">
         Illustrative simulation · Positions follow recorded events and calls. Blue circles / red squares identify
         teams.
