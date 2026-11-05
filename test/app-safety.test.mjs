@@ -30,6 +30,12 @@ try {
   assert.match(dialog, /<dialog[^>]*aria-labelledby="[^"]+"[^>]*aria-describedby="[^"]+"/)
   assert.match(dialog, /autofocus=""[^>]*>Keep playing<\/button>/)
   assert.match(dialog, />Start new game<\/button>/)
+  globalThis.localStorage = { getItem: () => '{broken' }
+  const recovery = renderToString(React.createElement(App))
+  assert.match(recovery, /Your saved game could not be loaded/)
+  assert.match(recovery, />Retry loading<\/button>/)
+  assert.match(recovery, />Replace saved game<\/button>/)
+  assert.doesNotMatch(recovery, />Retry saving<\/button>/)
   console.log('App safety rendering checks passed')
 } finally {
   Math.random = previousRandom

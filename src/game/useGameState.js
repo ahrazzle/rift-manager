@@ -1897,10 +1897,19 @@ function migrateMatchExperience(parsed) {
   return parsed
 }
 
-export function load() {
+function isOnboardingSave(parsed) {
+  return parsed.teamId === null && parsed.mode === 'season' &&
+    parsed.round === 1 && parsed.results.length === 0 &&
+    parsed.managerName === '' && parsed.finished === false &&
+    parsed.campaign === null && parsed.career === null &&
+    Object.keys(parsed.teams).length > 0
+}
+
+// Standalone callers keep their fallback contract; recovery needs the failure.
+export function load({ strict = false } = {}) {
   try {
     const raw = readSave()
-    if (!raw) return freshState()
+    if (raw == null) return freshState()
     const parsed = JSON.parse(raw)
     if (!parsed || parsed.version !== 1 || !parsed.teams || typeof parsed.teams !== 'object' ||
         Array.isArray(parsed.teams) || !Object.values(parsed.teams).every((players) =>
@@ -1908,27 +1917,27 @@ export function load() {
         !Array.isArray(parsed.results) || !Array.isArray(parsed.faPool) ||
         !Number.isInteger(parsed.round) || parsed.round < 1 ||
         !['standings', 'lineup', 'form', 'tactic'].every((key) => parsed[key] &&
-          typeof parsed[key] === 'object' && !Array.isArray(parsed[key]))) return freshState()
+          typeof parsed[key] === 'object' && !Array.isArray(parsed[key]))) throw new Error('The saved game is invalid.')
     // Old season saves predate campaign mode: default to season.
     if (parsed.mode == null) parsed.mode = 'season'
-    if (!['season', 'campaign', 'career', 'draft', 'igl', 'gauntlet'].includes(parsed.mode)) return freshState()
+    if (!['season', 'campaign', 'career', 'draft', 'igl', 'gauntlet'].includes(parsed.mode)) throw new Error('The saved game is invalid.')
     if (parsed.mode === 'campaign') {
       const progress = parsed.campaign
       const campaign = campaignById(progress?.campaignId)
       if (!campaign || !Number.isInteger(progress.nodeIndex) || progress.nodeIndex < 0 ||
-          !['active', 'failed', 'cleared'].includes(progress.status) || !Array.isArray(progress.nodeResults)) return freshState()
+          !['active', 'failed', 'cleared'].includes(progress.status) || !Array.isArray(progress.nodeResults)) throw new Error('The saved game is invalid.')
       if ((campaign.kind ?? 'series') === 'season') {
         if (parsed.teamId != null || parsed.seasonYear !== campaign.seasonYear ||
-            progress.nodeIndex !== 0 || progress.nodeResults.length || progress.status === 'failed') return freshState()
+            progress.nodeIndex !== 0 || progress.nodeResults.length || progress.status === 'failed') throw new Error('The saved game is invalid.')
       } else {
         if (parsed.teamId !== campaign.playerTeamId || progress.nodeIndex > campaign.nodes.length ||
             (progress.status === 'active' && progress.nodeIndex === campaign.nodes.length) ||
             !progress.nodeResults.every((r) => r && campaign.nodes.some((n) => n.id === r.nodeId) &&
-              Number.isInteger(r.slot) && r.slot >= 1 && r.slot <= CAMPAIGN_SLOTS)) return freshState()
+              Number.isInteger(r.slot) && r.slot >= 1 && r.slot <= CAMPAIGN_SLOTS)) throw new Error('The saved game is invalid.')
       }
-    } else if (!parsed.teamId || !Array.isArray(parsed.teams[parsed.teamId])) return freshState()
-    if (parsed.mode === 'campaign' && parsed.teamId && !Array.isArray(parsed.teams[parsed.teamId])) return freshState()
-    if (parsed.mode === 'career' && (!parsed.career || typeof parsed.career !== 'object')) return freshState()
+    } else if (parsed.teamId === null ? !isOnboardingSave(parsed) : (typeof parsed.teamId !== 'string' || !parsed.teamId || !Array.isArray(parsed.teams[parsed.teamId]))) throw new Error('The saved game is invalid.')
+    if (parsed.mode === 'campaign' && parsed.teamId && !Array.isArray(parsed.teams[parsed.teamId])) throw new Error('The saved game is invalid.')
+    if (parsed.mode === 'career' && (!parsed.career || typeof parsed.career !== 'object')) throw new Error('The saved game is invalid.')
     if (!('campaign' in parsed)) parsed.campaign = null
     // Old saves predate career mode: null unless a career save.
     if (!('career' in parsed)) parsed.career = null
@@ -2004,26 +2013,56 @@ export function load() {
     if (!('pendingPromotion' in parsed)) parsed.pendingPromotion = null
     if (!('playoffChampionId' in parsed)) parsed.playoffChampionId = null
     return migrateMatchExperience(parsed)
-  } catch {
+  } catch (error) {
+    if (strict) throw error
     return freshState()
   }
 }
 
-export function useGameState() {
-  const [state, dispatch] = useReducer(reducer, undefined, load)
-  const [storageError, setStorageError] = useState(null)
+const LOAD_ERROR = 'Your saved game could not be loaded. The existing save has been kept. Retry loading, or explicitly replace it to start over.'
+const SAVE_ERROR = 'Progress could not be saved in this browser. Free some storage, then retry saving.'
+function initialLoad() {
+  try { return { state: load({ strict: true }), loadError: null } }
+  catch { return { state: freshState(), loadError: LOAD_ERROR } }
+}
 
+function recoveryReducer(snapshot, action) {
+  if (action.type === '__RESTORE_SAVE') return { state: action.state, loadError: null }
+  if (action.type === '__LOAD_FAILED') return { ...snapshot, loadError: LOAD_ERROR }
+  if (snapshot.loadError) return snapshot
+  return { ...snapshot, state: reducer(snapshot.state, action) }
+}
+
+export function useGameState() {
+  const [{ state, loadError }, dispatch] = useReducer(recoveryReducer, undefined, initialLoad)
+  const [storageError, setStorageError] = useState(null)
+  const retryLoad = useCallback(() => {
+    try {
+      dispatch({ type: '__RESTORE_SAVE', state: load({ strict: true }) })
+      setStorageError(null)
+    } catch { dispatch({ type: '__LOAD_FAILED' }) }
+  }, [])
+  const replaceSave = useCallback(() => {
+    const replacement = freshState()
+    try {
+      // Only unlock the game after explicit replacement has actually succeeded.
+      writeSave(replacement)
+      dispatch({ type: '__RESTORE_SAVE', state: replacement })
+      setStorageError(null)
+    } catch {
+      setStorageError('The saved game could not be replaced. Restore browser storage access or free some storage, then choose Replace saved game again. You can also retry loading to recover the existing save.')
+    }
+  }, [])
   const retrySave = useCallback(() => {
+    if (loadError) return
     try {
       writeSave(state)
       setStorageError(null)
-    } catch {
-      setStorageError('Progress could not be saved in this browser. Free some storage, then retry saving.')
-    }
-  }, [state])
+    } catch { setStorageError(SAVE_ERROR) }
+  }, [state, loadError])
   useEffect(() => { retrySave() }, [retrySave])
 
-  return { state, dispatch, TOTAL_ROUNDS, storageError, retrySave }
+  return { state, dispatch, TOTAL_ROUNDS, storageError, retrySave, loadError, retryLoad, replaceSave }
 }
 
 export { TOTAL_ROUNDS, reducer }
