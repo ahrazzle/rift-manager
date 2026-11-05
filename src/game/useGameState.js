@@ -105,6 +105,16 @@ function applyUserSeriesResult(state, form, standings, results, homeId, awayId, 
   return { results, standings, form }
 }
 
+// null means a legacy save no longer contains evidence of the regional final.
+function regionalFinalist(state) {
+  if (typeof state.playoffFinalist === 'boolean') return state.playoffFinalist
+  const t = state.tournament
+  const final = t?.kind === 'playoffs' ? t.rounds?.at(-1)?.matches?.[0] : null
+  if (final?.homeId && final?.awayId) return final.homeId === state.teamId || final.awayId === state.teamId
+  if (state.teamId && state.playoffChampionId === state.teamId) return true
+  return null
+}
+
 // Interactive modes share the ordinary split -> playoff transition.
 function finishInteractiveRound(state, updates) {
   const next = { ...state, ...updates, round: state.round + 1, press: { pending: true } }
@@ -115,6 +125,7 @@ function finishInteractiveRound(state, updates) {
       const { semis } = buildPlayoffs(ordered, 4)
       next.phase = 'playoffs'
       next.playoffChampionId = null
+      next.playoffFinalist = null
       next.tournament = { kind: 'playoffs', rounds: [
         { name: 'Semifinal', matches: semis.map(([h, a]) => tournamentMatch(h, a, state.teamId)) },
         { name: 'Final', matches: [tournamentMatch(null, null, state.teamId)] },
@@ -209,6 +220,7 @@ function freshState(seasonYear = 'present') {
     league: season.league ?? 'LCK',
     phase: 'regional', // 'regional' | 'playoffs' | 'msi' | 'worlds' | 'done'
     tournament: null, // Tournament | null (multileague-design §4)
+    playoffFinalist: null,
     playoffChampionId: null, // P1 item 11: playoff winner (top-level, survives bracket replace)
     seriesOptions: { fearless: false }, // P1 item 10: global series toggles
     pendingPromotion: null, // P1 item 8: { player, teamId } | null (academy offer)
@@ -830,6 +842,7 @@ function baseReducer(state, action) {
             phase: 'playoffs',
             tournament,
             playoffChampionId: null,
+            playoffFinalist: null,
             press: { pending: true },
           }
         }
@@ -1182,10 +1195,10 @@ function baseReducer(state, action) {
       if (board) {
         const exp = board.expectation
         const met = exp === 'Win the title' ? champ
-          : exp === 'Reach the final' ? champ || place <= 2
+          : exp === 'Reach the final' ? regionalFinalist(state)
           : exp === 'Make the playoffs' ? place <= 4
           : place < ordered.length
-        board.confidence = Math.max(0, Math.min(100, board.confidence + (met ? 15 : -20)))
+        board.confidence = Math.max(0, Math.min(100, board.confidence + (met == null ? 0 : met ? 15 : -20)))
         if (board.confidence <= 0) sacked = true
       }
       if (sacked) return {
@@ -1262,6 +1275,7 @@ function baseReducer(state, action) {
         trainedRound: 0,
         tournament: null,
         phase: 'regional',
+        playoffFinalist: null,
         playoffChampionId: null, // P1 item 11: cleared with the season reset
         teams,
         faPool: fa,
@@ -1338,7 +1352,7 @@ function baseReducer(state, action) {
       const { tournament, teamMeta } = buildTournamentObject(state, kind)
       const rv = action.resolver ?? 'biased'
       tournament.resolver = rv === 'biased' || rv === 'random' || rv === 'manual' ? rv : 'biased'
-      return { ...state, tournament, teamMeta, phase: kind }
+      return { ...state, playoffFinalist: regionalFinalist(state), tournament, teamMeta, phase: kind }
     }
 
     case 'SET_RESOLVER': {
@@ -1426,14 +1440,19 @@ function baseReducer(state, action) {
       let championId = null
       let phase = state.phase
       let playoffChampionId = state.playoffChampionId ?? null
+      let playoffFinalist = state.playoffFinalist ?? null
       if (ri === rounds.length - 1) {
         status = 'done'
         championId = played[0].winner
         if (t.kind === 'worlds') phase = 'done'
         // P1 item 11: stamp the playoff winner on state when the final resolves.
-        if (t.kind === 'playoffs') playoffChampionId = championId
+        if (t.kind === 'playoffs') {
+          playoffChampionId = championId
+          const final = played[0]
+          playoffFinalist = final.homeId === state.teamId || final.awayId === state.teamId
+        }
       }
-      return { ...state, tournament: { ...t, rounds, status, championId, revealedRounds: Math.min((t.revealedRounds ?? 1) + 1, rounds.length), resolver: t.resolver }, phase, playoffChampionId }
+      return { ...state, tournament: { ...t, rounds, status, championId, revealedRounds: Math.min((t.revealedRounds ?? 1) + 1, rounds.length), resolver: t.resolver }, phase, playoffChampionId, playoffFinalist }
     }
 
     case 'RESOLVE_EVENT': {
@@ -2003,6 +2022,7 @@ export function load() {
     else if (typeof parsed.seriesOptions.fearless !== 'boolean') parsed.seriesOptions.fearless = false
     if (!('pendingPromotion' in parsed)) parsed.pendingPromotion = null
     if (!('playoffChampionId' in parsed)) parsed.playoffChampionId = null
+    if (typeof parsed.playoffFinalist !== 'boolean') parsed.playoffFinalist = regionalFinalist(parsed)
     return migrateMatchExperience(parsed)
   } catch {
     return freshState()
