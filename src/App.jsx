@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useGameState } from './game/useGameState.js'
 import NewGame from './components/NewGame.jsx'
+import MatchIcon from './components/MatchIcon.jsx'
 import Campaign from './components/Campaign.jsx'
 import Dashboard from './components/Dashboard.jsx'
 import Gauntlet from './components/Gauntlet.jsx'
@@ -20,6 +21,16 @@ import { EventModal, PromotionModal } from './components/CareerModals.jsx'
 import PressModal from './components/PressModal.jsx'
 import { fmtMoney } from './game/economy.js'
 import ConfirmDialog from './components/ConfirmDialog.jsx'
+
+function Brand() {
+  return <div className="broadcast-brand">
+    <svg width="32" height="32" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+      <path fill="#71e7ef" d="M2 33 13 7h18l-5 8H17l-2 5h13L16 33h-6l8-9h-5l-4 9z"/>
+      <path fill="#ff826d" d="m24 33 11-15-5 15z"/>
+    </svg>
+    <span>RIFT <b>MANAGER</b></span>
+  </div>
+}
 
 function SaveError({ error, retrySave, loadError, retryLoad, replaceSave }) {
   const [replacementPending, setReplacementPending] = useState(false)
@@ -135,13 +146,11 @@ export default function App() {
 
   if (!state.teamId && !isSeasonReplay) {
     return (
-      <div className="app">
+      <div className="app broadcast-shell">
         <a className="skip" href="#main-content">Skip to main content</a>
         <header className="topbar">
-          <div className="brand">
-            <span className="logo">RIFT</span> Manager
-          </div>
-          <div className="who">New coach? Read the guide first.</div>
+          <Brand />
+          <div className="topbar-spacer" />
           <button className="ghost" onClick={() => setGuideOpen(true)}>
             How to Play
           </button>
@@ -151,16 +160,6 @@ export default function App() {
         <main id="main-content" className="content">
           <NewGame state={state} dispatch={dispatch} />
 
-          <div className="card guide-cta">
-            <h2>New to Rift Manager?</h2>
-            <p className="tag">
-              A quick read of the How to Play guide saves you a lost week. It walks
-              through the season loop, tactics, and how to read a match.
-            </p>
-            <button className="primary" onClick={() => setGuideOpen(true)}>
-              Read the How to Play guide →
-            </button>
-          </div>
         </main>
 
         <SiteFooter />
@@ -217,15 +216,13 @@ export default function App() {
     : 0
 
   return (
-    <div className="app">
+    <div className={`app broadcast-shell${state.matchSession ? ' arena-shell' : ''}`}>
       <a className="skip" href="#main-content">Skip to main content</a>
       <header className="topbar">
-        <div className="brand">
-          <span className="logo">RIFT</span> Manager
-        </div>
+        <Brand />
         {st && st.n >= 2 && (
           <span className={`streak-pill ${st.dir === 'L' ? 'cold' : ''}`} title={st.dir === 'W' ? 'Win streak' : 'Losing streak'}>
-            {st.dir === 'W' ? `🔥 W${st.n}` : `❄ L${st.n}`}
+            <MatchIcon name={st.dir === 'W' ? 'flame' : 'snow'} size={14} /> {st.dir}{st.n}
           </span>
         )}
         <div className="who">
@@ -255,10 +252,10 @@ export default function App() {
           title="Sim speed — how fast games reveal"
           style={{ fontSize: 12, padding: '6px 10px' }}
         >
-          <option value="slow">🐢 Slow</option>
-          <option value="normal">▶️ Normal</option>
-          <option value="fast">⏩ Fast</option>
-          <option value="instant">⚡ Instant</option>
+          <option value="slow">Slow</option>
+          <option value="normal">Normal</option>
+          <option value="fast">Fast</option>
+          <option value="instant">Instant</option>
         </select>
         <button className="ghost" onClick={() => setGuideOpen(true)}>
           How to Play
@@ -269,34 +266,34 @@ export default function App() {
       </header>
       <main id="main-content" className="content">
         <SaveError error={storageError} retrySave={retrySave} loadError={loadError} retryLoad={retryLoad} replaceSave={replaceSave} />
-        {!isCampaign && state.teamId && (
+        {!state.matchSession && !isCampaign && state.teamId && (
           <div className="top-progress" aria-hidden>
             <span style={{ width: `${progress}%` }} />
           </div>
         )}
-        {!isCampaign && !isSeasonReplay && state.board && (
+        {!state.matchSession && !isCampaign && !isSeasonReplay && state.board && (
           <div className="manager-strip">
-            <span>🎯 <strong>{state.board.expectation}</strong></span>
+            <span><MatchIcon name="target" size={16} /> <strong>{state.board.expectation}</strong></span>
             {/* Warn below 40 matches BoardCard pressure band; sack at ≤0 in useGameState ADVANCE_SEASON */}
             <span className={state.board.confidence < 40 ? 'board-trust-warn' : 'board-trust'}>
               Board {state.board.confidence}
             </span>
-            {state.finance && <span>💰 {fmtMoney(state.finance.budget)}</span>}
+            {state.finance && <span><MatchIcon name="gold" size={16} /> {fmtMoney(state.finance.budget)}</span>}
             {state.sacked && <span className="bad">SACKED</span>}
           </div>
         )}
 
-        <nav className="tabs" aria-label="Season navigation">
+        {!state.matchSession && <nav className="tabs" aria-label="Season navigation">
           {nav.map(([id, label]) => (
             <button
               key={id}
               className={activeTab === id ? 'tab active' : 'tab'}
-              disabled={!!state.matchSession} onClick={() => setTab(id)}
+              aria-current={activeTab === id ? 'page' : undefined} onClick={() => setTab(id)}
             >
-              {label}
+              <MatchIcon name={id} size={15} />{label}
             </button>
           ))}
-        </nav>
+        </nav>}
 
         {state.matchSession ? <MatchExperience state={state} dispatch={dispatch} /> : isRetired ? (
           <CareerEpitaph state={state} dispatch={dispatch} />

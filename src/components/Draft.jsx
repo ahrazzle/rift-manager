@@ -7,13 +7,14 @@
 // Champion portraits come from Riot's ddragon CDN with an initials fallback.
 // ============================================================================
 import { useState, useMemo } from 'react'
+import MatchIcon from './MatchIcon.jsx'
 import { CHAMPIONS, CHAMP_BY_ID } from '../data/champions.js'
 import {
   DRAFT_STEPS, DRAFT_ROLES, currentStep, legalPicks,
   scoreComp, getDraftDebrief, champPortrait,
 } from '../game/draft.js'
 
-const SIDE_COLOR = { BLUE: '#3f8cff', RED: '#e2012d' }
+const SIDE_COLOR = { BLUE: '#4dd9ed', RED: '#ff786c' }
 
 function cap(s) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s
@@ -41,7 +42,7 @@ function CompPanel({ draft, side, userSide }) {
   const color = SIDE_COLOR[side]
   const isUser = side === userSide
   return (
-    <div className="card" style={{ borderTop: `3px solid ${color}`, margin: 0 }}>
+    <div className={`card draft-comp draft-${side.toLowerCase()}`} style={{ borderTop: `3px solid ${color}`, margin: 0 }}>
       <span className="eyebrow" style={{ color }}>
         {isUser ? 'Your comp' : 'Enemy comp'} · {side}
       </span>
@@ -50,7 +51,7 @@ function CompPanel({ draft, side, userSide }) {
           const cid = draft.picks[side][role]
           return (
             <div key={role} style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 40 }}>
-              <span className="badge" style={isUser ? undefined : { background: '#2a3346' }}>{role}</span>
+              <span className="badge"><MatchIcon name={role} size={16} />{role}</span>
               {cid ? (
                 <>
                   <ChampIcon champId={cid} size={36} />
@@ -135,9 +136,9 @@ export default function Draft({ draft, userSide, onBan, onPick, disabled, gameLa
     : []
 
   return (
-    <div className="stack" style={{ display: 'grid', gap: 14 }}>
+    <div className={`stack broadcast-draft ${yourTurn ? 'your-turn' : 'opponent-turn'}`} style={{ display: 'grid', gap: 14 }}>
       {/* Header */}
-      <div className="card" style={{ margin: 0 }}>
+      <div className="card draft-phase" key={draft.step} style={{ margin: 0 }}>
         <span className="eyebrow">Active coach · {phase}</span>
         <h2 style={{ marginTop: 4 }}>{gameLabel ? `Draft — ${gameLabel}` : 'Draft'}</h2>
         <p className="hint" style={{ marginTop: 4 }}>
@@ -169,7 +170,7 @@ export default function Draft({ draft, userSide, onBan, onPick, disabled, gameLa
       </div>
 
       {/* Comp panels */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: 14 }}>
+      <div className="draft-comps">
         <CompPanel draft={draft} side="BLUE" userSide={userSide} />
         <CompPanel draft={draft} side="RED" userSide={userSide} />
       </div>
@@ -236,19 +237,19 @@ export default function Draft({ draft, userSide, onBan, onPick, disabled, gameLa
           <div className="field" style={{ marginBottom: 12 }}>
             <input
               type="text"
-              placeholder="Search champions…"
+              aria-label="Search champions" placeholder="Search champions…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: 8, maxHeight: 430, overflowY: 'auto', paddingRight: 2 }}>
+          <div className="draft-champion-pool">
             {visible.map((c) => {
               const isTaken = taken.has(c.id)
               const clickable = yourTurn && !isTaken && (step.type === 'ban' || pickable.has(c.id))
               return (
                 <button
                   key={c.id}
-                  className="tac"
+                  className={`tac draft-champion ${isTaken ? 'is-taken' : ''}`}
                   disabled={!clickable}
                   onClick={() => handleChampClick(c.id)}
                   title={isTaken ? `${c.name} (unavailable)` : c.name}

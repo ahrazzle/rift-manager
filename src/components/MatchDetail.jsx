@@ -12,6 +12,7 @@ import { simulateSeries } from '../engine/sim.js'
 import { mulberry32 } from '../game/useGameState.js'
 import { TEAMS } from '../data/lck.js'
 import MatchReview from './MatchReview.jsx'
+import MatchIcon from './MatchIcon.jsx'
 
 const STATIC_NAME = Object.fromEntries(TEAMS.map((t) => [t.id, t.name]))
 
@@ -21,12 +22,12 @@ function nameOf(state, teamId) {
 const ROLE_ORDER = ['TOP', 'JNG', 'MID', 'BOT', 'SUP']
 
 const EVENT_META = {
-  tower: { icon: '■', color: '#eab308', label: 'Tower' },
-  dragon: { icon: '◆', color: 'var(--win)', label: 'Dragon' },
-  baron: { icon: '▲', color: '#a855f7', label: 'Baron' },
-  teamfight: { icon: '✖', color: 'var(--red)', label: 'Teamfight' },
-  ace: { icon: '★', color: '#fff', label: 'Ace' },
-  kill: { icon: '●', color: 'var(--text-2)', label: 'Kill' },
+  tower: { color: '#eab308', label: 'Tower' },
+  dragon: { color: 'var(--win)', label: 'Dragon' },
+  baron: { color: '#a855f7', label: 'Baron' },
+  teamfight: { color: 'var(--red)', label: 'Teamfight' },
+  ace: { color: '#fff', label: 'Ace' },
+  kill: { color: 'var(--text-2)', label: 'Kill' },
 }
 
 // Re-run the stored series inputs to recover the identical games[].
@@ -187,7 +188,7 @@ function GoldGraph({ timeline, events, durationMin, youAreA }) {
     const cx = X(Math.min(Math.max(e.t, 0), dur))
     const cy = Y(Math.max(-maxAbs, Math.min(maxAbs, diffAt(raw, e.t))))
     const sideLabel = e.side === (youAreA ? 'A' : 'B') ? 'You' : 'Opp'
-    const title = `${e.t}' ${meta.icon} ${meta.label} — ${sideLabel}: ${e.note}`
+    const title = `${e.t}' ${meta.label} — ${sideLabel}: ${e.note}`
     const common = { className: 'md-marker' }
     const r = e.type === 'kill' ? 3 : 4
     if (e.type === 'dragon') {
@@ -267,7 +268,7 @@ function GoldGraph({ timeline, events, durationMin, youAreA }) {
             aria-pressed={!hidden.has(type)}
             onClick={() => toggle(type)}
           >
-            {EVENT_META[type].icon} {EVENT_META[type].label}
+            <MatchIcon name={type} size={15} /> {EVENT_META[type].label}
           </button>
         ))}
       </div>
@@ -378,8 +379,8 @@ function EventList({ events, youAreA }) {
           const who = e.side === (youAreA ? 'A' : 'B') ? 'You' : 'Opp'
           return (
             <li key={i}>
-              <span className="md-evicon" style={{ color: meta.color === 'var(--win)' || meta.color === 'var(--red)' || meta.color === 'var(--text-2)' ? meta.color : meta.color }}>
-                {e.t}&prime; {meta.icon} {meta.label}
+              <span className="md-evicon" style={{ color: meta.color }}>
+                {e.t}&prime; <MatchIcon name={e.type} size={15} /> {meta.label}
               </span>{' '}
               — {who} — {e.note}
             </li>

@@ -23,7 +23,7 @@ const click = async (label) => {
 }
 try {
   await build({ entryPoints: ['src/App.jsx', 'src/components/WatchLive.jsx'], outdir: temp,
-    bundle: true, format: 'esm', platform: 'node', packages: 'external', jsx: 'automatic', loader: { '.md': 'text' } })
+    bundle: true, format: 'esm', platform: 'node', packages: 'external', jsx: 'automatic', loader: { '.md': 'text', '.webp': 'file' } })
   const { default: App } = await import(`${temp}/App.js`)
   const { default: WatchLive } = await import(`${temp}/components/WatchLive.js`)
   Math.random = mulberry32(1907)

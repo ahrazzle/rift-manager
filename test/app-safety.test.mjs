@@ -12,7 +12,7 @@ const temp = await mkdtemp(new URL('./.app-safety-', import.meta.url).pathname)
 const previousRandom = Math.random
 try {
   await build({ entryPoints: ['src/App.jsx', 'src/components/ConfirmDialog.jsx'],
-    outdir: temp, bundle: true, format: 'esm', platform: 'node', packages: 'external', jsx: 'automatic', loader: { '.md': 'text' } })
+    outdir: temp, bundle: true, format: 'esm', platform: 'node', packages: 'external', jsx: 'automatic', loader: { '.md': 'text', '.webp': 'file' } })
   const { default: App } = await import(`${temp}/App.js`)
   const { default: ConfirmDialog } = await import(`${temp}/components/ConfirmDialog.js`)
   Math.random = () => 0.42
