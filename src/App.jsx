@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { useGameState } from './game/useGameState.js'
 import NewGame from './components/NewGame.jsx'
 import MatchIcon from './components/MatchIcon.jsx'
@@ -15,7 +15,10 @@ import Results from './components/Results.jsx'
 import Market from './components/Market.jsx'
 import Squad from './components/Squad.jsx'
 import Guide from './components/Guide.jsx'
+import TutorialCoach from './components/TutorialCoach.jsx'
 import { exportPng } from './utils/exportPng.js'
+import { scrollContentToTop } from './utils/scrollToTop.js'
+import { shouldShowTutorial } from './game/tutorial.js'
 import { streakOf } from './game/hype.js'
 import { EventModal, PromotionModal } from './components/CareerModals.jsx'
 import PressModal from './components/PressModal.jsx'
@@ -130,9 +133,18 @@ function SiteFooter() {
 
 export default function App() {
   const { state, dispatch: gameDispatch, TOTAL_ROUNDS, storageError, retrySave, loadError, retryLoad, replaceSave } = useGameState()
-  const [tab, setTab] = useState('dashboard')
+  const [tab, setTabRaw] = useState('dashboard')
   const [guideOpen, setGuideOpen] = useState(false)
   const [resetPending, setResetPending] = useState(false)
+  const prevActiveTab = useRef(null)
+  const setTab = useCallback((id) => {
+    setTabRaw(id)
+    scrollContentToTop()
+  }, [])
+  const openGuide = useCallback(() => {
+    setGuideOpen(true)
+    scrollContentToTop()
+  }, [])
   const dispatch = (action) => {
     if (action.type === 'RESET' && (state.teamId || state.campaign)) {
       setResetPending(true)
@@ -144,36 +156,13 @@ export default function App() {
 
   // Season-replay campaigns carry no managed team — they still get the shell.
   const isSeasonReplay = state.mode === 'campaign' && !state.teamId
-
-  if (!state.teamId && !isSeasonReplay) {
-    return (
-      <div className="app broadcast-shell">
-        <a className="skip" href="#main-content">Skip to main content</a>
-        <header className="topbar">
-          <Brand compact />
-          <div className="topbar-spacer" />
-          <button className="ghost" onClick={() => setGuideOpen(true)}>
-            How to Play
-          </button>
-        </header>
-
-        <SaveError error={storageError} retrySave={retrySave} loadError={loadError} retryLoad={retryLoad} replaceSave={replaceSave} />
-        <main id="main-content" className="content">
-          <NewGame state={state} dispatch={dispatch} />
-
-        </main>
-
-        <SiteFooter />
-        {guideOpen && <Guide onClose={() => setGuideOpen(false)} />}
-      </div>
-    )
-  }
-
+  const onNewGameScreen = !state.teamId && !isSeasonReplay
   const isCampaign = state.mode === 'campaign'
   const isCareer = state.mode === 'career'
-  // (isSeasonReplay computed above, before the NewGame early-return.)
   const isRetired = isCareer && state.career?.status === 'retired'
-  const nav = isSeasonReplay
+  const nav = onNewGameScreen
+    ? [['dashboard', 'Dashboard']]
+    : isSeasonReplay
     ? [
         ['campaign', 'Scenario'],
         ['results', 'Results'],
@@ -204,12 +193,48 @@ export default function App() {
           ['results', 'Results'],
           ['market', 'Market'],
         ]
-  // International bracket tab appears once MSI/Worlds exists this season.
-  if (!isCampaign && state.tournament) nav.push(['tournament', state.tournament.kind === 'playoffs' ? 'Playoffs' : 'MSI/Worlds'])
+  if (!onNewGameScreen && !isCampaign && state.tournament) {
+    nav.push(['tournament', state.tournament.kind === 'playoffs' ? 'Playoffs' : 'MSI/Worlds'])
+  }
   const activeTab = nav.some(([id]) => id === tab) ? tab : nav[0][0]
 
-  const team = state.teams[state.teamId]
-  const teamName = team ? team[0]?.team : state.teamId
+  useEffect(() => {
+    scrollContentToTop()
+  }, [state.matchSession, state.teamId])
+
+  useEffect(() => {
+    if (prevActiveTab.current !== null && prevActiveTab.current !== activeTab) {
+      scrollContentToTop()
+    }
+    prevActiveTab.current = activeTab
+  }, [activeTab])
+
+  const showTutorial = !onNewGameScreen && shouldShowTutorial(state, { resetPending, guideOpen })
+
+  if (onNewGameScreen) {
+    return (
+      <div className="app broadcast-shell">
+        <a className="skip" href="#main-content">Skip to main content</a>
+        <header className="topbar">
+          <Brand compact />
+          <div className="topbar-spacer" />
+          <button className="ghost" onClick={openGuide}>
+            How to Play
+          </button>
+        </header>
+
+        <SaveError error={storageError} retrySave={retrySave} loadError={loadError} retryLoad={retryLoad} replaceSave={replaceSave} />
+        <main id="main-content" className="content">
+          <NewGame state={state} dispatch={dispatch} />
+
+        </main>
+
+        <SiteFooter />
+        {guideOpen && <Guide onClose={() => setGuideOpen(false)} />}
+      </div>
+    )
+  }
+
   const seasonRounds = state.totalRounds ?? TOTAL_ROUNDS
   const st = !isCampaign && state.teamId ? streakOf(state, state.teamId) : null
   const progress = !isCampaign && seasonRounds > 0
@@ -258,7 +283,7 @@ export default function App() {
           <option value="fast">Fast</option>
           <option value="instant">Instant</option>
         </select>
-        <button className="ghost" onClick={() => setGuideOpen(true)}>
+        <button className="ghost" onClick={openGuide}>
           How to Play
         </button>
         <button className="ghost" onClick={() => dispatch({ type: 'RESET' })}>
@@ -341,6 +366,9 @@ export default function App() {
         This replaces your current saved session. Your progress will be lost.
       </ConfirmDialog>}
       {guideOpen && <Guide onClose={() => setGuideOpen(false)} />}
+      {showTutorial && (
+        <TutorialCoach state={state} dispatch={dispatch} activeTab={activeTab} setTab={setTab} />
+      )}
     </div>
   )
 }

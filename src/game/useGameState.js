@@ -19,6 +19,8 @@ import { bestLineup, userLineup, styledPlayer, clampForm } from './logic.js'
 import { aiTactic } from './ai.js'
 import { prepareWeek, preparationBonus, upcomingOpponent } from './preparation.js'
 import { readSave, writeSave } from './persistence.js'
+import { freshTutorial, legacyTutorial, nextTutorialStep, normalizeTutorial } from './tutorial.js'
+export { freshTutorial, legacyTutorial, nextTutorialStep, normalizeTutorial } from './tutorial.js'
 
 // Deterministic per-series RNG so the Match Detail view can recompute identical
 // games[] on demand without persisting full timelines. Each series stores its
@@ -253,6 +255,7 @@ function freshState(seasonYear = 'present') {
     live: null, // active IGL-mode live series | null
     sacked: false, // board fired the coach
     simSpeed: 'normal', // reveal pacing: 'slow' | 'normal' | 'fast' | 'instant'
+    tutorial: null, // set on managed-game start; load() backfills legacy saves
   }
 }
 
@@ -561,6 +564,7 @@ function baseReducer(state, action) {
       const mode = action.mode ?? 'season'
       base.mode = ['season', 'draft', 'igl', 'gauntlet'].includes(mode) ? mode : 'season'
       initManagerState(base)
+      base.tutorial = freshTutorial(base.mode)
       return base
     }
     case 'RESET':
@@ -579,6 +583,7 @@ function baseReducer(state, action) {
       base.mode = 'career'
       base.career = freshCareer(base.teamId, base.managerName, ids, careerYear)
       initManagerState(base)
+      base.tutorial = freshTutorial('career')
       // P1 item 7: stamp 2 managed-roster starters with one random
       // series-trigger trait each (revealed: false) so the user meets the
       // system. The rest of the league stays as generated.
@@ -887,6 +892,28 @@ function baseReducer(state, action) {
       const speed = action.speed
       if (!['slow', 'normal', 'fast', 'instant'].includes(speed)) return state
       return { ...state, simSpeed: speed }
+    }
+
+    case 'TUTORIAL_DISMISS': {
+      if (!state.tutorial || state.tutorial.completed) return state
+      return { ...state, tutorial: { ...state.tutorial, dismissed: true, completed: true, step: 'done' } }
+    }
+    case 'TUTORIAL_ADVANCE': {
+      if (!state.tutorial || state.tutorial.completed || state.tutorial.dismissed) return state
+      const next = nextTutorialStep(state.tutorial)
+      return { ...state, tutorial: next }
+    }
+    case 'TUTORIAL_SET_STEP': {
+      if (!state.tutorial || state.tutorial.completed || state.tutorial.dismissed) return state
+      const step = action.step
+      const steps = state.tutorial.short
+        ? ['welcome', 'hub', 'play', 'result', 'done']
+        : ['welcome', 'hub', 'lineup', 'prep', 'play', 'result', 'done']
+      if (!steps.includes(step)) return state
+      return {
+        ...state,
+        tutorial: { ...state.tutorial, step, completed: step === 'done' },
+      }
     }
 
     // --- Expansion: gauntlet mode -----------------------------------------
@@ -1582,6 +1609,7 @@ function campaignReducer(state, action) {
         base.teamId = null
         base.mode = 'campaign'
         base.campaign = freshCampaign(campaign.id)
+        base.tutorial = legacyTutorial()
         return base
       }
       const base = freshState()
@@ -1600,6 +1628,7 @@ function campaignReducer(state, action) {
       base.lineup = defaultLineup(base.teams[campaign.playerTeamId])
       base.mode = 'campaign'
       base.campaign = freshCampaign(campaign.id)
+      base.tutorial = freshTutorial('campaign')
       return base
     }
 
@@ -2032,6 +2061,11 @@ export function load({ strict = false } = {}) {
     if (!('pendingPromotion' in parsed)) parsed.pendingPromotion = null
     if (!('playoffChampionId' in parsed)) parsed.playoffChampionId = null
     if (typeof parsed.playoffFinalist !== 'boolean') parsed.playoffFinalist = regionalFinalist(parsed)
+    if (!('tutorial' in parsed)) {
+      parsed.tutorial = normalizeTutorial(null, { hasManagedTeam: !!parsed.teamId })
+    } else {
+      parsed.tutorial = normalizeTutorial(parsed.tutorial, { hasManagedTeam: !!parsed.teamId })
+    }
     return migrateMatchExperience(parsed)
   } catch (error) {
     if (strict) throw error

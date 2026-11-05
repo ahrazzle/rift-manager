@@ -96,7 +96,7 @@ Early beats Late and Late beats Early, so phase is a guessing game against the e
 
 **Results.** Every played series, newest first, with the score and a short match log. Your games carry a WIN or LOSS tag.
 
-**Market.** A pool of free agents across all roles. Signing one costs a transfer fee, adds them to your roster, and starts them at once. The pool only shrinks, so sign early if a role needs help.
+**Market.** A pool of free agents across all roles. Each listing shows the signing fee and annual wage. Sign only when your transfer budget covers the fee — unaffordable deals stay disabled. Signed players join your roster as starters in their role. The pool only shrinks, so sign early if a role needs help.
 
 ## How a match simulates
 
@@ -133,6 +133,8 @@ The sim itself is instant. The reveal pacing is theater, and you control it: Slo
 - **Mind the board.** If confidence is low, play it safe: the sack is real.
 - **Watch the wage bill.** A stacked roster is expensive every offseason. Don't sign what you can't keep.
 
-## Saving and starting over
+## Saving, contributing, and starting over
 
 Your browser saves automatically. Staging keeps a separate save from the live game. If storage is full or blocked, a warning offers Retry saving; keep the tab open until it succeeds. New Game asks before replacing your current session. Drafts, IGL decisions, map playback, gauntlets and teamless historical replays resume after refresh. Older standalone Draft/IGL saves become Season saves with the corresponding add-on enabled; unfinished matches are retained.
+
+Developers and contributors: see **CONTRIBUTING.md** in the repository for local setup, `npm test`, and pull-request expectations.
