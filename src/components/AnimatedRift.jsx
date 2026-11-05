@@ -243,7 +243,7 @@ export default function AnimatedRift({
           </small>
         </div>
       </div>
-      <div className="rift-layout">
+      <div className={`rift-layout${decision ? ' rift-layout--decision' : ''}`}>
         <div className="rift-map-wrap">
           <svg className="rift-map" viewBox="0 0 100 100" role="img" aria-labelledby={`${id}-title ${id}-desc`}>
             <title id={`${id}-title`}>Rift map at {clockLabel(time)}</title>

@@ -260,6 +260,35 @@
   min-width: 0;
   border-left: 0;
 }
+.rift-arena .rift-layout.rift-layout--decision {
+  container-type: inline-size;
+  container-name: rift-decision-stage;
+  align-items: start;
+}
+.rift-arena .rift-layout.rift-layout--decision .rift-map-wrap {
+  align-self: start;
+}
+.rift-arena .rift-sidebar.rift-coaching {
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  box-sizing: border-box;
+  max-height: calc(100cqw - max(205px, 26cqw));
+  overflow: hidden;
+}
+.rift-arena .rift-sidebar.rift-coaching .igl-decision {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.rift-arena .rift-sidebar.rift-coaching .igl-decision h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(20px, 2.4vw, 28px);
+  line-height: 1.05;
+  margin: 6px 0 4px;
+}
+.rift-arena .rift-sidebar.rift-coaching .igl-decision > p:not(.hint) {
+  margin: 0 0 8px;
+}
 .rift-arena .rift-sidebar > h3 {
   display: flex;
   align-items: center;
@@ -581,7 +610,12 @@
     grid-column: 1/-1;
   }
   .rift-arena .rift-sidebar.rift-coaching {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    max-height: none;
+  }
+  .rift-arena .rift-sidebar.rift-coaching .igl-decision {
+    max-height: min(56vh, 460px);
   }
   .rift-arena .rift-feed p {
     grid-template-columns: 17px 35px minmax(0, 1fr);
@@ -713,6 +747,9 @@
   .rift-arena .rift-layout {
     grid-template-columns: minmax(0, 1fr) minmax(245px, 0.52fr);
   }
+  .rift-arena .rift-sidebar.rift-coaching {
+    max-height: calc(100cqw - max(245px, 34.2cqw));
+  }
   .rift-arena .rift-roster > div {
     padding: 3px 0;
   }
@@ -740,6 +777,9 @@
   }
   .rift-arena .rift-layout {
     grid-template-columns: minmax(0, 1fr) 265px;
+  }
+  .rift-arena .rift-sidebar.rift-coaching {
+    max-height: calc(100cqw - 265px);
   }
 }
 @media (max-width: 700px), (pointer: coarse) {
