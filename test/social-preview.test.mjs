@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { inflateSync } from 'node:zlib'
-import { renderSocialCard } from '../scripts/render-social-card.mjs'
+import { renderSocialCard, loadSocialCardSource } from '../scripts/render-social-card.mjs'
 
 // Also validate Vite output: node test/social-preview.test.mjs dist
 const directory = process.argv[2] || '.'
@@ -23,12 +23,12 @@ assert.ok(value('description').includes('Rift Manager'))
 assert.equal(value('og:title'), value('twitter:title'))
 assert.equal(value('og:description'), value('twitter:description'))
 assert.equal(value('twitter:card'), 'summary_large_image')
-assert.equal(value('og:image'), `${canonical}rift-manager-social-v2.png`)
+assert.equal(value('og:image'), `${canonical}rift-manager-social-v3.png`)
 assert.equal(value('og:image'), value('og:image:secure_url'))
 assert.equal(value('og:image'), value('twitter:image'))
 assert.equal(value('og:image:type'), 'image/png')
 assert.equal(value('og:image:alt'), value('twitter:image:alt'))
-assert.ok(value('og:image:alt').includes('three lanes'))
+assert.ok(value('og:image:alt').includes('painted esports arena'))
 const pngPath = new URL(value('og:image')).pathname
 const png = await readFile(`${directory === '.' ? 'public' : directory}${pngPath}`)
 assert.deepEqual(png.subarray(0, 8), Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
@@ -46,7 +46,13 @@ for (let offset = 8; offset < png.length;) {
   offset += length + 12
 }
 assert.equal(inflateSync(Buffer.concat(data)).length, (1200 * 4 + 1) * 630, 'complete decoded pixel rows')
-const svg = await readFile('assets/social/rift-manager-social-v2.svg', 'utf8')
+const svg = await loadSocialCardSource()
+assert.ok(!svg.includes('{{'), 'all local source assets embedded')
+assert.ok(svg.includes('data:image/svg+xml;base64,'), 'canonical brand SVG embedded')
 assert.deepEqual(png, renderSocialCard(svg), 'committed card matches reproducible SVG and bundled fonts')
+const legacyPng = await readFile(`${directory === '.' ? 'public' : directory}/rift-manager-social-v2.png`)
+assert.deepEqual(legacyPng.subarray(0, 8), png.subarray(0, 8), 'legacy v2 card remains a static PNG')
+assert.equal(legacyPng.readUInt32BE(16), 1200)
+assert.equal(legacyPng.readUInt32BE(20), 630)
 assert.ok(!html.includes('lolsim.askaconsult.com'), 'no legacy social asset host')
 console.log(`Social metadata, decoded 1200×630 PNG and source reproducibility pass (${directory})`)

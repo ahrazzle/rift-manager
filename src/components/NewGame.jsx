@@ -58,7 +58,10 @@ export default function NewGame({ state, dispatch }) {
     <div className="newgame">
       <section className="card hero broadcast-entry" aria-labelledby="entry-title">
         <div className="entry-copy">
-          <h1 id="entry-title"><span>RIFT</span> MANAGER</h1>
+          <h1 id="entry-title">
+            <img className="entry-brand" src={`${(import.meta.env?.BASE_URL ?? '/')}brand/rift-manager.svg`}
+              width="448" height="160" alt="Rift Manager" />
+          </h1>
           <p className="tag">Pick a roster and coach your team through the split.</p>
           <a className="entry-begin" href="#club-setup">Choose your club <MatchIcon name="chevron" size={18} /></a>
         </div>

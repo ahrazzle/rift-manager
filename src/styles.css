@@ -807,9 +807,9 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
   min-height: 58px; padding: 9px max(18px, calc((100vw - 1168px) / 2));
   background: rgb(9 16 26 / 96%); border-color: #243445;
 }
-.broadcast-brand { display: inline-flex; align-items: center; gap: 7px; color: #f5f8fa; white-space: nowrap; }
-.broadcast-brand span { font: 700 25px/1 var(--font-display); letter-spacing: .025em; }
-.broadcast-brand b { color: #abc1ce; font: inherit; }
+.broadcast-brand { display: inline-flex; align-items: center; flex-shrink: 0; }
+.broadcast-brand img { display: block; width: 140px; height: 50px; object-fit: contain; }
+.broadcast-brand-compact img { width: 40px; height: 40px; }
 .topbar-spacer { flex: 1; }
 .broadcast-shell .who { font-size: 12px; }
 .match-icon, .team-crest { flex-shrink: 0; vertical-align: middle; }
@@ -820,9 +820,9 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
 @media (max-width: 640px) {
   .broadcast-shell { padding-inline: 10px; }
   .broadcast-shell .topbar { gap: 7px; min-height: 48px; padding: 8px 10px; }
-  .broadcast-brand { margin-right: auto; gap: 3px; }
-  .broadcast-brand svg { width: 24px; height: 24px; }
-  .broadcast-brand span { font-size: 20px; }
+  .broadcast-brand { margin-right: auto; }
+  .broadcast-brand img { width: 112px; height: 40px; }
+  .broadcast-brand-compact img { width: 36px; height: 36px; }
   .broadcast-shell .topbar .streak-pill { display: none; }
   .broadcast-shell .topbar .ghost { font-size: 12px; padding: 6px 8px; }
   .broadcast-shell .topbar .year-select { max-width: 77px; }

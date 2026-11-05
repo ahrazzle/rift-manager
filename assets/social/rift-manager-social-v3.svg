@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Rift Manager — Build your team. Own the season.</title>
+  <desc id="desc">Cream Rift Manager tower and pennant logo over a painted esports arena, with the words Build your team. Own the season.</desc>
+  <defs>
+    <linearGradient id="shade"><stop offset="0" stop-color="#0b1923"/><stop offset=".34" stop-color="#0b1923" stop-opacity=".97"/><stop offset=".61" stop-color="#0b1923" stop-opacity=".55"/><stop offset="1" stop-color="#0b1923" stop-opacity=".08"/></linearGradient>
+    <linearGradient id="floor" x2="0" y2="1"><stop stop-color="#0b1923" stop-opacity="0"/><stop offset="1" stop-color="#0b1923" stop-opacity=".85"/></linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#0b1923"/>
+  <image x="140" y="0" width="1060" height="630" preserveAspectRatio="xMaxYMid slice" href="{{ARENA}}"/>
+  <rect width="1200" height="630" fill="url(#shade)"/>
+  <rect y="380" width="1200" height="250" fill="url(#floor)"/>
+  <rect x="60" y="48" width="36" height="5" fill="#ff643d"/>
+  <text x="111" y="57" font-family="Barlow Condensed" font-weight="500" font-size="19" letter-spacing="3" fill="#fff3d8">THE ESPORTS MANAGEMENT SIM</text>
+  <image x="52" y="112" width="650" height="260" preserveAspectRatio="xMinYMid meet" href="{{BRAND}}"/>
+  <text x="64" y="445" font-family="Barlow Condensed" font-weight="700" font-size="48" fill="#fff3d8">BUILD YOUR TEAM.</text>
+  <text x="64" y="495" font-family="Barlow Condensed" font-weight="700" font-size="48" fill="#fff3d8">OWN THE SEASON.</text>
+  <path d="M64 566H1136" stroke="#fff3d8" stroke-opacity=".26"/>
+  <text x="64" y="598" font-family="Barlow Condensed" font-weight="500" font-size="18" letter-spacing="2" fill="#fff3d8">RIFT.ASKACONSULT.COM</text>
+  <text x="1136" y="598" text-anchor="end" font-family="Barlow Condensed" font-weight="500" font-size="18" letter-spacing="2" fill="#fff3d8">BY ASKA DIGITAL</text>
+</svg>

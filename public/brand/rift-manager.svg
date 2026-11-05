@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 224 80" role="img" aria-labelledby="rift-title">
+  <title id="rift-title">Rift Manager</title>
+  <g id="pennant-rook">
+    <path fill="#ff643d" d="M31 4c8-3 14-3 21-1 5 1 10 2 17 0l-7 8 6 5c-6 2-12 2-18 0-5-1-9-2-13 0v13h-6z"/>
+    <path fill="#fff3d8" fill-rule="evenodd" d="M7 25h13v8h8v-8h14v8h8v-8h13v17l-5 5v4l-9 8 18 16H46L32 61h-5v14H11V46l-4-4zm20 18v9h12l5-4v-5z"/>
+  </g>
+  <g fill="#fff3d8" transform="translate(86 12) skewX(-6)">
+    <!-- RIFT: cut terminals and a full-width T echo the battlements. -->
+    <path fill-rule="evenodd" d="M0 0h23c10 0 15 5 15 13 0 6-3 10-9 12l12 13H26L15 26h-3v12H0zm12 9v8h10c3 0 4-1 4-4s-1-4-4-4z"/>
+    <path d="M44 0h12v38H44zM62 0h34l-1 10H74v7h19l-1 9H74v12H62zM99 0h38l-1 10h-12v28h-12V10H98z"/>
+  </g>
+  <!-- MANAGER: drawn as open, widely spaced small capitals. -->
+  <g transform="translate(82 59)" fill="none" stroke="#fff3d8" stroke-width="3" stroke-linejoin="bevel">
+    <path d="M1.5 13V1.5h1l5 7 5-7h1V13"/>
+    <path d="m22 13 5-11.5h2L34 13m-10-3.5h8"/>
+    <path d="M43 13V1.5h1l9 10h1v-11"/>
+    <path d="m63 13 5-11.5h2L75 13m-10-3.5h8"/>
+    <path d="M95 4.5c-1-2-3-3-5.5-3-4 0-6.5 2.1-6.5 5.5s2.5 5.5 6.5 5.5c2 0 4-.5 5.5-1.5V7.5h-5.5"/>
+    <path d="M115 1.5h-11V12h11m-11-5.4h9.5"/>
+    <path d="M125 13V1.5h6.8c3 0 4.2 1.2 4.2 3.2s-1.2 3.3-4.2 3.3H125m6.5 0 5 5"/>
+  </g>
+</svg>
