@@ -10,6 +10,8 @@ Player ratings are fictional values tuned for the sim, not real player stats.
 
 **Career.** Ten seasons, one club. Start with the year and roster you chose, then build an alternate timeline. Rosters age and develop, contracts expire, and the board judges you every year. League and international formats are simplified; foreign tournament teams use the starting-year rosters and tier-based qualification.
 
+In **Career only**, players gain or lose OVR when you **Advance Season** (not during weekly play). **Age** and **potential (Pot)** on Squad and Market show how much runway remains — potential is a fixed rating cap in the data, not something you unlock with training, and it does not shrink with age. **Lineup** shows a short growth **outlook** (rising / steady / declining / at ceiling) so starter picks respect ceiling vs rising kids; exact Pot stays on deeper screens. After Advance, a dismissible **off-season report** on the Dashboard lists ±OVR, ages, lineup reshuffles, releases, and league churn. **Season mode** does not run that annual growth tick.
+
 **Gauntlet.** Five escalating series against increasingly stronger opponents. One loss ends the run. Win all five to clear it. Check the scouting report before each round: tier and key players.
 
 **Scenario.** Short story campaigns. Relive legendary runs series by series, including **Los Ratones: Reality** (the streamer team's actual journey through the NLC, EMEA Masters, and the LEC Versus heartbreak) and **Los Ratones: Dream** (a fantasy run: LEC champions, then Worlds champions, clearly labeled as fiction).
@@ -74,7 +76,7 @@ Miss the board's expectation and confidence drops. Beat it and confidence rises.
 
 **Dashboard.** Season progress, your next matchup with an estimated win chance, this week's fixtures, and the Play Week button. When the season ends it shows your final record.
 
-**Lineup.** One starter per role: Top, Jungle, Mid, Bot, Support. Each role has a starter and a sub. Click a player to start them. Each player shows OVR (overall), MEC (mechanics), MAC (macro), and CON (consistency), plus current form, contract, and morale. Mid and Bot carry slightly more weight in the sim. Support carries slightly less.
+**Lineup.** One starter per role: Top, Jungle, Mid, Bot, Support. Each role has a starter and a sub. Click a player to start them. Each player shows OVR (overall), MEC (mechanics), MAC (macro), and CON (consistency), plus current form, contract, and morale. Career Lineup also shows **age** and a growth **outlook** (not exact Pot). Mid and Bot carry slightly more weight in the sim. Support carries slightly less.
 
 **Tactics.** Two choices that apply to every game of your next series.
 

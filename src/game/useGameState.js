@@ -253,6 +253,7 @@ function freshState(seasonYear = 'present') {
     live: null, // active IGL-mode live series | null
     sacked: false, // board fired the coach
     simSpeed: 'normal', // reveal pacing: 'slow' | 'normal' | 'fast' | 'instant'
+    offseasonReport: null, // Career: captured on ADVANCE_SEASON; dismissible Hub panel
   }
 }
 
@@ -295,6 +296,26 @@ function defaultLineup(teamPlayers) {
     if (p) map[p.role] = id
   }
   return map
+}
+
+function oswEntry(traits) {
+  if (!Array.isArray(traits)) return null
+  const raw = traits.find((t) => (typeof t === 'string' ? t : t.id) === 'one_season_wonder')
+  if (!raw) return null
+  return typeof raw === 'string' ? { id: 'one_season_wonder', revealed: false, fired: false, spike: 0 } : raw
+}
+
+function oswSpikeDelta(before, after) {
+  const b = oswEntry(before?.traits)
+  const a = oswEntry(after?.traits)
+  if (!a?.revealed) return null
+  if (!b?.fired && a.fired && a.spike > 0) return a.spike
+  return null
+}
+
+function playerNameLookup(id, roster, extras = []) {
+  const p = roster.find((x) => x.id === id) ?? extras.find((x) => x.id === id)
+  return p?.name ?? id
 }
 
 // --- Career mode (design doc §2 LOCKED contract) ---------------------------
@@ -1146,6 +1167,9 @@ function baseReducer(state, action) {
       const schedule = roundRobin(teamIds)
       const standings = {}
       for (const tid of teamIds) standings[tid] = emptyStanding(tid)
+      const seasonIndexCompleted = state.career.seasonIndex
+      const preLineup = { ...(state.lineup || {}) }
+      const preManaged = (state.teams[state.teamId] || []).map((p) => ({ ...p }))
       // P0 engine item 5: one annual development tick (off-season roll, off
       // the seeded match path).
       const teams = {}
@@ -1208,6 +1232,7 @@ function baseReducer(state, action) {
       // AI offseason churn (light two-agent homage): each AI team cuts its
       // weakest player and signs the best FA fit for that role.
       let fa = [...faPool]
+      const aiChurn = []
       for (const tid of teamIds) {
         if (tid === state.teamId) continue
         const roster = teams[tid] || []
@@ -1217,10 +1242,60 @@ function baseReducer(state, action) {
         const weak = roster[weakIdx]
         const cand = fa.filter((p) => p.role === weak.role).sort((a, b) => b.ovr - a.ovr)[0]
         if (cand && cand.ovr > weak.ovr + 2) {
+          aiChurn.push({
+            teamId: tid,
+            cutName: weak.name,
+            signedName: cand.name,
+            role: weak.role,
+          })
           teams[tid] = roster.map((p, i) => (i === weakIdx ? { ...cand, team: tid, contract: 2, morale: 70 } : p))
           fa = fa.filter((p) => p.id !== cand.id)
           fa.push({ ...weak, team: 'FA', contract: 1, morale: 60 })
         }
+      }
+      const developedPairs = preManaged.map((before) => {
+        const afterDevelop = (teams[state.teamId] || []).find((p) => p.id === before.id)
+          ?? released.find((p) => p.id === before.id)
+        return { before, afterDevelop }
+      })
+      const newLineup = defaultLineup(teams[state.teamId])
+      const lineupChanges = []
+      for (const role of ROLES) {
+        const outId = preLineup[role]
+        const inId = newLineup[role]
+        if (!outId || !inId || outId === inId) continue
+        lineupChanges.push({
+          role,
+          outId,
+          outName: playerNameLookup(outId, teams[state.teamId], preManaged),
+          inId,
+          inName: playerNameLookup(inId, teams[state.teamId], preManaged),
+        })
+      }
+      const rosterReport = developedPairs
+        .filter(({ afterDevelop }) => afterDevelop)
+        .map(({ before, afterDevelop }) => {
+          const potential = before.potential ?? Math.max(45, Math.min(99, (before.ovr ?? 70) + 5))
+          const ovrAfter = afterDevelop.ovr
+          return {
+            id: before.id,
+            name: before.name,
+            role: before.role,
+            ageBefore: before.age ?? 21,
+            ageAfter: afterDevelop.age ?? (before.age ?? 21) + 1,
+            ovrBefore: before.ovr,
+            ovrAfter,
+            potential,
+            atCeiling: ovrAfter >= Math.min(99, potential),
+            oswSpike: oswSpikeDelta(before, afterDevelop),
+          }
+        })
+      const offseasonReport = {
+        seasonIndexCompleted,
+        roster: rosterReport,
+        lineupChanges,
+        released: released.map((p) => ({ id: p.id, name: p.name, role: p.role, ovr: p.ovr })),
+        aiChurn,
       }
       // P0 UX item 4: career dilemma roll (~35%, non-empty managed roster).
       // pendingEvent gate above blocks advancing while one is unresolved.
@@ -1279,9 +1354,15 @@ function baseReducer(state, action) {
         playoffChampionId: null, // P1 item 11: cleared with the season reset
         teams,
         faPool: fa,
-        lineup: defaultLineup(teams[state.teamId]),
+        lineup: newLineup,
         press: { pending: true },
+        offseasonReport,
       }
+    }
+
+    case 'DISMISS_OFFSEASON_REPORT': {
+      if (state.offseasonReport == null) return state
+      return { ...state, offseasonReport: null }
     }
 
     case 'RESOLVE_PROMOTION': {
@@ -2031,6 +2112,7 @@ export function load({ strict = false } = {}) {
     else if (typeof parsed.seriesOptions.fearless !== 'boolean') parsed.seriesOptions.fearless = false
     if (!('pendingPromotion' in parsed)) parsed.pendingPromotion = null
     if (!('playoffChampionId' in parsed)) parsed.playoffChampionId = null
+    if (!('offseasonReport' in parsed)) parsed.offseasonReport = null
     if (typeof parsed.playoffFinalist !== 'boolean') parsed.playoffFinalist = regionalFinalist(parsed)
     return migrateMatchExperience(parsed)
   } catch (error) {

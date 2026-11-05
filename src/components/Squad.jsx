@@ -44,6 +44,26 @@ export default function Squad({ state, dispatch }) {
   return (
     <div className="stack">
       {state.lastEventLog && <p className="hint">{state.lastEventLog}</p>}
+      <div className="card">
+        <h2>My Roster</h2>
+        <p className="hint">Age and potential (Pot) — fixed cap in data; growth happens on Career Advance Season only.</p>
+        <div className="market-grid">
+          {myRoster.map((p) => (
+            <div className="fa-card" key={p.id}>
+              <div className="fa-top">
+                <span className="fa-name">{p.name}</span>
+                <span className="fa-role">{ROLE_LABEL[p.role]}</span>
+              </div>
+              <div className="fa-stats">
+                <span>OVR {p.ovr}</span>
+                <span>Age {p.age ?? 21}</span>
+                <span>Pot {p.potential ?? Math.min(99, p.ovr + 5)}</span>
+                {state.lineup[p.role] === p.id && <span>Starter</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
       {/* ---- 1. My Staff ---- */}
       <div className="card">
         <h2>My Staff: Head Coach</h2>
@@ -142,6 +162,8 @@ export default function Squad({ state, dispatch }) {
               </div>
               <div className="fa-stats">
                 <span>OVR {p.ovr}</span>
+                <span>Age {p.age ?? 21}</span>
+                <span>Pot {p.potential ?? Math.min(99, p.ovr + 5)}</span>
                 {state.lineup[p.role] === p.id && <span>Starter</span>}
               </div>
               <button
@@ -180,6 +202,8 @@ export default function Squad({ state, dispatch }) {
                   </div>
                   <div className="fa-stats">
                     <span>OVR {p.ovr}</span>
+                    <span>Age {p.age ?? 21}</span>
+                    <span>Pot {p.potential ?? Math.min(99, p.ovr + 5)}</span>
                   </div>
                   <button
                     className={getId === p.id ? 'primary' : 'ghost'}

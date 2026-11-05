@@ -58,7 +58,7 @@ export function PromotionModal({ state, dispatch }) {
         <div className="modal-head"><h2>🎓 Academy standout</h2></div>
         <div className="guide-body" style={{ padding: '18px 22px 26px', overflowY: 'auto' }}>
           <p>
-            <strong>{pl.name}</strong> ({pl.role}, {pl.ovr} OVR, age {pl.age}) has caught the eye.
+            <strong>{pl.name}</strong> ({pl.role}, {pl.ovr} OVR, age {pl.age}, Pot {pl.potential ?? Math.min(99, pl.ovr + 8)}) has caught the eye.
             Promote them to the {teamName(state, state.teamId)} main roster, or keep them
             developing in the academy.
           </p>

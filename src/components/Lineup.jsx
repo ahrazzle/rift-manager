@@ -1,9 +1,19 @@
 import { ROLES, ROLE_LABEL } from '../data/lck.js'
+import { growthOutlook } from '../data/development.js'
 import { styledPlayer } from '../game/logic.js'
 import PlayerTags from './PlayerTags.jsx'
 
-function PlayerRow({ player, isStarter, form, onSelect, onHover }) {
+const OUTLOOK_CLS = {
+  rising: 'outlook-rise',
+  steady: 'outlook-steady',
+  declining: 'outlook-decline',
+  'at ceiling': 'outlook-ceiling',
+}
+
+function PlayerRow({ player, isStarter, form, onSelect, showOutlook }) {
   const f = form[player.id] ?? player.form
+  const age = player.age ?? 21
+  const outlook = showOutlook ? growthOutlook(player) : null
   return (
     <button
       className={isStarter ? 'plrow starter' : 'plrow'}
@@ -11,6 +21,15 @@ function PlayerRow({ player, isStarter, form, onSelect, onHover }) {
     >
       <span className="pl-name">{player.name}</span>
       <span className="pl-ovr" title="Overall">{player.ovr}</span>
+      <span className="tale-chip pl-age" title="Player age">Age {age}</span>
+      {outlook && (
+        <span
+          className={`tale-chip outlook-chip ${OUTLOOK_CLS[outlook] || ''}`}
+          title="Career growth outlook (Advance Season only — not a promise every week)"
+        >
+          {outlook}
+        </span>
+      )}
       <span className="bars">
         <Mini label="M" v={player.mech} />
         <Mini label="A" v={player.macro} />
@@ -38,6 +57,7 @@ export default function Lineup({ state, dispatch }) {
   const players = state.teams[state.teamId]
   const form = state.form
   const teamName = state.teamMeta?.[state.teamId]?.name ?? state.teamId
+  const showOutlook = state.mode === 'career' && state.career?.status === 'active'
 
   function setStarter(role, playerId) {
     dispatch({ type: 'SET_LINEUP', role, playerId })
@@ -47,7 +67,14 @@ export default function Lineup({ state, dispatch }) {
     <div className="stack">
       <div className="card">
         <h2>Starting Lineup: {teamName}</h2>
-        <p className="hint">Click a player to start them in their role. Subs are listed below starters.</p>
+        <p className="hint">
+          Click a player to start them in their role. Subs are listed below starters.
+          {showOutlook
+            ? ' Growth outlook reflects Career off-season development bands — exact potential is on Squad.'
+            : state.mode === 'season'
+              ? ' Season mode has no annual player growth between splits.'
+              : ''}
+        </p>
         {ROLES.map((role) => {
           const inRole = players.filter((p) => p.role === role)
           const starterId = state.lineup[role]
@@ -64,6 +91,7 @@ export default function Lineup({ state, dispatch }) {
                     form={form}
                     isStarter={p.id === starterId}
                     onSelect={() => setStarter(role, p.id)}
+                    showOutlook={showOutlook}
                   />
                 ))}
               </div>
