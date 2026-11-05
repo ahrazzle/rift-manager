@@ -1,61 +1,74 @@
 # Rift Manager — Deployment runbook
 
-## Project boundaries
+## GitHub Pages publication
 
-| Target | Project | URL |
-| --- | --- | --- |
-| Staging | `lck-manager-staging` | https://lck-manager-staging.vercel.app/ and https://lolsim.askaconsult.com/staging/ |
-| Live | `lck-manager` | https://lolsim.askaconsult.com/ and https://lck-manager-five.vercel.app/ |
+The canonical public game is https://www.rift.askaconsult.com/.
+Source lives on `main`. Since [PR #15](https://github.com/ahrazzle/rift-manager/pull/15),
+[`.github/workflows/pages.yml`](../.github/workflows/pages.yml) runs on every push
+to `main` and on manual dispatch. It installs dependencies with Node.js 24, runs
+all tests, builds, checks `CNAME`, `.nojekyll` and relative asset references, then
+publishes `dist/` to `gh-pages`. Pages serves that compiled branch.
 
-Scope: `a-4677s-projects`. Staging ID: `prj_yVc6nm5SPtSM2WKrs8Ia1ly8TYww`.
-Existing Vercel CLI authentication works. Do not paste tokens into source or scripts.
-A deployment with `--prod` targets the production environment of the explicitly
-selected project; for this workflow that project is **staging**, not the live game.
+**Merging a PR into `main` triggers live publication, including documentation-only
+PRs.** Review and release authorization must happen before merging. A successful
+source merge or build alone does not prove the public site updated: check the
+workflow, Pages publication, anonymous root HTML and referenced assets. Preserve
+`public/CNAME`, `public/.nojekyll` and Vite `base: './'`.
 
-## Staging release
+Record the reviewed source SHA, workflow run, published Pages SHA and served asset
+checks in each release receipt. The workflow replaces Pages branch history, so
+retain rollback source SHAs separately. An authorized rollback should restore the
+intended reviewed source through the same workflow; do not replace `main` with
+compiled files. DNS, permissions and Pages settings are separate changes.
 
-1. Run `npm test` and `npm run build`; address failures.
-2. Commit the intended source and docs using the project identity:
-   `git -c user.name=proteus -c user.email=proteus@askaconsult.com commit`.
-3. Run `bash scripts/deploy-staging.sh`. It requires a clean tree, verifies the
-   build, archives the commit without Git metadata, links only the staging project,
-   verifies its ID, and creates a deployment with `--skip-domain`.
-4. Inspect the returned deployment with `vercel inspect URL --scope a-4677s-projects`.
-   Fetch its HTML and JS/CSS assets. If protected, use the authenticated Vercel
-   access workflow; do not disable deployment protection. Compare asset hashes to
-   `dist/` and check the new UI strings. Use the printed temporary copy as `--cwd`
-   when the CLI needs linked-project context.
-5. Move staging's domains with
-   `vercel promote URL --yes --scope a-4677s-projects --cwd TEMP_COPY`.
-6. Verify both staging URLs and their assets return HTTP 200 with the same build.
-   Verify the live root still serves its pre-release asset hashes. Play through
-   the browser controls when browser access is available.
+The [November 3 release record](RELEASE-2026-11-03.md) records historical deployment
+evidence, not the current published head. Social-card source reconciliation landed
+through [PR #14](https://github.com/ahrazzle/rift-manager/pull/14); PR #10 is the
+earlier overlapping proposal.
 
-Do not use the legacy root `deploy.sh`: it deploys whichever local project happens
-to be linked. The new script pins the destination and avoids sending this machine's
-Git identity to Vercel. The source repository has no GitHub remote.
+## Vercel redirect and staging
 
-## Assets, proxy and saves
+[PR #16](https://github.com/ahrazzle/rift-manager/pull/16) tracks the Vercel routing
+configuration in [`vercel.json`](../vercel.json). On `lolsim.askaconsult.com`, paths
+outside `/staging` permanently redirect to the corresponding path on the www
+Pages site. `/staging/(.*)` remains a proxy to
+https://lck-manager-staging.vercel.app/. The direct staging alias is also available.
+These routes are Vercel configuration; GitHub Pages does not provide the proxy.
+A repository configuration change needs its own Vercel deployment and served-route
+verification before it can be treated as live behavior.
 
-The tracked `vercel.json` contains the live project's `/staging/(.*)` proxy to the
-staging hostname. Preserve it for any later live release. The staging script writes
-an empty config only in its temporary copy, because staging serves its own root.
-Keep Vite `base: './'`: relative assets resolve under `/staging/`.
+Staging uses the separate `lck-manager-staging` Vercel project. For an authorized
+staging release:
 
-Live saves use `lck-manager-save-v1`; staging paths/hostnames use
-`lck-manager-staging-save-v1`. Staging can import a legacy save on first load, then
-writes only its own key. The two hostnames have separate browser storage origins.
+1. Run `npm ci`, `npm test`, and `npm run build`, then commit the intended source.
+2. Run `bash scripts/deploy-staging.sh` from a clean tree. It archives the commit
+   without Git metadata, pins and verifies the staging project, and creates a
+   deployment without moving domains. Do not use the legacy `deploy.sh`, which
+   uses whichever project is locally linked.
+3. Inspect the returned deployment and compare HTML and JS/CSS assets with the
+   tested build. Use authenticated access for protected previews; keep protection on.
+4. Promote that exact deployment to the staging alias only when authorized, using
+   the project context printed by the script. Verify the direct alias and Vercel
+   `/staging/` proxy, and confirm the public Pages game remains on its intended build.
 
-## Live promotion
+The script removes live routing config only from its temporary staging copy.
+Never deploy this machine's Git identity or commit `.env*`, `.vercel`, build output,
+credentials or browser saves. Current account access must be checked when needed;
+this document does not assert a contributor has credentials or release rights.
 
-Live requires a separate explicit instruction. Verify its project ID before use,
-retain the staging proxy in its deployment config, and deploy from a git-free copy.
-The restored repository's `main` branch is an import baseline, not a record of live.
-Consult Vercel's deployed artifacts and `CHANGELOG.md`, not old branch labels.
+## Browser saves
 
-## Source sync
+[`src/game/persistence.js`](../src/game/persistence.js) selects
+`lck-manager-staging-save-v1` for `/staging` paths or matching
+`lck-manager-staging*.vercel.app` hosts. Other locations use `lck-manager-save-v1`.
+If the staging key is absent, reading may fall back to the production key **on the
+same browser origin**; validated state is then written only to the staging key.
+This is not a cross-host migration. The www, lolsim and direct staging hosts have
+separate localStorage origins. Redirecting a host does not transfer its saves.
 
-After a release, sync final tracked source to the supplied working-files folder.
-Preserve existing online file IDs and upload new files only where needed. Exclude
-`.git`, `.env*`, `.vercel`, `node_modules`, and `dist`. The old local Drive folder was
-behind the online snapshot; never restore it over the current repository.
+## Source provenance
+
+Keep reviewed source and release evidence in this repository. Historical recovery
+records are in [SOURCE-RECOVERY.md](SOURCE-RECOVERY.md). Do not restore an old
+working-file snapshot over newer source. Exclude `.git`, `.env*`, `.vercel`,
+`node_modules` and `dist` from source exports.
