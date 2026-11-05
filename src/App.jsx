@@ -21,11 +21,20 @@ import PressModal from './components/PressModal.jsx'
 import { fmtMoney } from './game/economy.js'
 import ConfirmDialog from './components/ConfirmDialog.jsx'
 
-function SaveError({ error, retrySave }) {
-  if (!error) return null
+function SaveError({ error, retrySave, loadError, retryLoad, replaceSave }) {
+  const [replacementPending, setReplacementPending] = useState(false)
+  if (!error && !loadError) return null
   return <div className="card" role="alert">
-    <p>{error}</p>
-    <button type="button" className="primary" onClick={retrySave}>Retry saving</button>
+    <p>{loadError || error}</p>
+    {loadError ? <>
+      {error && <p>{error}</p>}
+      <button type="button" className="primary" onClick={retryLoad}>Retry loading</button>
+      <button type="button" className="ghost" onClick={() => setReplacementPending(true)}>Replace saved game</button>
+      {replacementPending && <ConfirmDialog title="Replace saved game?" confirmLabel="Replace saved game"
+        onConfirm={() => { setReplacementPending(false); replaceSave() }} onCancel={() => setReplacementPending(false)}>
+        This permanently replaces the existing saved game with a new game. Retry loading first if you want to recover your progress.
+      </ConfirmDialog>}
+    </> : <button type="button" className="primary" onClick={retrySave}>Retry saving</button>}
   </div>
 }
 
@@ -108,7 +117,7 @@ function SiteFooter() {
 }
 
 export default function App() {
-  const { state, dispatch: gameDispatch, TOTAL_ROUNDS, storageError, retrySave } = useGameState()
+  const { state, dispatch: gameDispatch, TOTAL_ROUNDS, storageError, retrySave, loadError, retryLoad, replaceSave } = useGameState()
   const [tab, setTab] = useState('dashboard')
   const [guideOpen, setGuideOpen] = useState(false)
   const [resetPending, setResetPending] = useState(false)
@@ -138,7 +147,7 @@ export default function App() {
           </button>
         </header>
 
-        <SaveError error={storageError} retrySave={retrySave} />
+        <SaveError error={storageError} retrySave={retrySave} loadError={loadError} retryLoad={retryLoad} replaceSave={replaceSave} />
         <main id="main-content" className="content">
           <NewGame state={state} dispatch={dispatch} />
 
@@ -259,7 +268,7 @@ export default function App() {
         </button>
       </header>
       <main id="main-content" className="content">
-        <SaveError error={storageError} retrySave={retrySave} />
+        <SaveError error={storageError} retrySave={retrySave} loadError={loadError} retryLoad={retryLoad} replaceSave={replaceSave} />
         {!isCampaign && state.teamId && (
           <div className="top-progress" aria-hidden>
             <span style={{ width: `${progress}%` }} />

@@ -11,7 +11,7 @@ export function saveKey(location = globalThis.window?.location) {
 
 export function readSave() {
   const storage = globalThis.localStorage
-  if (!storage) return null
+  if (!storage) throw new Error('Browser storage is unavailable.')
   const key = saveKey()
   const raw = storage.getItem(key)
   // Import on first load only. The hook writes the validated/migrated state to
@@ -20,5 +20,7 @@ export function readSave() {
 }
 
 export function writeSave(state) {
-  globalThis.localStorage?.setItem(saveKey(), JSON.stringify(state))
+  const storage = globalThis.localStorage
+  if (!storage) throw new Error('Browser storage is unavailable.')
+  storage.setItem(saveKey(), JSON.stringify(state))
 }
