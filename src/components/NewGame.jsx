@@ -5,6 +5,7 @@ import { SEASONS, SEASON_ORDER, LEAGUES, PRESENT_BY_LEAGUE, seasonsForLeague } f
 import MatchOptions from './MatchOptions.jsx'
 import { matchOptions } from '../game/matchSession.js'
 import { CAMPAIGNS } from '../data/campaigns.js'
+import { GITHUB_CONTRIBUTING, GITHUB_REPO } from '../siteLinks.js'
 
 export default function NewGame({ state, dispatch }) {
   const [options, setOptions] = useState(() => matchOptions(state?.matchOptions))
@@ -63,6 +64,16 @@ export default function NewGame({ state, dispatch }) {
               width="448" height="160" alt="Rift Manager" />
           </h1>
           <p className="tag">Pick a roster and coach your team through the split.</p>
+          <p className="entry-community faint">
+            Public source on{' '}
+            <a href={GITHUB_REPO} target="_blank" rel="noreferrer">
+              GitHub
+            </a>
+            — issues, discussions, and pull requests welcome.{' '}
+            <a href={GITHUB_CONTRIBUTING} target="_blank" rel="noreferrer">
+              How to contribute
+            </a>
+          </p>
           <a className="entry-begin" href="#club-setup">Choose your club <MatchIcon name="chevron" size={18} /></a>
         </div>
       </section>
