@@ -1177,11 +1177,14 @@ function baseReducer(state, action) {
       const faPool = (state.faPool ?? []).map((p) => developPlayer(p, Math.random))
       // --- Expansion: economy / contracts / morale / board / AI churn --------
       let finance = state.finance ? { ...state.finance } : null
+      const budgetBefore = finance ? finance.budget : null
       const myRoster = teams[state.teamId] || []
       // Annual wage bill.
+      let wageBill = 0
+      let renewalFees = 0
       if (finance) {
-        const bill = myRoster.reduce((s, p) => s + playerWage(p), 0)
-        finance.budget -= bill
+        wageBill = myRoster.reduce((s, p) => s + playerWage(p), 0)
+        finance.budget -= wageBill
       }
       // Contracts: decrement; expired → renew if affordable, else release.
       // Starters are never released (the club always finds the money).
@@ -1198,6 +1201,7 @@ function baseReducer(state, action) {
         const isStarter = lineupIds.has(p.id)
         if (finance && (finance.budget >= renewFee || isStarter)) {
           finance.budget -= renewFee
+          renewalFees += renewFee
           kept.push({ ...p, contract: 2, morale: clampMorale((p.morale ?? 70) + 5) })
         } else {
           released.push({ ...p, team: 'FA', contract: 1, morale: 60 })
@@ -1253,6 +1257,29 @@ function baseReducer(state, action) {
           fa.push({ ...weak, team: 'FA', contract: 1, morale: 60 })
         }
       }
+      // Transfers Near: offseason income — sponsorship scales with tier,
+      // prize money follows final placement. Careers otherwise only ever
+      // lose money (wages, renewals, signings).
+      const teamTier = state.teamMeta?.[state.teamId]?.tier ?? 80
+      let sponsorship = 0
+      let prize = 0
+      if (finance) {
+        sponsorship = teamTier * 6000
+        prize = champ ? 400000 : regionalFinalist(state) ? 200000 : place <= 4 ? 100000 : 0
+        finance.budget += sponsorship + prize
+      }
+      // Transfers Near: FA pool refresh — five new prospects, one per role,
+      // enter free agency each offseason; the pool caps at 20 so the Market
+      // stays readable. The season index in the seed keeps names/ids unique
+      // across seasons; the academy flag is stripped, as on promotion.
+      const newcomers = ROLES.map((role) => {
+        const { academy: _academy, ...prospect } = buildAcademyPlayer(`FA-${seasonIndexCompleted + 1}`, teamTier, role)
+        return { ...prospect, team: 'FA' }
+      })
+      fa.push(...newcomers)
+      if (fa.length > 20) {
+        fa = [...fa].sort((a, b) => (b.ovr ?? 0) - (a.ovr ?? 0)).slice(0, 20)
+      }
       const developedPairs = preManaged.map((before) => {
         const afterDevelop = (teams[state.teamId] || []).find((p) => p.id === before.id)
           ?? released.find((p) => p.id === before.id)
@@ -1296,6 +1323,18 @@ function baseReducer(state, action) {
         lineupChanges,
         released: released.map((p) => ({ id: p.id, name: p.name, role: p.role, ovr: p.ovr })),
         aiChurn,
+        newFreeAgents: newcomers.map((p) => ({ id: p.id, name: p.name, role: p.role, ovr: p.ovr, age: p.age })),
+        finance: finance
+          ? {
+              income: sponsorship + prize,
+              sponsorship,
+              prize,
+              wages: wageBill,
+              renewals: renewalFees,
+              budgetBefore,
+              budgetAfter: finance.budget,
+            }
+          : null,
       }
       // P0 UX item 4: career dilemma roll (~35%, non-empty managed roster).
       // pendingEvent gate above blocks advancing while one is unresolved.

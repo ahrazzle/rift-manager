@@ -63,3 +63,7 @@ Append-only per the project-files SOP. One line per change:
 2026-11-05T20:00:00Z | grk-smith | src/components/AboutCommunity.jsx, SiteFooter.jsx, test/about-community.test.mjs, CHANGELOG.md | Address grk-proof CHANGES_REQUESTED on #35: Esc closes About modal; focus into dialog + trap + restore trigger (ConfirmDialog-style); align player copy with docs/design/about-community-copy.md (no chemistry-meter writing aside); footer disclaimer matches design doc.
 
 2026-11-05T20:30:00Z | mithrax | src/components/AnimatedRift.jsx, src/match.css, src/styles/rift-arena.css, src/styles/match-broadcast.css, CHANGELOG.md | IGL tactical pause layout: cap coaching sidebar to square-map height, scroll call list inside panel (overflow-y auto), rift-layout--decision container query; removes dead void under map during stage decision.
+
+2026-11-05T20:38:00Z | amp-cayde | src/game/useGameState.js, src/components/Dashboard.jsx, docs/GUIDE.md, test/transfers-offseason.test.mjs, test/p0-engine.test.mjs | Transfers Near: offseason FA refresh (5 new prospects, one per role, pool capped at 20) + sponsorship/prize income each Advance Season, shown in the offseason report; document Squad trades, coaches, and academy in GUIDE.
+
+2026-11-05T21:55:00Z | mithrax | src/game/useGameState.js, test/transfers-offseason.test.mjs, CHANGELOG.md | Offseason money report honesty: capture budgetBefore before wages/renewals so Hub Budget A→B reconciles with the wage/renewal/income lines; budgetAfter remains end-of-offseason budget.
