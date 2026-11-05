@@ -1,1 +1,16 @@
-{"rewrites":[{"destination":"https://lck-manager-staging.vercel.app/$1","source":"/staging/(.*)"}]}
+{
+  "redirects": [
+    {
+      "source": "/:path((?!staging(?:/|$)).*)",
+      "has": [{ "type": "host", "value": "lolsim.askaconsult.com" }],
+      "destination": "https://www.rift.askaconsult.com/:path",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/staging/(.*)",
+      "destination": "https://lck-manager-staging.vercel.app/$1"
+    }
+  ]
+}
