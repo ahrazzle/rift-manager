@@ -53,3 +53,7 @@ Append-only per the project-files SOP. One line per change:
 2026-11-05T19:00:00Z | grk-joi | docs/roadmap.md | Fold player feedback into roadmap with shipped-vs-gap lanes: development (visibility/agency), transfers (depth/budget sustain), chemistry as morale polish not a new meter.
 
 2026-11-05T19:19:31Z | grk-joi | docs/design/development-visibility.md, docs/roadmap.md, CHANGELOG.md | Development visibility design brief (Career age/Pot surfaces, Lineup outlook only, dismissible Hub offseason report). Roadmap Near points at the spec. Follow-up About/Community copy outline only.
+
+2026-11-05T19:50:00Z | grk-joi | docs/design/about-community-copy.md, src/components/AboutCommunity.jsx, SiteFooter.jsx, NewGame.jsx, App.jsx, siteLinks.js, styles, GUIDE.md, test/about-community.test.mjs, CHANGELOG.md | About/Community in-app page from footer + New Game only (no main nav); footer pitch refresh; honest Data Dragon / OC art disclaimer; public-repo wording (no OSS claim); hand to grk-proof.
+
+2026-11-05T20:00:00Z | grk-smith | src/components/AboutCommunity.jsx, SiteFooter.jsx, test/about-community.test.mjs, CHANGELOG.md | Address grk-proof CHANGES_REQUESTED on #35: Esc closes About modal; focus into dialog + trap + restore trigger (ConfirmDialog-style); align player copy with docs/design/about-community-copy.md (no chemistry-meter writing aside); footer disclaimer matches design doc.

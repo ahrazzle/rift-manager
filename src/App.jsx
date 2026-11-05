@@ -23,6 +23,7 @@ import PressModal from './components/PressModal.jsx'
 import { fmtMoney } from './game/economy.js'
 import ConfirmDialog from './components/ConfirmDialog.jsx'
 import SiteFooter from './components/SiteFooter.jsx'
+import AboutCommunity from './components/AboutCommunity.jsx'
 
 function Brand({ compact = false }) {
   return <div className={`broadcast-brand${compact ? ' broadcast-brand-compact' : ''}`}>
@@ -118,6 +119,7 @@ export default function App() {
   const { state, dispatch: gameDispatch, TOTAL_ROUNDS, storageError, retrySave, loadError, retryLoad, replaceSave } = useGameState()
   const [tab, setTabRaw] = useState('dashboard')
   const [guideOpen, setGuideOpen] = useState(false)
+  const [aboutOpen, setAboutOpen] = useState(false)
   const [resetPending, setResetPending] = useState(false)
   const prevActiveTab = useRef(null)
   const setTab = useCallback((id) => {
@@ -126,6 +128,10 @@ export default function App() {
   }, [])
   const openGuide = useCallback(() => {
     setGuideOpen(true)
+    scrollContentToTop()
+  }, [])
+  const openAbout = useCallback(() => {
+    setAboutOpen(true)
     scrollContentToTop()
   }, [])
   const dispatch = (action) => {
@@ -206,12 +212,13 @@ export default function App() {
 
         <SaveError error={storageError} retrySave={retrySave} loadError={loadError} retryLoad={retryLoad} replaceSave={replaceSave} />
         <main id="main-content" className="content">
-          <NewGame state={state} dispatch={dispatch} />
+          <NewGame state={state} dispatch={dispatch} onOpenAbout={openAbout} />
 
         </main>
 
-        <SiteFooter />
+        <SiteFooter onOpenAbout={openAbout} />
         {guideOpen && <Guide onClose={() => setGuideOpen(false)} />}
+        {aboutOpen && <AboutCommunity onClose={() => setAboutOpen(false)} />}
       </div>
     )
   }
@@ -336,7 +343,7 @@ export default function App() {
         <PressModal state={state} dispatch={dispatch} onClose={() => dispatch({ type: 'PRESS_SKIP' })} />
       )}
 
-      <SiteFooter />
+      <SiteFooter onOpenAbout={openAbout} />
       {resetPending && <ConfirmDialog title="Start a new game?" confirmLabel="Start new game"
         onCancel={() => setResetPending(false)}
         onConfirm={() => {
@@ -347,6 +354,7 @@ export default function App() {
         This replaces your current saved session. Your progress will be lost.
       </ConfirmDialog>}
       {guideOpen && <Guide onClose={() => setGuideOpen(false)} />}
+      {aboutOpen && <AboutCommunity onClose={() => setAboutOpen(false)} />}
     </div>
   )
 }

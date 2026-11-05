@@ -7,7 +7,7 @@ import { matchOptions } from '../game/matchSession.js'
 import { CAMPAIGNS } from '../data/campaigns.js'
 import { GITHUB_CONTRIBUTING, GITHUB_REPO } from '../siteLinks.js'
 
-export default function NewGame({ state, dispatch }) {
+export default function NewGame({ state, dispatch, onOpenAbout }) {
   const [options, setOptions] = useState(() => matchOptions(state?.matchOptions))
   const [mode, setMode] = useState('career')
   const [league, setLeague] = useState('LCK')
@@ -73,6 +73,14 @@ export default function NewGame({ state, dispatch }) {
             <a href={GITHUB_CONTRIBUTING} target="_blank" rel="noreferrer">
               How to contribute
             </a>
+            {typeof onOpenAbout === 'function' && (
+              <>
+                {' · '}
+                <button type="button" className="linkish" onClick={onOpenAbout}>
+                  About / Community
+                </button>
+              </>
+            )}
           </p>
           <a className="entry-begin" href="#club-setup">Choose your club <MatchIcon name="chevron" size={18} /></a>
         </div>
