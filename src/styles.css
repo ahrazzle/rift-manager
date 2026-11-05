@@ -885,3 +885,17 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
 }
 /* The observer controls live beside the map, so the shell can scroll out of play. */
 .arena-shell .topbar { position: static; }
+
+/* About / Community — reuses guide modal shell; no main-nav tab */
+.about-backdrop { z-index: 40; }
+.about-modal .about-sections { padding-top: 8px; }
+.about-list { margin: 0; padding-left: 1.15em; color: var(--text-2); font-size: var(--fs-14); line-height: 1.55; }
+.about-list li + li { margin-top: 0.45em; }
+.about-links { margin-top: 12px; flex-wrap: wrap; gap: 8px; display: flex; }
+.site-footer .footer-contribute-links button.btn {
+  text-decoration: none;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+.site-footer .footer-contribute-links button.btn:hover { color: var(--text-2); }

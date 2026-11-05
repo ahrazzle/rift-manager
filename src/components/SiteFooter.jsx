@@ -1,6 +1,6 @@
 import { GITHUB_CONTRIBUTING, GITHUB_REPO } from '../siteLinks.js'
 
-export default function SiteFooter() {
+export default function SiteFooter({ onOpenAbout }) {
   return (
     <footer className="site-footer">
       <section className="footer-contribute" aria-labelledby="footer-contribute-heading">
@@ -8,10 +8,15 @@ export default function SiteFooter() {
           Help shape the game
         </p>
         <p className="footer-contribute-copy muted">
-          The source is public on GitHub. Open issues, join discussions, or send pull requests
-          to help shape Rift Manager.
+          Free LoL esports management sim — prepare, decide, watch, adjust. Source is public on
+          GitHub. Issues, discussions, and focused pull requests welcome.
         </p>
         <p className="footer-contribute-links">
+          {typeof onOpenAbout === 'function' && (
+            <button type="button" className="btn btn-quiet" onClick={onOpenAbout}>
+              About / Community
+            </button>
+          )}
           <a className="btn btn-quiet" href={GITHUB_REPO} target="_blank" rel="noreferrer">
             GitHub repository
           </a>
@@ -21,8 +26,10 @@ export default function SiteFooter() {
         </p>
       </section>
       <p className="footer-disclaimer faint">
-        Champion portraits and League names come from Riot&apos;s Data Dragon CDN; third-party
-        names and imagery are not original project assets.
+        League of Legends names are Riot Games trademarks used as third-party references.
+        Champion portraits (draft / map display) load from Riot&apos;s Data Dragon CDN with
+        initials or role-icon fallbacks; club crests and many UI glyphs are original. Not
+        affiliated with Riot. Original champion icons and crests welcome — see About / Community.
       </p>
       <a className="aska-signature" href="https://digital.askaconsult.com/" target="_blank" rel="noreferrer">
         <span>Made by</span> Aska Digital
