@@ -11,11 +11,13 @@ coach’s office, on the draft board, and at key moments in a series.
 
 ## Current release
 
-The latest released game includes historical rosters, Draft and IGL add-ons,
-and map presentation controls. The public www site is served from the repository’s
-`gh-pages` branch. Vercel staging remains a separate preview environment. Source
-changes merged into `main` automatically trigger the tested Pages build and live
-publication workflow. Review release impact before merging.
+**V1 (v1.0.0)** is staged as a [draft release](https://github.com/ahrazzle/rift-manager/releases/tag/v1.0.0).
+It includes historical rosters, Draft and IGL add-ons, the illustrated match
+broadcast, the tower-and-pennant brand identity, and map presentation controls.
+The public www site is served from the repository’s `gh-pages` branch. Vercel
+staging remains a separate preview environment. Source changes merged into `main`
+automatically trigger the tested Pages build and live publication workflow.
+Review release impact before merging.
 See the [historical release record](docs/RELEASE-2026-11-03.md) for earlier
 source/build verification and the [runbook](docs/DEPLOY-AND-CONTINUE.md) for current publication.
 
