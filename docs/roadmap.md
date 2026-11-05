@@ -43,3 +43,27 @@
 
 ## UI/UX overhaul (design proposal, 2026-11-03)
 - **Broadcast Night** direction approved after design-agent review; proposal, spec, prototypes, and assets live in `docs/design/broadcast-night/` (implementation not started — see `SPEC.md` migration phases).
+
+## Player feedback lanes (2026-11-05)
+Captured from live feedback: development, transfers, and chemistry would deepen the addiction loop. Honest audit vs what already ships — do not invent a second sim on top of the prepare → decide → watch → adjust fantasy.
+
+### Player development
+- **Shipped (Career):** annual age/potential growth (`developPlayer`), traits, academy offers, prep that lifts form (not permanent OVR).
+- **Gap:** visibility and agency more than a missing engine.
+- **Near:** surface age/potential in lineup; offseason growth/regression summary after Advance Season.
+- **Mid:** richer academy choice without a second career sim.
+- **Later:** playing-time / mentoring OVR paths only if they stay office decisions.
+
+### Transfers
+- **Shipped:** FA Market with budget/fees/wages, Career 1-for-1 trades, contracts/renewals, AI offseason churn.
+- **Gap:** depth and Career budget sustain, not “no market.”
+- **Near:** budget / FA pool refresh between seasons; document Squad trades/coaches/academy in GUIDE.
+- **Mid:** voluntary sell/release + slightly smarter trade AI (role-aware 1-for-1 is fine).
+- **Later (ideas only):** windows / bidding — do not overshadow prep → match → adjust.
+
+### Team chemistry
+- **Shipped (proxies):** per-player morale, press, career locker dilemmas, draft comfort (draft-scoped).
+- **Gap:** no chemistry/cohesion system — calling it chemistry oversells.
+- **Near/mid:** deepen morale consequences after signs, bench, and tenure so existing systems matter more.
+- **Avoid for now:** a separate chemistry meter that duplicates morale.
+
