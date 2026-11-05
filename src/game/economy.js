@@ -25,12 +25,21 @@ export function canAfford(budget, fee) {
   return fee <= budget
 }
 
-// "$4.2M" / "$850K" / "$95K"
+// "$4.2M" / "$850K" / "$95K" / "$0" — never "$0K".
 export function fmtMoney(n) {
   const v = Math.round(n ?? 0)
+  if (v === 0) return '$0'
   if (v >= 1_000_000) {
     const m = v / 1_000_000
     return '$' + (Number.isInteger(m) ? m.toFixed(0) : m.toFixed(1)) + 'M'
   }
   return '$' + Math.round(v / 1000) + 'K'
+}
+
+// Exact dollars with thousands separators: "$346,800". Used where a rounded
+// label would hide a real difference, such as the transfer market.
+export function fmtMoneyExact(n) {
+  const v = Math.round(n ?? 0)
+  const digits = String(Math.abs(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return (v < 0 ? '-$' : '$') + digits
 }

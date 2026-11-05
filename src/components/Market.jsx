@@ -1,5 +1,5 @@
 import { ROLE_LABEL } from '../data/lck.js'
-import { canAfford, fmtMoney, playerWage, signingFee } from '../game/economy.js'
+import { canAfford, fmtMoney, fmtMoneyExact, playerWage, signingFee } from '../game/economy.js'
 
 export default function Market({ state, dispatch }) {
   const budget = state.finance?.budget
@@ -31,7 +31,10 @@ export default function Market({ state, dispatch }) {
               <span title="Macro">MAC {p.macro}</span>
               <span title="Consistency">CON {p.consist}</span>
             </div>
-            <p className="hint">Signing fee: {fmtMoney(signingFee(p))} · Annual wage: {fmtMoney(playerWage(p))}</p>
+            <p className="hint">Signing fee: {fmtMoneyExact(signingFee(p))} · Annual wage: {fmtMoneyExact(playerWage(p))}</p>
+            {budget != null && !canAfford(budget, signingFee(p)) && (
+              <p className="hint">Short by {fmtMoneyExact(signingFee(p) - budget)}</p>
+            )}
             <button className="primary" disabled={budget != null && !canAfford(budget, signingFee(p))} onClick={() => dispatch({ type: 'SIGN', playerId: p.id })}>
               {budget != null && !canAfford(budget, signingFee(p)) ? 'Insufficient budget' : 'Sign'}
             </button>
