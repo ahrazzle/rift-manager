@@ -66,22 +66,14 @@ for (let s = 0; s < 300; s++) {
 }
 assert(fident, '§10 fearless:false == default (no effect when off)')
 
-// fearless:true — game-2 winner should win game 3 slightly less than control.
-let g3ctrl = 0, g3fl = 0, g3n = 0
-for (let s = 0; s < 1500; s++) {
-  const ctrl = simulateSeries(mk(85), tac, mk(85), tac, rng32(s), 'A', 'B')
-  const fl = simulateSeries(mk(85), tac, mk(85), tac, rng32(s), 'A', 'B', { fearless: true })
-  // only series that reach a game 3 (1-1 after two)
-  const c2 = ctrl.games.slice(0, 2)
-  if (c2[0].winner !== c2[1].winner) {
-    g3n++
-    const prevW = c2[1].winner
-    if (ctrl.games[2].winner === prevW) g3ctrl++
-    if (fl.games[2].winner === prevW) g3fl++
-  }
+// fearless:true — without Active Coach draft there is no pool lockout; sim must match off (penalty retired).
+let fearlessSimIdent = true
+for (let s = 0; s < 300; s++) {
+  const off = simulateSeries(mk(85), tac, mk(85), tac, rng32(s), 'A', 'B', { fearless: false })
+  const on = simulateSeries(mk(85), tac, mk(85), tac, rng32(s), 'A', 'B', { fearless: true })
+  if (JSON.stringify(off) !== JSON.stringify(on)) { fearlessSimIdent = false; break }
 }
-assert(g3n > 50, `§10 enough game-3 series sampled (${g3n})`)
-assert(g3fl < g3ctrl, `§10 fearless reduces prevWinner's game-3 win rate (${g3fl} vs ${g3ctrl} of ${g3n})`)
+assert(fearlessSimIdent, '§10 fearless:true == fearless:false for simulateSeries (no sim penalty)')
 
 // ---------- §10 SET_SERIES_OPTION validation ----------
 let so = reducer(undefined, { type: 'START_CAREER', teamId: 'T1', managerName: 'Mozi' })

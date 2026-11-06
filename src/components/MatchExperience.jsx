@@ -3,7 +3,7 @@ import MatchOptions from './MatchOptions.jsx'
 import Draft from './Draft.jsx'
 import AnimatedRift from './AnimatedRift.jsx'
 import MatchDetail from './MatchDetail.jsx'
-import { currentStep } from '../game/draft.js'
+import { currentStep, draftReadyToPlay } from '../game/draft.js'
 import { iglCallById } from '../game/igl.js'
 import MatchIcon from './MatchIcon.jsx'
 import TeamCrest from './TeamCrest.jsx'
@@ -164,6 +164,11 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
                 <MatchIcon name="draft" size={14} /> Draft
               </span>
             )}
+            {session.fearlessActive && (
+              <span title="Fearless draft — champions picked in earlier games cannot be chosen again this series">
+                <MatchIcon name="eye" size={14} /> Fearless
+              </span>
+            )}
             {options.igl && (
               <span>
                 <MatchIcon name="flag" size={14} /> IGL
@@ -245,13 +250,30 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
             draft={session.draft}
             userSide={session.draft.userSide}
             gameLabel={`Game ${session.games.length + 1}`}
+            fearlessCount={session.fearlessUsed?.length ?? 0}
+            fearlessActive={!!session.fearlessActive}
             onBan={(champId) => dispatch({ type: 'MATCH_DRAFT_BAN', champId })}
             onPick={(champId, role) => dispatch({ type: 'MATCH_DRAFT_PICK', champId, role })}
+            onPickFlex={(champId) => dispatch({ type: 'MATCH_DRAFT_FLEX', champId })}
+            onAssignFlex={(champId, role) => dispatch({ type: 'MATCH_DRAFT_ASSIGN_FLEX', champId, role })}
+            onRearrange={(payload) => dispatch({ type: 'MATCH_DRAFT_REARRANGE', side: session.draft.userSide, ...payload })}
           />
           {session.draft.done && (
-            <button type="button" className="primary big" onClick={send('MATCH_DRAFT_LOCK')}>
-              {options.igl || options.showSimulation ? 'Take your comp onto the Rift →' : 'Play this game →'}
-            </button>
+            <>
+              {!draftReadyToPlay(session.draft) && (
+                <p className="hint" role="status">
+                  Assign every flex pick to a role before you lock. Open roles and the flex list are above.
+                </p>
+              )}
+              <button
+                type="button"
+                className="primary big"
+                disabled={!draftReadyToPlay(session.draft)}
+                onClick={send('MATCH_DRAFT_LOCK')}
+              >
+                {options.igl || options.showSimulation ? 'Take your comp onto the Rift →' : 'Play this game →'}
+              </button>
+            </>
           )}
         </>
       )}
@@ -305,6 +327,12 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
               : 'Return to the Rift.'}
           </h2>
           <p>First to {c.needWins} wins the match.</p>
+          {session.fearlessActive && session.games.length > 0 && (
+            <p className="hint">
+              Fearless: champions your teams locked in earlier games stay out of the pool for the rest of this
+              series. Bans reset each game.
+            </p>
+          )}
           {gameTape}
           <button type="button" className="primary big" onClick={send('MATCH_NEXT_GAME')}>
             {options.draft ? `Draft game ${session.games.length + 1}` : `Enter game ${session.games.length + 1}`} →

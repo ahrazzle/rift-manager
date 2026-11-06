@@ -8,7 +8,10 @@ import { CAMPAIGNS } from '../data/campaigns.js'
 import { COACHES, COACH_BY_ID, coachBonus } from '../data/coaches.js'
 import { buildLCKSchedule, makeStandings, emptyStanding, roundRobin, buildPlayoffs } from '../engine/season.js'
 import { simulateSeries, simulateSingleGame } from '../engine/sim.js'
-import { createDraft, applyBan, applyPick, scoreComp, getDraftDebrief, PERSONALITY_IDS } from './draft.js'
+import {
+  createDraft, applyBan, applyPick, applyFlex, applyFlexReserved, assignFlex, scoreComp, getDraftDebrief, PERSONALITY_IDS, aiDraftMove,
+  draftReadyToPlay, swapPicks, movePick, flexIntoFilledRole, repairEnemyFlexMatching,
+} from './draft.js'
 import { IGL_CALLS, buildIglPrompt, evaluateIglCall } from './igl.js'
 import { playerWage, signingFee, teamBudget, canAfford } from './economy.js'
 import { developPlayer } from '../data/development.js'
@@ -29,7 +32,10 @@ import { mulberry32 } from './random.js'
 export { mulberry32 } from './random.js'
 import { comfortChamps } from './comfort.js'
 export { comfortChamps } from './comfort.js'
-import { MATCH_OPTIONS, matchOptions, createMatchSession, startMatchSession, startSessionGame, changeSessionDraft, makeSessionCall, finishSessionGame, nextSessionGame, sessionResult } from './matchSession.js'
+import {
+  MATCH_OPTIONS, matchOptions, createMatchSession, startMatchSession, startSessionGame, changeSessionDraft,
+  makeSessionCall, finishSessionGame, nextSessionGame, sessionResult, mergeFearlessAfterDraft, draftChampIdsForFearless,
+} from './matchSession.js'
 const SCHEDULE = buildLCKSchedule()
 const TOTAL_ROUNDS = SCHEDULE.length
 
@@ -150,7 +156,7 @@ function simOtherMatches(state, matches, myId, round, form, standings, results) 
     const res = simulateSeries(
       homeLineupObj, aiTactic(homeId, awayId, round, Math.random, state.teamMeta?.[homeId]?.tier),
       awayLineupObj, aiTactic(awayId, homeId, round, Math.random, state.teamMeta?.[awayId]?.tier),
-      mulberry32(seed), homeId, awayId, { bigMatch: false, fearless: false },
+      mulberry32(seed), homeId, awayId, { bigMatch: false },
     )
     const homeWon = res.winner === 'A'
     results.push({ round, homeId, awayId, homeWon, aWins: res.aWins, bWins: res.bWins, isUser: false, userSide: null, log: [], detail: null })
@@ -166,10 +172,17 @@ function simOtherMatches(state, matches, myId, round, form, standings, results) 
   return userMatch
 }
 // Draft side selection: home is BLUE on even games (pro-style alternation).
-function draftForGame(gameIndex, userIsHome) {
+function draftForGame(gameIndex, userIsHome, opts = {}) {
   const homeIsBlue = gameIndex % 2 === 0
   const userSide = (userIsHome === homeIsBlue) ? 'BLUE' : 'RED'
-  return createDraft(userSide)
+  const fearlessIds = opts.fearlessActive ? (opts.fearlessUsed ?? []) : []
+  return createDraft(userSide, { fearlessIds })
+}
+
+function mergeLegacyFearless(ds, draft) {
+  if (!ds?.fearlessActive || !draft?.done || !draftReadyToPlay(draft)) return ds
+  const add = draftChampIdsForFearless(draft)
+  return { ...ds, fearlessUsed: [...new Set([...(ds.fearlessUsed ?? []), ...add])] }
 }
 
 // Sim-speed pacing (the sim math is instant; these only pace the theatrics).
@@ -557,7 +570,6 @@ function playTournamentMatch(state, match, bonus, roundNo, simMode = 'biased', f
     {
       aBonus: bonusA, bBonus: bonusB, simMode: mode, forcedWinner: fwEngine,
       bigMatch,
-      fearless: state.seriesOptions?.fearless ?? false, // P1 item 10
     },
   )
   const homeWon = res.winner === 'A'
@@ -567,7 +579,7 @@ function playTournamentMatch(state, match, bonus, roundNo, simMode = 'biased', f
     aWins: res.aWins,
     bWins: res.bWins,
     log: match.isUser ? res.log : [],
-    detail: { seed, homeLineup: homeLineupObj, awayLineup: awayLineupObj, homeTactic, awayTactic, bonusA, bonusB, simMode: mode, forcedWinner: fwEngine, bigMatch, fearless: state.seriesOptions?.fearless ?? false },
+    detail: { seed, homeLineup: homeLineupObj, awayLineup: awayLineupObj, homeTactic, awayTactic, bonusA, bonusB, simMode: mode, forcedWinner: fwEngine, bigMatch },
   }
 }
 
@@ -652,7 +664,12 @@ function baseReducer(state, action) {
       // Unknown keys / non-bool values → no-op.
       if (isRetired(state)) return state
       if (action.key !== 'fearless' || typeof action.value !== 'boolean') return state
-      return { ...state, seriesOptions: { ...(state.seriesOptions ?? { fearless: false }), fearless: action.value } }
+      const seriesOptions = { ...(state.seriesOptions ?? { fearless: false }), fearless: action.value }
+      const ms = state.matchSession
+      const syncMs = ms && ms.stage === 'setup' && ms.options?.draft
+        ? { ...ms, fearlessActive: action.value, context: { ...ms.context, fearlessDraft: action.value } }
+        : ms
+      return { ...state, seriesOptions, matchSession: syncMs }
     }
 
     case 'TRAIN': {
@@ -715,7 +732,6 @@ function baseReducer(state, action) {
       const prepBonus = preparationBonus(state, upcomingOpponent(state))
       const bonus = managedCoachBonus(state) + prepBonus
       const stratSnap = state.strategy ? { ...state.strategy } : null
-      const fearless = state.seriesOptions?.fearless ?? false // P1 item 10
       // P1 item 7: revealed-trait persistence. Engine returns post-series
       // snapshots (res.lineups) only when a carrier exists; copy-on-write the
       // two teams' rosters and stamp revealed: true. Display-only otherwise.
@@ -765,7 +781,7 @@ function baseReducer(state, action) {
           awayLineupObj, awayTactic,
           mulberry32(seed),
           homeId, awayId,
-          { aBonus: bonusA, bBonus: bonusB, aStrat: stratA, bStrat: stratB, bigMatch: false, fearless },
+          { aBonus: bonusA, bBonus: bonusB, aStrat: stratA, bStrat: stratB, bigMatch: false },
         )
         // P1 item 7: persist newly-revealed traits onto the two rosters.
         if (res.lineups) {
@@ -789,7 +805,7 @@ function baseReducer(state, action) {
           // MatchDetail can re-run simulateSeries deterministically. No full
           // timelines stored here — recomputed on demand. Strat snapshots
           // ride along so the recompute passes the same extra.
-          detail: { seed, homeLineup: homeLineupObj, awayLineup: awayLineupObj, homeTactic, awayTactic, bonusA, bonusB, homeStrat: stratA, awayStrat: stratB, bigMatch: false, fearless,
+          detail: { seed, homeLineup: homeLineupObj, awayLineup: awayLineupObj, homeTactic, awayTactic, bonusA, bonusB, homeStrat: stratA, awayStrat: stratB, bigMatch: false,
             preparation: (homeIsUser || awayIsUser) && state.preparation?.round === round ? { focus: state.preparation.focus, bonus: prepBonus } : null },
         })
 
@@ -986,12 +1002,14 @@ function baseReducer(state, action) {
       for (const p of state.teams[aiTeamId] || []) {
         for (const c of comfortChamps(p)) aiComfort.push(c)
       }
+      const fearlessActive = !!state.seriesOptions?.fearless
       return {
         ...state, form, standings, results,
         draftSeries: {
           homeId, awayId, userIsHome, gameIndex: 0, aWins: 0, bWins: 0,
-          games: [], draft: draftForGame(0, userIsHome),
+          games: [], draft: draftForGame(0, userIsHome, { fearlessActive, fearlessUsed: [] }),
           aiPersonality, aiComfort,
+          fearlessActive, fearlessUsed: [],
         },
       }
     }
@@ -999,19 +1017,59 @@ function baseReducer(state, action) {
       const ds = state.draftSeries
       if (!ds?.draft || isRetired(state)) return state
       try {
-        return { ...state, draftSeries: { ...ds, draft: applyBan(ds.draft, action.champId) } }
+        const draft = applyBan(ds.draft, action.champId)
+        return { ...state, draftSeries: mergeLegacyFearless({ ...ds, draft }, draft) }
       } catch { return state }
     }
     case 'DRAFT_PICK': {
       const ds = state.draftSeries
       if (!ds?.draft || isRetired(state)) return state
       try {
-        return { ...state, draftSeries: { ...ds, draft: applyPick(ds.draft, action.champId, action.role) } }
+        const draft = applyPick(ds.draft, action.champId, action.role)
+        return { ...state, draftSeries: mergeLegacyFearless({ ...ds, draft }, draft) }
+      } catch { return state }
+    }
+    case 'DRAFT_FLEX': {
+      const ds = state.draftSeries
+      if (!ds?.draft || isRetired(state)) return state
+      try {
+        const draft = applyFlex(ds.draft, action.champId)
+        return { ...state, draftSeries: mergeLegacyFearless({ ...ds, draft }, draft) }
+      } catch { return state }
+    }
+    case 'DRAFT_ASSIGN_FLEX': {
+      const ds = state.draftSeries
+      if (!ds?.draft || isRetired(state)) return state
+      try {
+        const draft = assignFlex(ds.draft, ds.draft.userSide, action.champId, action.role)
+        return { ...state, draftSeries: mergeLegacyFearless({ ...ds, draft }, draft) }
+      } catch { return state }
+    }
+    case 'DRAFT_REARRANGE': {
+      const ds = state.draftSeries
+      if (!ds?.draft || ds.draft.userSide !== action.side || isRetired(state)) return state
+      try {
+        let draft = ds.draft
+        if (action.op === 'swap') draft = swapPicks(draft, action.side, action.roleA, action.roleB)
+        else if (action.op === 'move') draft = movePick(draft, action.side, action.fromRole, action.toRole)
+        else if (action.op === 'flexIntoFilled') draft = flexIntoFilledRole(draft, action.side, action.flexChampId, action.targetRole)
+        else return state
+        draft = repairEnemyFlexMatching(draft, Math.random)
+        return { ...state, draftSeries: mergeLegacyFearless({ ...ds, draft }, draft) }
+      } catch { return state }
+    }
+    case 'DRAFT_AI_FLEX': {
+      const ds = state.draftSeries
+      if (!ds?.draft || isRetired(state)) return state
+      try {
+        const draft = applyFlexReserved(ds.draft, action.champId, action.role)
+        return { ...state, draftSeries: mergeLegacyFearless({ ...ds, draft }, draft) }
       } catch { return state }
     }
     case 'DRAFT_RESOLVE_GAME': {
       const ds = state.draftSeries
-      if (!ds?.draft?.done || !state.teamId || isRetired(state)) return state
+      if (!ds?.draft?.done || !draftReadyToPlay(ds.draft) || !state.teamId || isRetired(state)) return state
+      const dsMerged = mergeLegacyFearless({ ...ds }, ds.draft)
       const blue = scoreComp(ds.draft.picks.BLUE)
       const red = scoreComp(ds.draft.picks.RED)
       const userPicks = ds.draft.picks[ds.draft.userSide] || {}
@@ -1046,10 +1104,15 @@ function baseReducer(state, action) {
       for (const p of Object.values(homeWon ? homeLineupObj : awayLineupObj)) if (form[p.id] !== undefined) form[p.id] = clampForm(form[p.id] + 3)
       for (const p of Object.values(homeWon ? awayLineupObj : homeLineupObj)) if (form[p.id] !== undefined) form[p.id] = clampForm(form[p.id] - 3)
       if (!decided) {
-        const ni = ds.gameIndex + 1
+        const ni = dsMerged.gameIndex + 1
         return {
           ...state, form,
-          draftSeries: { ...ds, gameIndex: ni, aWins, bWins, games, draft: draftForGame(ni, ds.userIsHome) },
+          draftSeries: {
+            ...dsMerged, gameIndex: ni, aWins, bWins, games,
+            draft: draftForGame(ni, dsMerged.userIsHome, {
+              fearlessActive: dsMerged.fearlessActive, fearlessUsed: dsMerged.fearlessUsed ?? [],
+            }),
+          },
         }
       }
       const standings = JSON.parse(JSON.stringify(state.standings))
@@ -1947,11 +2010,11 @@ export function matchContextFor(state, action) {
   const userSide = homeId === managedId ? 'home' : awayId === managedId ? 'away' : null
   return { seed, sourceAction, kind, label, homeId, awayId, homeName: homeId, awayName: awayId,
     homeLineup, awayLineup, homeTactic, awayTactic, userSide, needWins, locked,
+    fearlessDraft: !!state.seriesOptions?.fearless,
     extra: { aBonus: homeId === managedId ? bonus : 0, bBonus: awayId === managedId ? bonus : 0,
       aStrat: kind === 'regional' && userSide === 'home' ? state.strategy : null,
       bStrat: kind === 'regional' && userSide === 'away' ? state.strategy : null,
-      simMode, forcedWinner, bigMatch: kind === 'tournament' && round - 10 >= state.tournament.rounds.length - 2,
-      fearless: ['regional', 'tournament'].includes(kind) && !!state.seriesOptions?.fearless } }
+      simMode, forcedWinner, bigMatch: kind === 'tournament' && round - 10 >= state.tournament.rounds.length - 2 } }
 }
 
 function settleMatch(state, session) {
@@ -1989,9 +2052,10 @@ function reducer(state, action) {
       case 'MATCH_CANCEL': return s.stage === 'setup' ? { ...state, matchSession: null } : state
       case 'MATCH_CLOSE': return s.stage === 'result' ? { ...state, matchSession: null } : state
       case 'MATCH_START': return settleMatch(state, startMatchSession(s))
-      case 'MATCH_DRAFT_AI': case 'MATCH_DRAFT_BAN': case 'MATCH_DRAFT_PICK':
+      case 'MATCH_DRAFT_AI': case 'MATCH_DRAFT_BAN': case 'MATCH_DRAFT_PICK': case 'MATCH_DRAFT_FLEX': case 'MATCH_DRAFT_ASSIGN_FLEX': case 'MATCH_DRAFT_REARRANGE':
         return { ...state, matchSession: changeSessionDraft(s, action) }
-      case 'MATCH_DRAFT_LOCK': return s.stage === 'draft' && s.draft?.done ? settleMatch(state, startSessionGame(s)) : state
+      case 'MATCH_DRAFT_LOCK':
+        return s.stage === 'draft' && s.draft?.done && draftReadyToPlay(s.draft) ? settleMatch(state, startSessionGame(s)) : state
       case 'MATCH_DECISION': return s.stage === 'map' && s.options.igl && !s.current.callId
         ? { ...state, matchSession: { ...s, stage: 'decision', current: { ...s.current, cursor: s.current.decisionAt } } } : state
       case 'MATCH_CALL': return { ...state, matchSession: makeSessionCall(s, action.callId) }

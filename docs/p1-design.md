@@ -305,6 +305,10 @@ are all ~0 the summary reads `Why ~50%? — even matchup`. No reducer, no sim ch
 
 ## §10. Fearless-draft toggle for series
 
+**Superseded (2026-11):** the strength-penalty model below is not current behavior. Active Coach draft uses real champion lockout across series games when Draft + `seriesOptions.fearless` are on; `simulateSeries` no longer applies a Fearless strength modifier. See the role/flex/Fearless spec (design handoff) for the locked rules.
+
+*Historical text (penalty model — retained for archive):*
+
 Models the 2025+ pro Fearless rule at our abstraction level (tactic lockout,
 not champion lockout): the side that **won** game N cannot run the same
 tactic in game N+1 — represented as a small strength penalty, since tactics

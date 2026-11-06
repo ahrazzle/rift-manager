@@ -1,17 +1,18 @@
 // ============================================================================
 // Draft — Active Coach pick/ban UI.
 //
-// Props: draft (from createDraft/applyBan/applyPick), userSide ('BLUE'|'RED'),
-// onBan(champId), onPick(champId, role), disabled, gameLabel? ("Game 1").
-// The parent owns the draft state and drives AI moves; this is pure UI.
-// Champion portraits come from Riot's ddragon CDN with an initials fallback.
+// Role-first picks, flex holding area, Fearless lockout display, role swaps/moves.
+// Props: draft, userSide, onBan, onPick(champId, role), onPickFlex?, onAssignFlex?,
+// onRearrange?( { op, ... } ), disabled, gameLabel?, fearlessCount?, fearlessActive?
 // ============================================================================
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import MatchIcon from './MatchIcon.jsx'
 import { CHAMPIONS, CHAMP_BY_ID } from '../data/champions.js'
 import {
-  DRAFT_STEPS, DRAFT_ROLES, currentStep, legalPicks,
-  scoreComp, getDraftDebrief, champPortrait,
+  DRAFT_STEPS, DRAFT_ROLES, currentStep, legalPicks, openEligibleRoles,
+  legalCommittedPicksForStep, canApplyFlex, canAssignFlex,
+  canSwapPicks, canMovePick, canFlexIntoFilledRole,
+  draftReadyToPlay, scoreComp, getDraftDebrief, champPortrait,
 } from '../game/draft.js'
 
 const SIDE_COLOR = { BLUE: '#4dd9ed', RED: '#ff786c' }
@@ -38,9 +39,113 @@ function ChampIcon({ champId, size = 40 }) {
   return <img src={url} alt={champ.name} title={champ.name} loading="lazy" onError={() => setErr(true)} style={box} />
 }
 
-function CompPanel({ draft, side, userSide }) {
+function flexRolesLabel(draft, side, entry) {
+  const open = openEligibleRoles(draft, side, entry.champId)
+  return open.length ? open.join(' / ') : (CHAMP_BY_ID[entry.champId]?.roles ?? []).join(' / ')
+}
+
+function CompPanel({
+  draft, side, userSide, pickTargetRole, setPickTargetRole, roleFilter, setRoleFilter, yourTurn, step,
+  assignTarget, setAssignTarget,
+  swapSource, setSwapSource,
+  onRearrange, onAssignFlex, canRearrange, setRearrangeHint,
+}) {
   const color = SIDE_COLOR[side]
   const isUser = side === userSide
+  const canPickTarget = yourTurn && step?.type === 'pick' && step.side === userSide
+
+  const hintCantPlay = (champId, destRole) => {
+    const n = CHAMP_BY_ID[champId]?.name ?? champId
+    setRearrangeHint(`${n} can’t play ${destRole}`)
+  }
+
+  const handleUserFilledRole = (role, cid) => {
+    if (assignTarget) {
+      if (canFlexIntoFilledRole(draft, userSide, assignTarget, role)) {
+        onRearrange({ op: 'flexIntoFilled', flexChampId: assignTarget, targetRole: role })
+        setAssignTarget(null)
+        setSwapSource(null)
+      } else {
+        const flexC = CHAMP_BY_ID[assignTarget]
+        if (flexC && !flexC.roles.includes(role)) hintCantPlay(assignTarget, role)
+        else setRearrangeHint('Can’t flex there — matching or no home for displaced champ.')
+      }
+      return
+    }
+    if (!canRearrange) return
+    if (swapSource === role) {
+      setSwapSource(null)
+      return
+    }
+    if (swapSource) {
+      const other = draft.picks[userSide][swapSource]
+      if (!other) {
+        setSwapSource(role)
+        return
+      }
+      if (canSwapPicks(draft, userSide, swapSource, role)) {
+        onRearrange({ op: 'swap', roleA: swapSource, roleB: role })
+        setSwapSource(null)
+      } else {
+        const a = CHAMP_BY_ID[other]
+        const b = CHAMP_BY_ID[cid]
+        if (a && !a.roles.includes(role)) hintCantPlay(other, role)
+        else if (b && !b.roles.includes(swapSource)) hintCantPlay(cid, swapSource)
+        else setRearrangeHint('Those champions can’t trade roles.')
+      }
+      return
+    }
+    setPickTargetRole(null)
+    setSwapSource(role)
+  }
+
+  const handleUserEmptyRole = (role) => {
+    if (assignTarget) {
+      if (canAssignFlex(draft, userSide, assignTarget, role)) {
+        onAssignFlex(assignTarget, role)
+        setAssignTarget(null)
+        setSwapSource(null)
+        return
+      }
+      if (canFlexIntoFilledRole(draft, userSide, assignTarget, role)) {
+        onRearrange({ op: 'flexIntoFilled', flexChampId: assignTarget, targetRole: role })
+        setAssignTarget(null)
+        setSwapSource(null)
+        return
+      }
+      if (swapSource && canMovePick(draft, userSide, swapSource, role)) {
+        onRearrange({ op: 'move', fromRole: swapSource, toRole: role })
+        setSwapSource(null)
+        return
+      }
+      if (swapSource) {
+        const movingId = draft.picks[userSide][swapSource]
+        const moving = CHAMP_BY_ID[movingId]
+        if (moving && !moving.roles.includes(role)) hintCantPlay(movingId, role)
+        else setRearrangeHint('Can’t assign flex there.')
+        return
+      }
+      setRearrangeHint('Can’t assign flex there.')
+      return
+    }
+    if (swapSource) {
+      if (canMovePick(draft, userSide, swapSource, role)) {
+        onRearrange({ op: 'move', fromRole: swapSource, toRole: role })
+        setSwapSource(null)
+      } else {
+        const movingId = draft.picks[userSide][swapSource]
+        const moving = CHAMP_BY_ID[movingId]
+        if (moving && !moving.roles.includes(role)) hintCantPlay(movingId, role)
+        else setRearrangeHint('Can’t move there.')
+      }
+      return
+    }
+    if (!canPickTarget || !isUser) return
+    setSwapSource(null)
+    setPickTargetRole(role)
+    setRoleFilter(role)
+  }
+
   return (
     <div className={`card draft-comp draft-${side.toLowerCase()}`} style={{ borderTop: `3px solid ${color}`, margin: 0 }}>
       <span className="eyebrow" style={{ color }}>
@@ -49,21 +154,122 @@ function CompPanel({ draft, side, userSide }) {
       <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
         {DRAFT_ROLES.map((role) => {
           const cid = draft.picks[side][role]
-          return (
-            <div key={role} style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 40 }}>
-              <span className="badge"><MatchIcon name={role} size={16} />{role}</span>
-              {cid ? (
-                <>
+          const highlightPick = canPickTarget && pickTargetRole === role && isUser
+          const highlightSwap = isUser && swapSource === role
+          const rowStyle = {
+            display: 'flex', alignItems: 'center', gap: 10, minHeight: 44,
+            borderRadius: 8, padding: '2px 6px',
+            border: (highlightPick || highlightSwap) ? `2px solid ${color}` : '2px solid transparent',
+            background: (highlightPick || highlightSwap) ? `${color}14` : 'transparent',
+          }
+          if (cid) {
+            if (isUser && canRearrange) {
+              return (
+                <button
+                  key={role}
+                  type="button"
+                  className="tac"
+                  onClick={() => handleUserFilledRole(role, cid)}
+                  style={{
+                    ...rowStyle, opacity: 0.95, width: '100%', textAlign: 'left',
+                    minHeight: 44, padding: '6px 8px', cursor: 'pointer',
+                    border: highlightSwap ? `2px solid ${color}` : rowStyle.border,
+                    background: highlightSwap ? `${color}22` : rowStyle.background,
+                  }}
+                >
+                  <span className="badge"><MatchIcon name={role} size={16} />{role}</span>
                   <ChampIcon champId={cid} size={36} />
                   <span style={{ fontWeight: 700, fontSize: 14 }}>{CHAMP_BY_ID[cid].name}</span>
-                </>
+                  {highlightSwap && (
+                    <span className="hint" style={{ marginLeft: 'auto' }}>Tap another role or cancel</span>
+                  )}
+                </button>
+              )
+            }
+            return (
+              <div key={role} style={{ ...rowStyle, opacity: 0.95 }}>
+                <span className="badge"><MatchIcon name={role} size={16} />{role}</span>
+                <ChampIcon champId={cid} size={36} />
+                <span style={{ fontWeight: 700, fontSize: 14 }}>{CHAMP_BY_ID[cid].name}</span>
+              </div>
+            )
+          }
+          const openSlotPick = canPickTarget && isUser
+          const emptyClickable = isUser && (openSlotPick || canRearrange || assignTarget)
+          return (
+            <div key={role} style={rowStyle}>
+              {emptyClickable ? (
+                <button
+                  type="button"
+                  className="tac"
+                  disabled={!emptyClickable}
+                  onClick={() => handleUserEmptyRole(role)}
+                  style={{
+                    width: '100%', textAlign: 'left', minHeight: 44, padding: '8px 10px',
+                    border: highlightPick ? `2px solid ${color}` : '1px solid var(--line)',
+                    background: highlightPick ? `${color}18` : 'var(--surface-2)',
+                  }}
+                >
+                  <span className="badge"><MatchIcon name={role} size={16} />{role}</span>
+                  <span className="hint" style={{ margin: '4px 0 0', display: 'block' }}>
+                    {openSlotPick && highlightPick ? 'Pick target — choose a champion below'
+                      : openSlotPick ? 'Tap to pick this role'
+                        : assignTarget ? 'Tap to assign flex or complete move'
+                          : swapSource ? 'Tap to move champ here'
+                            : '— open —'}
+                  </span>
+                </button>
               ) : (
-                <span className="hint" style={{ margin: 0 }}>— open —</span>
+                <>
+                  <span className="badge"><MatchIcon name={role} size={16} />{role}</span>
+                  <span className="hint" style={{ margin: 0 }}>— open —</span>
+                </>
               )}
             </div>
           )
         })}
       </div>
+      {/* Enemy / user flex holding */}
+      {(draft.flex?.[side] ?? []).length > 0 && (
+        <div style={{ marginTop: 12 }}>
+          <span className="hint" style={{ margin: 0 }}>Flex picks (role hidden)</span>
+          <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0', display: 'grid', gap: 8 }}>
+            {(draft.flex[side] ?? []).map((e) => (
+              <li
+                key={`${e.champId}-${side}`}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+                  padding: 8, borderRadius: 8, border: assignTarget === e.champId && isUser
+                    ? `2px solid ${color}` : '1px dashed var(--line)',
+                  background: isUser ? `${color}0d` : '#0b0e13',
+                }}
+              >
+                <ChampIcon champId={e.champId} size={36} />
+                <div style={{ flex: 1, minWidth: 120 }}>
+                  <strong>{CHAMP_BY_ID[e.champId]?.name}</strong>
+                  <span className="hint" style={{ display: 'block', marginTop: 2 }}>
+                    · {flexRolesLabel(draft, side, e)}
+                  </span>
+                </div>
+                {isUser && (
+                  <button
+                    type="button"
+                    className="ghost"
+                    style={{ minHeight: 44 }}
+                    onClick={() => {
+                      setPickTargetRole(null)
+                      setSwapSource(null)
+                      setAssignTarget(assignTarget === e.champId ? null : e.champId)
+                    }}
+                  >
+                    {assignTarget === e.champId ? 'Cancel assign' : 'Assign role…'}
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div style={{ marginTop: 12 }}>
         <span className="hint" style={{ margin: 0 }}>Bans</span>
         <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap', minHeight: 30 }}>
@@ -79,13 +285,51 @@ function CompPanel({ draft, side, userSide }) {
   )
 }
 
-export default function Draft({ draft, userSide, onBan, onPick, disabled, gameLabel }) {
+export default function Draft({
+  draft, userSide, onBan, onPick, onPickFlex = () => {}, onAssignFlex = () => {}, onRearrange = () => {},
+  disabled, gameLabel, fearlessCount = 0, fearlessActive = false,
+}) {
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('ALL')
-  const [pickTarget, setPickTarget] = useState(null)
+  const [pickTargetRole, setPickTargetRole] = useState(null)
+  const [assignTarget, setAssignTarget] = useState(null)
+  const [swapSource, setSwapSource] = useState(null)
+  const [rearrangeHint, setRearrangeHint] = useState(null)
+  const hintTimer = useRef(null)
+
+  useEffect(() => {
+    const st = currentStep(draft)
+    if (!st || st.type !== 'pick' || st.side !== userSide) {
+      setPickTargetRole(null)
+    }
+  }, [draft.step, draft.done, userSide])
 
   const step = currentStep(draft)
   const yourTurn = !!step && step.side === userSide && !disabled
+  const canRearrange = !disabled
+  const userHasCommittedPick = DRAFT_ROLES.some((r) => draft.picks[userSide]?.[r])
+  const showChampionPool = !draft.done
+  const showFlexAssignUi = !!assignTarget && ((!draft.done && step?.type === 'pick' && step.side === userSide)
+    || (draft.done && !draftReadyToPlay(draft)))
+
+  const setRearrangeHintTimed = (msg) => {
+    if (hintTimer.current) clearTimeout(hintTimer.current)
+    setRearrangeHint(msg)
+    if (msg) {
+      hintTimer.current = setTimeout(() => {
+        setRearrangeHint(null)
+        hintTimer.current = null
+      }, 3200)
+    }
+  }
+
+  useEffect(() => () => {
+    if (hintTimer.current) clearTimeout(hintTimer.current)
+  }, [])
+
+  useEffect(() => {
+    if (swapSource) setPickTargetRole(null)
+  }, [swapSource])
 
   const phase = !step
     ? 'Complete'
@@ -94,19 +338,31 @@ export default function Draft({ draft, userSide, onBan, onPick, disabled, gameLa
         : draft.step < 16 ? 'Ban Phase 2'
           : 'Pick Phase 2'
 
+  const fearlessSet = useMemo(() => new Set(draft.fearless ?? []), [draft.fearless])
+
   const taken = useMemo(() => {
     const s = new Set()
     for (const sd of ['BLUE', 'RED']) {
       for (const b of draft.bans[sd]) s.add(b)
       for (const c of Object.values(draft.picks[sd])) s.add(c)
+      for (const e of draft.flex?.[sd] ?? []) s.add(e.champId)
     }
     return s
   }, [draft])
 
-  // On the player's pick turns: champId → eligible unfilled roles.
   const pickable = useMemo(() => {
     if (!step || step.type !== 'pick' || step.side !== userSide) return new Map()
     return new Map(legalPicks(draft, userSide).map((p) => [p.champId, p.roles]))
+  }, [draft, step, userSide])
+
+  const committedLegal = useMemo(() => {
+    if (!step || step.type !== 'pick' || step.side !== userSide) return new Map()
+    const m = new Map()
+    for (const { champId, role } of legalCommittedPicksForStep(draft, userSide)) {
+      if (!m.has(champId)) m.set(champId, new Set())
+      m.get(champId).add(role)
+    }
+    return m
   }, [draft, step, userSide])
 
   const visible = CHAMPIONS.filter((c) => {
@@ -117,17 +373,43 @@ export default function Draft({ draft, userSide, onBan, onPick, disabled, gameLa
 
   const handleChampClick = (champId) => {
     if (!yourTurn || taken.has(champId)) return
+    setSwapSource(null)
     if (step.type === 'ban') {
       onBan(champId)
       return
     }
+    if (assignTarget) return
+
     const roles = pickable.get(champId)
     if (!roles || roles.length === 0) return
-    if (roles.length === 1) {
-      onPick(champId, roles[0])
+
+    if (pickTargetRole) {
+      const allowed = committedLegal.get(champId)
+      if (!allowed?.has(pickTargetRole)) return
+      onPick(champId, pickTargetRole)
+      setPickTargetRole(null)
+      setSwapSource(null)
       return
     }
-    setPickTarget(champId)
+
+    if (roleFilter !== 'ALL') {
+      const allowed = committedLegal.get(champId)
+      if (!allowed?.has(roleFilter)) return
+      onPick(champId, roleFilter)
+      setSwapSource(null)
+      return
+    }
+
+    if (canApplyFlex(draft, userSide, champId)) {
+      onPickFlex(champId)
+      setSwapSource(null)
+      return
+    }
+    const legalRoles = [...(committedLegal.get(champId) ?? [])]
+    if (legalRoles.length === 1) {
+      onPick(champId, legalRoles[0])
+      setSwapSource(null)
+    }
   }
 
   const debrief = draft.done ? getDraftDebrief(draft) : []
@@ -135,21 +417,38 @@ export default function Draft({ draft, userSide, onBan, onPick, disabled, gameLa
     ? ['BLUE', 'RED'].map((sd) => ({ side: sd, ...scoreComp(draft.picks[sd]) }))
     : []
 
+  const fearSubtitle = fearlessActive && fearlessCount > 0
+    ? `Fearless · ${fearlessCount} champion${fearlessCount === 1 ? '' : 's'} already played in this series`
+    : null
+
   return (
     <div className={`stack broadcast-draft ${yourTurn ? 'your-turn' : 'opponent-turn'}`} style={{ display: 'grid', gap: 14 }}>
-      {/* Header */}
       <div className="card draft-phase" key={draft.step} style={{ margin: 0 }}>
         <span className="eyebrow">Active coach · {phase}</span>
         <h2 style={{ marginTop: 4 }}>{gameLabel ? `Draft — ${gameLabel}` : 'Draft'}</h2>
+        {fearSubtitle && <p className="hint" style={{ marginTop: 4 }}>{fearSubtitle}</p>}
         <p className="hint" style={{ marginTop: 4 }}>
           {!step
             ? 'Both comps are locked in.'
             : step.side === userSide
               ? step.type === 'ban'
                 ? 'Your ban: remove a champion from the pool.'
-                : 'Your pick: choose a champion, then assign the role.'
+                : 'Your pick: choose which role is picking, then lock a champion. Or pick without a role to flex a champ that can still go more than one place.'
               : 'Enemy coach is thinking…'}
         </p>
+        {step?.side === userSide && step.type === 'pick' && (
+          <p className="hint" style={{ marginTop: 6, fontWeight: 600 }}>
+            {!pickTargetRole && roleFilter === 'ALL'
+              ? 'Choose a role to commit this pick — or pick a flex champ to hide the role.'
+              : null}
+            {pickTargetRole && (
+              <>Committing to <strong>{pickTargetRole}</strong> — pick a legal champion below.</>
+            )}
+            {!pickTargetRole && roleFilter !== 'ALL' && (
+              <>Browsing <strong>{roleFilter}</strong> — tap a portrait to commit to that role.</>
+            )}
+          </p>
+        )}
         <div style={{ display: 'flex', gap: 4, marginTop: 10, flexWrap: 'wrap' }} aria-hidden>
           {DRAFT_STEPS.map((s, i) => (
             <span
@@ -169,13 +468,43 @@ export default function Draft({ draft, userSide, onBan, onPick, disabled, gameLa
         </div>
       </div>
 
-      {/* Comp panels */}
       <div className="draft-comps">
-        <CompPanel draft={draft} side="BLUE" userSide={userSide} />
-        <CompPanel draft={draft} side="RED" userSide={userSide} />
+        <CompPanel
+          draft={draft} side="BLUE" userSide={userSide}
+          pickTargetRole={pickTargetRole} setPickTargetRole={setPickTargetRole}
+          roleFilter={roleFilter} setRoleFilter={setRoleFilter}
+          yourTurn={yourTurn} step={step}
+          assignTarget={assignTarget} setAssignTarget={setAssignTarget}
+          swapSource={swapSource} setSwapSource={setSwapSource}
+          onRearrange={onRearrange}
+          onAssignFlex={onAssignFlex}
+          canRearrange={canRearrange}
+          setRearrangeHint={setRearrangeHintTimed}
+        />
+        <CompPanel
+          draft={draft} side="RED" userSide={userSide}
+          pickTargetRole={pickTargetRole} setPickTargetRole={setPickTargetRole}
+          roleFilter={roleFilter} setRoleFilter={setRoleFilter}
+          yourTurn={yourTurn} step={step}
+          assignTarget={assignTarget} setAssignTarget={setAssignTarget}
+          swapSource={swapSource} setSwapSource={setSwapSource}
+          onRearrange={onRearrange}
+          onAssignFlex={onAssignFlex}
+          canRearrange={canRearrange}
+          setRearrangeHint={setRearrangeHintTimed}
+        />
       </div>
+      {userHasCommittedPick && canRearrange && (
+        <p className="hint" style={{ margin: 0 }}>
+          Tap two roles to swap their champs, or move a champ into an open role it can play.
+        </p>
+      )}
+      {rearrangeHint && (
+        <p className="hint" role="status" style={{ margin: 0, color: 'var(--warning, #f59e0b)' }}>
+          {rearrangeHint}
+        </p>
+      )}
 
-      {/* Done: comp verdicts + debrief */}
       {draft.done && (
         <div className="card" style={{ margin: 0 }}>
           <span className="eyebrow">Draft complete</span>
@@ -204,7 +533,11 @@ export default function Draft({ draft, userSide, onBan, onPick, disabled, gameLa
             {debrief.map((e, i) => (
               <div key={i} className="tac" style={{ cursor: 'default' }}>
                 <span className="tac-name">
-                  {e.yourPick.name} <span style={{ color: 'var(--text-2)', fontWeight: 400 }}>({e.yourPick.role})</span>
+                  {e.yourPick.name}
+                  {e.yourPick.role && (
+                    <span style={{ color: 'var(--text-2)', fontWeight: 400 }}> ({e.yourPick.role})</span>
+                  )}
+                  {e.yourPick.flex && <span style={{ color: 'var(--text-2)', fontWeight: 400 }}> (flex)</span>}
                 </span>
                 {e.delta > 0 && e.optimalPick ? (
                   <span className="tac-blurb">
@@ -219,16 +552,21 @@ export default function Draft({ draft, userSide, onBan, onPick, disabled, gameLa
         </div>
       )}
 
-      {/* Champion pool */}
-      {!draft.done && (
+      {showChampionPool && (
         <div className="card" style={{ margin: 0 }}>
           <span className="eyebrow">Champion pool</span>
           <div className="tabs" style={{ padding: '8px 0' }}>
             {['ALL', ...DRAFT_ROLES].map((r) => (
               <button
                 key={r}
+                type="button"
                 className={roleFilter === r ? 'tab active' : 'tab'}
-                onClick={() => setRoleFilter(r)}
+                style={{ minHeight: 44 }}
+                onClick={() => {
+                  setRoleFilter(r)
+                  if (r === 'ALL') setPickTargetRole(null)
+                  setSwapSource(null)
+                }}
               >
                 {r}
               </button>
@@ -245,22 +583,49 @@ export default function Draft({ draft, userSide, onBan, onPick, disabled, gameLa
           <div className="draft-champion-pool">
             {visible.map((c) => {
               const isTaken = taken.has(c.id)
-              const clickable = yourTurn && !isTaken && (step.type === 'ban' || pickable.has(c.id))
+              const isFearlessLocked = fearlessSet.has(c.id) && !draft.bans.BLUE.includes(c.id) && !draft.bans.RED.includes(c.id)
+              const inPool = step?.type === 'ban' || pickable.has(c.id)
+              let clickable = yourTurn && !isTaken && inPool
+              if (assignTarget) {
+                clickable = false
+              } else if (step?.type === 'pick' && !isTaken && pickable.has(c.id)) {
+                if (pickTargetRole) {
+                  clickable = !!committedLegal.get(c.id)?.has(pickTargetRole)
+                } else if (roleFilter !== 'ALL') {
+                  clickable = !!committedLegal.get(c.id)?.has(roleFilter)
+                } else {
+                  const canF = canApplyFlex(draft, userSide, c.id)
+                  const oneRole = (committedLegal.get(c.id)?.size ?? 0) === 1
+                  clickable = canF || oneRole
+                }
+              }
+              const titleBits = [c.name]
+              if (isFearlessLocked) titleBits.push('Fearless — picked earlier in the series')
               return (
                 <button
                   key={c.id}
+                  type="button"
                   className={`tac draft-champion ${isTaken ? 'is-taken' : ''}`}
                   disabled={!clickable}
                   onClick={() => handleChampClick(c.id)}
-                  title={isTaken ? `${c.name} (unavailable)` : c.name}
+                  title={titleBits.join(' · ')}
                   style={{
                     textAlign: 'center', padding: '10px 6px',
                     opacity: isTaken ? 0.35 : clickable ? 1 : 0.75,
                     cursor: clickable ? 'pointer' : 'default',
+                    boxShadow: isFearlessLocked ? 'inset 0 0 0 2px #a78bfa' : undefined,
                   }}
                 >
-                  <span style={{ display: 'flex', justifyContent: 'center' }}>
+                  <span style={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
                     <ChampIcon champId={c.id} size={44} />
+                    {isFearlessLocked && (
+                      <span
+                        style={{
+                          position: 'absolute', right: 2, top: 2, fontSize: 9, fontWeight: 800,
+                          background: '#4c1d95', color: '#e9d5ff', padding: '1px 4px', borderRadius: 4,
+                        }}
+                      >FL</span>
+                    )}
                   </span>
                   <span className="tac-name" style={{ fontSize: 12, marginTop: 6, display: 'block' }}>{c.name}</span>
                   <span className="tac-blurb" style={{ display: 'block' }}>{c.roles.join(' / ')}</span>
@@ -271,38 +636,35 @@ export default function Draft({ draft, userSide, onBan, onPick, disabled, gameLa
               <p className="hint">No champions match that filter.</p>
             )}
           </div>
-        </div>
-      )}
-
-      {/* Role selector popup */}
-      {pickTarget && (
-        <div className="modal-backdrop" onClick={() => setPickTarget(null)}>
-          <div className="modal" style={{ width: 'min(420px, 100%)' }} onClick={(e) => e.stopPropagation()}>
-            <div className="card" style={{ margin: 0, border: 'none', background: 'transparent' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <ChampIcon champId={pickTarget} size={48} />
-                <h3 style={{ margin: 0 }}>Pick {CHAMP_BY_ID[pickTarget].name} as…</h3>
-              </div>
-              <div className="tac-grid" style={{ marginTop: 12 }}>
-                {(pickable.get(pickTarget) || []).map((role) => (
-                  <button
-                    key={role}
-                    className="tac"
-                    disabled={disabled}
-                    onClick={() => { onPick(pickTarget, role); setPickTarget(null) }}
-                  >
-                    <span className="tac-name">{role}</span>
-                    <span className="tac-blurb">
-                      {draft.picks[userSide][role] ? 'filled' : 'open slot'}
-                    </span>
-                  </button>
-                ))}
-              </div>
-              <div style={{ marginTop: 12 }}>
-                <button className="ghost" onClick={() => setPickTarget(null)}>Cancel</button>
+          {showFlexAssignUi && (
+            <div style={{ marginTop: 12 }} role="region" aria-label="Assign flex to role">
+              <span className="hint">
+                Assigning <strong>{CHAMP_BY_ID[assignTarget]?.name}</strong> — tap a legal role on your comp panel (or use the tabs).
+              </span>
+              <div className="tabs" style={{ paddingTop: 8 }}>
+                {DRAFT_ROLES.map((r) => {
+                  const ok = canAssignFlex(draft, userSide, assignTarget, r)
+                  return (
+                    <button
+                      key={`as-${r}`}
+                      type="button"
+                      className={ok ? 'tab active' : 'tab'}
+                      style={{ minHeight: 44, opacity: ok ? 1 : 0.45 }}
+                      disabled={!ok}
+                      onClick={() => {
+                        if (!ok) return
+                        onAssignFlex(assignTarget, r)
+                        setAssignTarget(null)
+                        setSwapSource(null)
+                      }}
+                    >
+                      {r}
+                    </button>
+                  )
+                })}
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@
 import {
   DRAFT_STEPS, createDraft, currentStep, applyBan, applyPick,
   legalBans, legalPicks, aiDraftMove, scoreComp, getDraftDebrief, champMeta, champPortrait,
+  swapPicks, movePick, canSwapPicks,
 } from '../src/game/draft.js'
 import { CHAMPIONS } from '../src/data/champions.js'
 
@@ -120,6 +121,42 @@ assert(champMeta('jarvan') === 6, `jarvan meta = engage(3)+teamfight(3) (${champ
 assert(champMeta('jarvan') > champMeta('karma'), 'engage/teamfight outranks poke/protect')
 assert(CHAMPIONS.length === 173, '173 champions in pool')
 assert(CHAMPIONS.every((c) => c.ddragon && c.ddragon.endsWith('.png')), 'every champ has a ddragon filename')
+
+// ---------- role swaps / moves (no draft step) ----------
+// Yasuo MID + Jayce TOP → legal swap; step unchanged
+{
+  let dr = createDraft('BLUE')
+  dr = { ...dr, picks: { BLUE: { MID: 'yasuo', TOP: 'jayce' }, RED: {} }, step: 7 }
+  const beforeStep = dr.step
+  const after = swapPicks(dr, 'BLUE', 'MID', 'TOP')
+  assert(after.picks.BLUE.MID === 'jayce' && after.picks.BLUE.TOP === 'yasuo', 'Yasuo/Jayce roles swap')
+  assert(after.step === beforeStep && after.done === dr.done, 'swap does not advance draft step')
+}
+// Enemy turn: swap still allowed on user side
+{
+  let dr = createDraft('BLUE')
+  dr = applyBan(dr, legalBans(dr)[0])
+  assert(currentStep(dr).side === 'RED', 'enemy ban turn')
+  dr = {
+    ...dr,
+    picks: { ...dr.picks, BLUE: { MID: 'yasuo', TOP: 'jayce', JNG: 'jarvan', BOT: 'jinx', SUP: 'thresh' } },
+  }
+  const after = swapPicks(dr, 'BLUE', 'MID', 'TOP')
+  assert(after.picks.BLUE.MID === 'jayce' && after.picks.BLUE.TOP === 'yasuo', 'swap works on enemy turn')
+}
+// Yasuo MID → empty TOP reopens MID
+{
+  let dr = createDraft('BLUE')
+  dr = { ...dr, picks: { ...dr.picks, BLUE: { MID: 'yasuo' } } }
+  const after = movePick(dr, 'BLUE', 'MID', 'TOP')
+  assert(!after.picks.BLUE.MID && after.picks.BLUE.TOP === 'yasuo', 'Yasuo moves to empty TOP, MID open')
+}
+// Camille TOP + Nami SUP cannot swap
+{
+  let dr = createDraft('BLUE')
+  dr = { ...dr, picks: { ...dr.picks, BLUE: { TOP: 'camille', SUP: 'nami' } } }
+  assert(!canSwapPicks(dr, 'BLUE', 'TOP', 'SUP'), 'Camille/Nami illegal swap blocked')
+}
 
 console.log(failures === 0 ? '\nDRAFT: ALL PASSED' : `\nDRAFT: ${failures} FAILURE(S)`)
 process.exit(failures === 0 ? 0 : 1)

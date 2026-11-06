@@ -91,3 +91,5 @@ Append-only per the project-files SOP. One line per change:
 2026-11-06T07:30:00Z | mithrax | src/data/champions.js, test/draft.test.mjs, CHANGELOG.md | Active Coach draft pool expanded to all 173 League champions (patch 16.22.1); 113 new entries interleaved by primary role, including Nami and other formerly missing picks.
 
 2026-11-06 | gpt-forge | champion portrait patch | Fixed Locke and Zaahen portraits requesting the older 15.20.1 CDN, which returns 403 for both. Use Data Dragon 16.22.1 to match the expanded roster; draft regression checks cover both URLs and the existing null fallback.
+
+2026-11-06T12:00:00Z | mithrax | src/game/draft.js, src/components/Draft.jsx, MatchExperience.jsx, ModesDashboard.jsx, matchSession.js, docs, test/draft.test.mjs, test/p1.test.mjs | Role-first flex + real Fearless pool lockout; role swaps/moves via swapPicks/movePick/flexIntoFilledRole and MATCH_DRAFT_REARRANGE without advancing steps; AI flex uses applyFlexReserved; repairEnemyFlexMatching deterministic; p1 §10 sim test expects no Fearless strength effect; GUIDE + §10 superseded note.

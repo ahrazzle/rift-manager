@@ -62,10 +62,9 @@ export default function Strategy({ state, dispatch }) {
     // draw by design (it measures the no-gameplan number).
     const seed = matchupSeed(state, oppId)
     const oppTactic = matchupOppTactic(state, oppId)
-    const fearless = state.seriesOptions?.fearless ?? false
     const bonus = managedCoachBonus(state) + preparationBonus(state, oppId)
     const base = estimateSeriesWinProb(myObj, state.tactic, oppObj, oppTactic, 300, seededRng(seed + '|base'), bonus)
-    const withStrat = estimateSeriesWinProb(myObj, state.tactic, oppObj, oppTactic, 300, seededRng(seed), bonus, { aStrat: strat, fearless })
+    const withStrat = estimateSeriesWinProb(myObj, state.tactic, oppObj, oppTactic, 300, seededRng(seed), bonus, { aStrat: strat })
     const why = explainWinProb(state, oppId, { n: 300, rng: seededRng(seed), oppTactic })
     return { oppId, base, withStrat, why }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,17 +122,17 @@ export default function Strategy({ state, dispatch }) {
               onClick={() => dispatch({ type: 'SET_SERIES_OPTION', key: 'fearless', value: true })}
             >
               <span className="tac-name">Fearless ON</span>
-              <span className="tac-blurb">Series winner plays off comfort next game (−1.0 str)</span>
+              <span className="tac-blurb">Champions locked in during earlier games of a series cannot be picked again. Bans reset each game.</span>
             </button>
             <button
               className={!state.seriesOptions?.fearless ? 'tac active' : 'tac'}
               onClick={() => dispatch({ type: 'SET_SERIES_OPTION', key: 'fearless', value: false })}
             >
               <span className="tac-name">Fearless OFF</span>
-              <span className="tac-blurb">Standard draft every game</span>
+              <span className="tac-blurb">Standard draft every game — the full pool comes back.</span>
             </button>
           </div>
-          <p className="hint">Applies to all series.</p>
+          <p className="hint">Applies to every series in this save. Active Coach draft must be on, or it has no effect.</p>
         </div>
 
         <div className="tac-current">

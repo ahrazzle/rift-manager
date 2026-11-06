@@ -26,7 +26,9 @@ function DraftContainer({ state, dispatch }) {
       const move = aiDraftMove(draft, Math.random, ds.aiPersonality, ds.aiComfort)
       dispatch(move.type === 'ban'
         ? { type: 'DRAFT_BAN', champId: move.champId }
-        : { type: 'DRAFT_PICK', champId: move.champId, role: move.role })
+        : move.flex
+          ? { type: 'DRAFT_AI_FLEX', champId: move.champId, role: move.role }
+          : { type: 'DRAFT_PICK', champId: move.champId, role: move.role })
     }, thinkMs)
     return () => clearTimeout(t)
   }, [draft, dispatch, thinkMs, ds.aiPersonality, ds.aiComfort])
@@ -43,7 +45,16 @@ function DraftContainer({ state, dispatch }) {
       <div className="card">
         <h3>Draft complete: Game {ds.gameIndex + 1}</h3>
         <p className="tag">Series {myWins}–{opWins}. Comp locked. Sim the game?</p>
-        <Draft draft={draft} userSide={draft.userSide} onBan={() => {}} onPick={() => {}} disabled gameLabel={`Draft — Game ${ds.gameIndex + 1}`} />
+        <Draft
+          draft={draft}
+          userSide={draft.userSide}
+          onBan={() => {}}
+          onPick={() => {}}
+          onAssignFlex={() => {}}
+          onRearrange={() => {}}
+          disabled
+          gameLabel={`Draft — Game ${ds.gameIndex + 1}`}
+        />
         <div className="actions" style={{ marginTop: 12 }}>
           <button className="primary big" onClick={() => { setResolving(true); setTimeout(() => { dispatch({ type: 'DRAFT_RESOLVE_GAME' }); setResolving(false) }, 600) }}>
             Sim Game {ds.gameIndex + 1} →
@@ -76,6 +87,9 @@ function DraftContainer({ state, dispatch }) {
         userSide={draft.userSide}
         onBan={(champId) => dispatch({ type: 'DRAFT_BAN', champId })}
         onPick={(champId, role) => dispatch({ type: 'DRAFT_PICK', champId, role })}
+        onPickFlex={(champId) => dispatch({ type: 'DRAFT_FLEX', champId })}
+        onAssignFlex={(champId, role) => dispatch({ type: 'DRAFT_ASSIGN_FLEX', champId, role })}
+        onRearrange={(payload) => dispatch({ type: 'DRAFT_REARRANGE', side: draft.userSide, ...payload })}
         gameLabel={`Draft — Game ${ds.gameIndex + 1}`}
       />
     </div>
