@@ -651,11 +651,20 @@
     flex-direction: column;
     max-height: none;
     overflow: visible;
+    padding: 14px 12px 18px;
   }
   .rift-arena .rift-sidebar.rift-coaching .igl-decision {
     max-height: none;
     height: auto;
     overflow: visible;
+    display: block;
+  }
+  .rift-arena .rift-sidebar.rift-coaching .igl-decision h2 {
+    margin-bottom: 10px;
+  }
+  .rift-coaching .igl-call-grid {
+    flex: none;
+    margin-top: 12px;
   }
   .rift-arena .rift-feed p {
     grid-template-columns: 17px 35px minmax(0, 1fr);

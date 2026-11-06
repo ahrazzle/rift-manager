@@ -145,6 +145,17 @@
 .rift-coaching .igl-call-option { padding: 10px; }
 .rift-coaching .igl-call-option strong { font-size: 12px; margin-bottom: 4px; }
 .rift-coaching .igl-call-option span { font-size: 10px; }
+@media (max-width: 700px) {
+  .rift-coaching .igl-decision {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+  .rift-coaching .igl-call-grid {
+    flex: none;
+    margin-top: 12px;
+  }
+}
 @media (max-width: 780px) {
   .rift-sidebar.rift-coaching { display: flex; flex-direction: column; }
   .rift-coaching .igl-call-grid { grid-template-columns: 1fr; }
