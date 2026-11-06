@@ -10,9 +10,9 @@ const outDir = '/opt/cursor/artifacts/match-layout-verify'
 mkdirSync(outDir, { recursive: true })
 
 const viewports = [
+  { name: 'desktop-1280', width: 1280, height: 800 },
   { name: 'desktop-1440', width: 1440, height: 900 },
   { name: 'desktop-1920', width: 1920, height: 1080 },
-  { name: 'mobile-390', width: 390, height: 844, isMobile: true },
 ]
 
 async function waitForServer(url, ms = 60000) {

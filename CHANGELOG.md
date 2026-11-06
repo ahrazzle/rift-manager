@@ -71,3 +71,5 @@ Append-only per the project-files SOP. One line per change:
 2026-11-05T22:05:00Z | mithrax | src/game/useGameState.js, test/transfers-offseason.test.mjs, CHANGELOG.md | FA pool cap: when trimming to 20, always keep the five offseason newcomers and cut lowest-OVR veterans so report newFreeAgents match the Market pool.
 
 2026-11-06T00:32:00Z | mithrax | src/components/AnimatedRift.jsx, src/match.css, src/styles.css, src/styles/rift-arena.css, src/styles/match-broadcast.css, CHANGELOG.md | Match sim layout: full-width arena grid (scoreboard above map, IGL beside map on desktop); drop 920px cap; mobile single-column grid fixes iOS side-by-side strip; map ResizeObserver + devicePixelRatio sizing; IGL header/call list spacing and scroll without overlap.
+
+2026-11-06T00:45:00Z | mithrax | src/styles.css, src/match.css, src/styles/rift-arena.css, scripts/match-layout-shots.mjs, CHANGELOG.md | Desktop match (≥1200px): full viewport width (no app/shell max-width); height-sized map hero (--rift-map-side); compact scoreboard strip; controls under map column; IGL panel 420–520px with internal scroll. Mobile unchanged.

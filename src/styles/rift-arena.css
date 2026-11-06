@@ -783,7 +783,7 @@
     display: none;
   }
 }
-@media (min-width: 900px) {
+@media (min-width: 900px) and (max-width: 1199px) {
   .rift-arena .rift-arena-grid {
     --rift-sidebar-width: 300px;
   }
@@ -810,9 +810,106 @@
     padding-bottom: 12px;
   }
 }
-@media (min-width: 1100px) {
+@media (min-width: 1100px) and (max-width: 1199px) {
   .rift-arena .rift-arena-grid {
     --rift-sidebar-width: 320px;
+  }
+}
+@media (min-width: 1200px) {
+  .rift-arena.rift-view {
+    --rift-gutter: clamp(12px, 1.6vw, 28px);
+    --rift-sidebar-width: clamp(420px, 26vw, 520px);
+    --rift-stage-chrome: 248px;
+    --rift-map-side: min(
+      calc(100dvh - var(--rift-stage-chrome)),
+      60vw,
+      calc(100vw - var(--rift-sidebar-width) - 2 * var(--rift-gutter) - 4px)
+    );
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    border-radius: 4px;
+  }
+  .rift-arena .rift-broadcast-label {
+    padding: 6px 14px;
+  }
+  .rift-arena .rift-arena-grid {
+    grid-template-columns: var(--rift-map-side) minmax(420px, 520px);
+    grid-template-rows: auto auto auto auto auto;
+    grid-template-areas:
+      'score score'
+      'map side'
+      'controls side'
+      'display display'
+      'caption caption';
+    width: 100%;
+    max-width: none;
+    justify-content: start;
+    column-gap: 0;
+  }
+  .rift-arena .rift-arena-grid--decision {
+    container-type: normal;
+  }
+  .rift-arena .rift-map-wrap {
+    width: var(--rift-map-side);
+    height: var(--rift-map-side);
+    max-width: 100%;
+    aspect-ratio: 1;
+    justify-self: start;
+    align-self: start;
+  }
+  .rift-arena .rift-arena-grid .rift-controls {
+    width: var(--rift-map-side);
+    max-width: 100%;
+    justify-self: start;
+    box-sizing: border-box;
+  }
+  .rift-arena .rift-arena-grid .rift-sidebar {
+    align-self: stretch;
+    min-height: 0;
+    border-left: 1px solid var(--arena-line);
+  }
+  .rift-arena .rift-sidebar.rift-coaching {
+    max-height: none;
+    height: 100%;
+    overflow: hidden;
+  }
+  .rift-arena .rift-sidebar.rift-coaching .igl-decision {
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+  }
+  .rift-arena .rift-scoreboard {
+    grid-template-columns: minmax(0, 1fr) 96px minmax(0, 1fr);
+  }
+  .rift-arena .rift-score {
+    padding: 8px 18px 10px;
+  }
+  .rift-arena .rift-score strong {
+    font-size: 22px;
+  }
+  .rift-arena .rift-score b {
+    font-size: 30px;
+  }
+  .rift-arena .rift-score > div {
+    margin: 2px 0 4px;
+  }
+  .rift-arena .rift-clock {
+    padding: 6px 4px;
+  }
+  .rift-arena .rift-clock strong {
+    font-size: 26px;
+  }
+  .rift-arena .rift-objective-score {
+    gap: 10px;
+    font-size: 10px;
+  }
+  .rift-arena .rift-controls {
+    padding: 8px 12px;
+    flex-wrap: nowrap;
+  }
+  .rift-arena .rift-caption {
+    padding: 6px 14px;
   }
 }
 @media (max-width: 700px), (pointer: coarse) {

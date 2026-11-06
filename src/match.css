@@ -1,5 +1,18 @@
 /* Match add-ons and the original icon-based Rift illustration. */
 .match-experience { display: grid; gap: 18px; }
+@media (min-width: 1200px) {
+  .match-experience.stage-map,
+  .match-experience.stage-decision {
+    gap: 0;
+    width: 100%;
+    max-width: none;
+  }
+  .match-experience.stage-map > .rift-view,
+  .match-experience.stage-decision > .rift-view {
+    width: 100%;
+    max-width: none;
+  }
+}
 .match-experience > .card { margin: 0; }
 .match-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .match-heading h1 { font-size: clamp(25px, 4vw, 42px); margin: 9px 0; }
