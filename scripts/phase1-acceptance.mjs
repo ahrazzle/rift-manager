@@ -39,7 +39,7 @@ async function dismissOverlays(page) {
 }
 
 async function startSeason(page) {
-  await page.getByRole('button', { name: /⚡ Season/i }).click()
+  await page.getByRole('button', { name: /^Season$/i }).click()
   await page.locator('#season-year-select').selectOption({ index: 0 }).catch(async () => {
     await page.locator('.year-select').first().selectOption({ index: 0 })
   })

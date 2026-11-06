@@ -191,28 +191,66 @@
   font-size: 11px;
   padding: 5px;
 }
-.rift-arena .rift-layout {
+.rift-arena .rift-arena-grid {
+  --rift-sidebar-width: 280px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(205px, 26%);
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) var(--rift-sidebar-width);
+  grid-template-areas:
+    'score score'
+    'map side'
+    'controls controls'
+    'display display'
+    'caption caption';
   align-items: stretch;
   background: #07111c;
 }
+.rift-arena .rift-arena-grid .rift-scoreboard {
+  grid-area: score;
+}
+.rift-arena .rift-arena-grid .rift-map-wrap {
+  grid-area: map;
+}
+.rift-arena .rift-arena-grid .rift-sidebar {
+  grid-area: side;
+}
+.rift-arena .rift-arena-grid .rift-controls {
+  grid-area: controls;
+}
+.rift-arena .rift-arena-grid .rift-display-controls {
+  grid-area: display;
+}
+.rift-arena .rift-arena-grid .rift-caption {
+  grid-area: caption;
+}
+.rift-arena .rift-arena-grid--decision {
+  container-type: inline-size;
+  container-name: rift-arena-stage;
+  align-items: start;
+}
+.rift-arena .rift-arena-grid--decision .rift-map-wrap {
+  align-self: start;
+}
 .rift-arena .rift-map-wrap {
   min-width: 0;
+  width: 100%;
+  aspect-ratio: 1;
   padding: 0;
   position: relative;
   background: #07121c;
   overflow: hidden;
   border-right: 1px solid var(--arena-line);
+  box-sizing: border-box;
 }
 .rift-arena .rift-map {
   display: block;
   width: 100%;
-  height: auto;
-  aspect-ratio: 1;
+  height: 100%;
   max-height: none;
   border-radius: 0;
   background: #091623;
+  vertical-align: top;
 }
 .rift-arena .rift-player {
   transition:
@@ -260,25 +298,19 @@
   min-width: 0;
   border-left: 0;
 }
-.rift-arena .rift-layout.rift-layout--decision {
-  container-type: inline-size;
-  container-name: rift-decision-stage;
-  align-items: start;
-}
-.rift-arena .rift-layout.rift-layout--decision .rift-map-wrap {
-  align-self: start;
-}
 .rift-arena .rift-sidebar.rift-coaching {
   display: flex;
   flex-direction: column;
   align-self: start;
   box-sizing: border-box;
-  max-height: calc(100cqw - max(205px, 26cqw));
+  max-height: calc(100cqw - var(--rift-sidebar-width));
   overflow: hidden;
 }
-.rift-arena .rift-sidebar.rift-coaching .igl-decision {
-  flex: 1 1 auto;
-  min-height: 0;
+@media (min-width: 701px) and (max-width: 1199px) {
+  .rift-arena .rift-sidebar.rift-coaching .igl-decision {
+    height: 100%;
+    overflow: hidden;
+  }
 }
 .rift-arena .rift-sidebar.rift-coaching .igl-decision h2 {
   font-family: 'Barlow Condensed', sans-serif;
@@ -584,22 +616,27 @@
   }
 }
 @media (max-width: 700px) {
-  .rift-arena .rift-layout {
+  .rift-arena .rift-arena-grid {
     grid-template-columns: minmax(0, 1fr);
-    display: contents;
+    grid-template-areas:
+      'score'
+      'map'
+      'controls'
+      'display'
+      'side'
+      'caption';
   }
   .rift-arena .rift-map-wrap {
     border-right: 0;
     border-bottom: 1px solid var(--arena-line);
-    order: 1;
     align-self: stretch;
+    width: 100%;
   }
   .rift-arena .rift-sidebar {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0 18px;
     padding: 14px;
-    order: 3;
     border-top: 1px solid var(--arena-line);
   }
   .rift-arena .rift-sidebar > h3 {
@@ -613,9 +650,21 @@
     display: flex;
     flex-direction: column;
     max-height: none;
+    overflow: visible;
+    padding: 14px 12px 18px;
   }
   .rift-arena .rift-sidebar.rift-coaching .igl-decision {
-    max-height: min(56vh, 460px);
+    max-height: none;
+    height: auto;
+    overflow: visible;
+    display: block;
+  }
+  .rift-arena .rift-sidebar.rift-coaching .igl-decision h2 {
+    margin-bottom: 10px;
+  }
+  .rift-coaching .igl-call-grid {
+    flex: none;
+    margin-top: 12px;
   }
   .rift-arena .rift-feed p {
     grid-template-columns: 17px 35px minmax(0, 1fr);
@@ -646,7 +695,6 @@
   .rift-arena .rift-controls {
     gap: 7px;
     padding: 10px;
-    order: 2;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -663,15 +711,7 @@
     font-size: 10px;
     gap: 4px;
   }
-  .rift-arena.rift-view {
-    display: flex;
-    flex-direction: column;
-  }
-  .rift-arena .rift-caption {
-    order: 4;
-  }
   .rift-arena .rift-controls button.rift-settings {
-    order: 0;
     min-width: 44px;
     padding: 8px;
   }
@@ -743,12 +783,12 @@
     display: none;
   }
 }
-@media (min-width: 900px) {
-  .rift-arena .rift-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(245px, 0.52fr);
+@media (min-width: 900px) and (max-width: 1199px) {
+  .rift-arena .rift-arena-grid {
+    --rift-sidebar-width: 300px;
   }
   .rift-arena .rift-sidebar.rift-coaching {
-    max-height: calc(100cqw - max(245px, 34.2cqw));
+    max-height: calc(100cqw - var(--rift-sidebar-width));
   }
   .rift-arena .rift-roster > div {
     padding: 3px 0;
@@ -770,16 +810,148 @@
     padding-bottom: 12px;
   }
 }
-@media (min-width: 900px) and (min-height: 650px) {
-  .rift-arena.rift-view {
-    max-width: 920px;
-    margin-inline: auto;
+@media (min-width: 1100px) and (max-width: 1199px) {
+  .rift-arena .rift-arena-grid {
+    --rift-sidebar-width: 320px;
   }
-  .rift-arena .rift-layout {
-    grid-template-columns: minmax(0, 1fr) 265px;
+}
+@media (min-width: 1200px) {
+  .rift-arena.rift-view {
+    --rift-gutter: clamp(12px, 1.6vw, 28px);
+    --rift-min-sidebar: 420px;
+    /* topbar + content pad + label + compact score + controls row + buffer */
+    --rift-stage-chrome: 314px;
+    container-type: inline-size;
+    container-name: rift-arena;
+    --rift-map-side: min(
+      calc(100dvh - var(--rift-stage-chrome)),
+      calc(100cqw - var(--rift-min-sidebar))
+    );
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    border-radius: 4px;
+  }
+  .rift-arena .rift-broadcast-label {
+    padding: 5px 14px;
+  }
+  .rift-arena .rift-arena-grid {
+    grid-template-columns: var(--rift-map-side) minmax(var(--rift-min-sidebar), 1fr);
+    grid-template-rows: auto var(--rift-map-side) auto auto;
+    grid-template-areas:
+      'score score'
+      'map side'
+      'controls side'
+      'display display';
+    width: 100%;
+    max-width: none;
+    column-gap: 0;
+    min-height: 0;
+  }
+  .rift-arena .rift-arena-grid .rift-caption {
+    display: none;
+  }
+  .rift-arena .rift-arena-grid--decision {
+    container-type: normal;
+  }
+  .rift-arena .rift-map-wrap {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    max-width: var(--rift-map-side);
+    max-height: var(--rift-map-side);
+    justify-self: start;
+    align-self: start;
+  }
+  .rift-arena .rift-arena-grid .rift-controls {
+    width: 100%;
+    max-width: var(--rift-map-side);
+    justify-self: start;
+    box-sizing: border-box;
+  }
+  .rift-arena .rift-arena-grid .rift-sidebar {
+    grid-row: 2 / 4;
+    align-self: stretch;
+    min-height: 0;
+    max-height: calc(var(--rift-map-side) + 3.25rem);
+    min-width: var(--rift-min-sidebar);
+    border-left: 1px solid var(--arena-line);
+    overflow: hidden;
   }
   .rift-arena .rift-sidebar.rift-coaching {
-    max-height: calc(100cqw - 265px);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: none;
+    height: 100%;
+    overflow: hidden;
+  }
+  .rift-arena .rift-sidebar.rift-coaching .igl-decision {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    max-height: 100%;
+    overflow: hidden;
+  }
+  .rift-arena .rift-sidebar.rift-coaching .igl-call-grid {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    padding-right: 4px;
+    scrollbar-gutter: stable;
+  }
+  .rift-arena .rift-sidebar.rift-coaching .igl-decision > .hint {
+    flex-shrink: 0;
+  }
+  .rift-arena .rift-scoreboard {
+    grid-template-columns: minmax(0, 1fr) 88px minmax(0, 1fr);
+    width: 100%;
+  }
+  .rift-arena .rift-score {
+    padding: 6px 16px 8px;
+  }
+  .rift-arena .rift-score strong {
+    font-size: 20px;
+  }
+  .rift-arena .rift-score b {
+    font-size: 28px;
+  }
+  .rift-arena .rift-score > div {
+    margin: 1px 0 3px;
+  }
+  .rift-arena .rift-score .eyebrow {
+    font-size: 8px;
+  }
+  .rift-arena .rift-clock {
+    padding: 4px;
+  }
+  .rift-arena .rift-clock strong {
+    font-size: 24px;
+  }
+  .rift-arena .rift-objective-score {
+    gap: 8px;
+    font-size: 9px;
+  }
+  .rift-arena .rift-controls {
+    padding: 6px 10px;
+    flex-wrap: wrap;
+    min-height: 0;
+  }
+  .rift-arena .rift-controls button {
+    min-height: 30px;
+    padding: 5px 8px;
+  }
+}
+@media (min-width: 1200px) and (max-height: 860px) {
+  .rift-arena.rift-view {
+    --rift-stage-chrome: 352px;
   }
 }
 @media (max-width: 700px), (pointer: coarse) {

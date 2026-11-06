@@ -926,6 +926,45 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
 .broadcast-shell .tab.active { border-color: #5daeba; background: #12313d; color: #bcfbff; }
 .broadcast-shell .manager-strip > span, .broadcast-shell .streak-pill { display: inline-flex; align-items: center; gap: 5px; }
 .arena-shell .content { padding-top: 12px; }
+.broadcast-shell.arena-shell:has(.stage-map, .stage-decision) .content {
+  max-width: none;
+  width: 100%;
+}
+.broadcast-shell.arena-shell:has(.stage-map, .stage-decision) .match-experience {
+  width: 100%;
+  min-width: 0;
+}
+@media (min-width: 1200px) {
+  .app.broadcast-shell.arena-shell:has(.stage-map, .stage-decision) {
+    max-width: none;
+    width: 100%;
+    margin-inline: 0;
+    padding-inline: clamp(12px, 1.6vw, 28px);
+    padding-bottom: 0;
+  }
+  .app.broadcast-shell.arena-shell:has(.stage-map, .stage-decision) .content {
+    max-width: none;
+    width: 100%;
+    padding-top: 8px;
+  }
+  .app.broadcast-shell.arena-shell:has(.stage-map, .stage-decision) .topbar {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+    max-width: none;
+    padding-inline: clamp(12px, 1.6vw, 28px);
+  }
+  .broadcast-shell.arena-shell:has(.stage-map, .stage-decision) {
+    max-width: none;
+  }
+  .broadcast-shell.arena-shell:has(.stage-map, .stage-decision) .match-experience {
+    gap: 8px;
+    max-width: none;
+  }
+  .app.broadcast-shell.arena-shell:has(.stage-map, .stage-decision) .site-footer {
+    display: none;
+  }
+}
 @media (max-width: 640px) {
   .broadcast-shell { padding-inline: 10px; }
   .broadcast-shell .topbar { gap: 7px; min-height: 48px; padding: 8px 10px; }
