@@ -93,6 +93,7 @@
   animation: result-rise var(--d-slow) var(--ease-out) both;
 }
 .result-title.result-rise {
+  text-wrap: balance;
   animation-delay: 120ms;
 }
 .result-score.result-rise {
