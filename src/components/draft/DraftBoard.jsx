@@ -22,7 +22,7 @@ import {
   canSwapPicks, canMovePick, canFlexIntoFilledRole,
   draftReadyToPlay, scoreComp, getDraftDebrief,
 } from '../../game/draft.js'
-import { useModeBar, ModeBarActions } from '../shell/modeBar.jsx'
+import { useModeBar, ModeBarActions } from '../shell/index.js'
 import { Chip } from '../ui/index.js'
 import { cx } from '../ui/cx.js'
 import { SideColumn } from './SideColumn.jsx'
@@ -32,7 +32,7 @@ import { ChampionPool } from './ChampionPool.jsx'
 import { ActionPanel, actionRows } from './ActionPanel.jsx'
 import { DraftSummary } from './DraftSummary.jsx'
 import { FlexList } from './FlexList.jsx'
-import { useMedia, NARROW } from './useMedia.js'
+import { useMedia, NARROW } from '../ui/index.js'
 import { champName, otherSide, playerName, teamFor } from './copy.js'
 
 const noop = () => {}
@@ -406,12 +406,12 @@ export default function DraftBoard({
     return () => document.removeEventListener('keydown', onKey)
   })
 
-  // ---- Mode bar: "Draft" + game of series, score chip on the right ----
+  // ---- Mode bar: matchup title, "Draft · Game N of M", score chip on the right ----
   const gameNumber = series?.gameNumber ?? (Number(String(gameLabel ?? '').replace(/\D+/g, '')) || 1)
   const bestOf = series?.needWins ? series.needWins * 2 - 1 : null
+  // Title stays the shell's matchup ("T1 vs GEN"), like every other match stage.
   useModeBar({
-    title: 'Draft',
-    subtitle: [bestOf && bestOf > 1 ? `Game ${gameNumber} of ${bestOf}` : `Game ${gameNumber}`, series?.label]
+    subtitle: [series?.label, 'Draft', bestOf && bestOf > 1 ? `Game ${gameNumber} of ${bestOf}` : `Game ${gameNumber}`]
       .filter(Boolean)
       .join(' · '),
   })

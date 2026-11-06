@@ -16,7 +16,7 @@ const MODES = [
   { id: 'gauntlet', icon: 'shield', name: 'Gauntlet', blurb: 'Five escalating series. One loss ends the run.' },
 ]
 
-export default function NewGame({ state, dispatch, onOpenAbout }) {
+export default function NewGame({ state, dispatch, onOpenAbout, onStepChange }) {
   const [options, setOptions] = useState(() => matchOptions(state?.matchOptions))
   const [seriesFearless, setSeriesFearless] = useState(() => !!state?.seriesOptions?.fearless)
   const [mode, setMode] = useState('career')
@@ -41,6 +41,10 @@ export default function NewGame({ state, dispatch, onOpenAbout }) {
     if (stepMounted.current) stepHeading.current?.focus?.({ preventScroll: false })
     stepMounted.current = true
   }, [step])
+  // The walkthrough's match-options tip waits for step 3, where MatchOptions renders.
+  useEffect(() => {
+    onStepChange?.(step)
+  }, [step, onStepChange])
 
   function pickMode(next) {
     setMode(next)
@@ -79,7 +83,7 @@ export default function NewGame({ state, dispatch, onOpenAbout }) {
     { id: 'team', label: teamStepLabel },
     { id: 'options', label: 'Options' },
   ]
-  const stepTitles = ['Choose your run', mode === 'campaign' ? 'Choose your scenario' : 'Choose your club', 'Match options']
+  const stepTitles = ['Choose your run', mode === 'campaign' ? 'Choose your scenario' : 'Choose your club', 'Coach and options']
 
   function start() {
     if (mode === 'career') dispatch({ type: 'START_CAREER', teamId, managerName, seasonYear: careerYear, matchOptions: options, seriesFearless })

@@ -8,7 +8,7 @@ import { bestLineup, userLineup, estimateSeriesWinProb, explainWinProb, matchupS
 import { managedCoachBonus } from '../game/useGameState.js'
 import { TRAIT_BY_ID } from '../data/traits.js'
 import { preparationBonus } from '../game/preparation.js'
-import { Card, Chip, Delta, Meter } from './ui/index.js'
+import { Card, Chip, Delta, Meter, OddsWhy } from './ui/index.js'
 import OptionGroup from './team/OptionGroup.jsx'
 
 const FALLBACK_SCHEDULE = buildLCKSchedule()
@@ -119,20 +119,7 @@ export default function Strategy({ state, dispatch }) {
           ) : (
             <p className="opt-hint">No upcoming match (season finished).</p>
           )}
-          {preview && preview.why ? (
-            <details className="why">
-              <summary>Why {Math.round((preview.why.prob ?? 0.5) * 100)}%? : top factors</summary>
-              <ul>
-                {preview.why.factors.map((f) => (
-                  <li key={f.label}>
-                    {f.label}: {f.contribution > 0 ? '+' : ''}
-                    {f.contribution.toFixed(1)}pp
-                  </li>
-                ))}
-              </ul>
-            </details>
-          ) : null}
-          {preview?.why.preparation > 0 && <p className="opt-hint">Includes +{preview.why.preparation.toFixed(1)} match preparation from this week’s coaching session.</p>}
+          {preview?.why && <OddsWhy why={preview.why} />}
         </Card>
 
         <Card title="Your lineup traits">

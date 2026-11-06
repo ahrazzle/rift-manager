@@ -1,7 +1,7 @@
 // ============================================================================
 // ResultStage: the reward moment after a series (SPEC §3.6).
 //
-// Mount point (MatchExperience.jsx, stage `result`, owned by the match lane):
+// Mount point (MatchExperience.jsx, stage `result`):
 //
 //   {stage === 'result' && (
 //     <ResultStage
@@ -28,12 +28,11 @@ import TeamCrest from '../TeamCrest.jsx'
 import MatchDetail from '../MatchDetail.jsx'
 import MatchReview from '../MatchReview.jsx'
 import { TutorialReviewTip } from '../TutorialHost.jsx'
-import { Button, Card, Chip, Delta, Icon } from '../ui/index.js'
+import { Button, Card, Chip, Delta, Icon, TrophyMark } from '../ui/index.js'
 import { teamName } from '../../game/hype.js'
 import { PREPARATION_FOCI } from '../../game/preparation.js'
 import { gameRows, lookAtNote, mvpLine, seriesChanges, seriesMvp, seriesOutcome, upNext } from '../../game/seriesSnapshot.js'
 import { setPrepIntent, takeNewAchievements } from '../hub/hubMemory.js'
-import TrophyMark from './TrophyMark.jsx'
 
 export function ChangedStrip({ tiles }) {
   if (!tiles?.length) return null
@@ -197,7 +196,10 @@ export default function ResultStage({ state, session, onContinue, tutorial, pers
   const eyebrow = out.spectator
     ? `Final · ${out.stageLabel}`
     : `${out.won ? 'Series won' : 'Series lost'} · ${out.stageLabel}`
-  const title = out.spectator || out.won ? `${name(out.winnerId)} beat ${name(out.loserId)}` : `${name(out.oppId)} took it ${b}–${a}`
+  // Keep the scoreline on one line when a long club name wraps the headline.
+  const title = out.spectator || out.won
+    ? `${name(out.winnerId)} beat ${name(out.loserId)}`
+    : <>{name(out.oppId)} took it <span style={{ whiteSpace: 'nowrap' }}>{b}–{a}</span></>
   const scoreText = `${a} – ${b}`
 
   const openReview = () => setReviewOpen(true)

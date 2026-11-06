@@ -132,7 +132,18 @@ export default function TutorialOverlay({
           }
         }
       } else if (cardTop + cardH > vh - 8) {
-        cardTop = Math.max(12, top - cardH - 12)
+        const above = top - cardH - 12
+        if (above >= 12) {
+          cardTop = above
+        } else {
+          // The anchor is taller than the room around it (Coach's office on a
+          // phone). Pin the card to the bottom of the screen, above the tabbar,
+          // so the anchor's heading at the top of the spotlight stays readable.
+          const tabbar = globalThis.document.querySelector('.shell-tabbar')
+          const tb = tabbar?.getClientRects?.().length ? tabbar.getBoundingClientRect() : null
+          const floor = tb && tb.top < vh ? tb.top : vh
+          cardTop = floor - cardH - 12
+        }
       }
       if (placement !== 'igl-safe') {
         cardTop = clamp(cardTop, 12, Math.max(12, vh - cardH - 12))
@@ -205,7 +216,7 @@ export default function TutorialOverlay({
     <div className="tutorial-root" aria-hidden={false}>
       {hole ? (
         <div
-          className={`tutorial-hole${reducedMotion ? ' tutorial-hole--static' : ''}`}
+          className="tutorial-hole"
           style={{
             top: hole.top,
             left: hole.left,

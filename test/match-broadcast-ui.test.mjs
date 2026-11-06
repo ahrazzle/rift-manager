@@ -84,7 +84,7 @@ try {
   const prompt = { context: 'Enemy has taken 2 dragons. your team is down 3 kills. Make the call, coach. Around the 14-minute mark, what is the gameplan?', options: IGL_CALLS }
   const dialog = (extra = {}) =>
     React.createElement(DecisionDialog, {
-      prompt, clock: '14:00', gameNumber: 2, iglName: 'Keria',
+      prompt, clock: '14:00', gameNumber: 2,
       onChoose: (id) => chosen.push(id), onDelegate: () => delegated++, onClose: () => closed++, ...extra,
     })
   await act(async () => { tree = create(dialog()) })
@@ -110,8 +110,8 @@ try {
   assert.deepEqual(bars.map((b) => b.findAllByType('i').filter((i) => i.props.className === 'on').length), [3, 1], 'risk/reward carried by filled shape')
   await act(async () => options[3].props.onClick())
   assert.deepEqual(chosen, [IGL_CALLS[3].id])
-  const delegate = tree.root.findAllByType('button').find((b) => text(b) === 'Let Keria decide')
-  assert.ok(delegate, 'escape hatch names the shotcaller')
+  const delegate = tree.root.findAllByType('button').find((b) => text(b) === 'Let the team decide')
+  assert.ok(delegate, 'escape hatch: the team makes the call (the game has no IGL player)')
   await act(async () => delegate.props.onClick())
   assert.equal(delegated, 1)
   const close = tree.root.findAllByType('button').find((b) => b.props['aria-label'] === 'Close')

@@ -111,67 +111,6 @@
   color: var(--text-3);
 }
 
-/* Odds bar + Why */
-.hub-odds .ui-meter-row strong {
-  font-family: var(--font-display);
-  font-size: var(--fs-20);
-  letter-spacing: 0.02em;
-}
-.hub-odds .ui-meter-row {
-  align-items: center;
-}
-.hub-why {
-  margin-top: var(--sp-3);
-  border-top: 1px solid var(--line);
-  padding-top: var(--sp-2);
-}
-.hub-why summary {
-  cursor: pointer;
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  color: var(--text-2);
-  font-size: var(--fs-14);
-  font-weight: 600;
-  list-style: none;
-}
-.hub-why summary::-webkit-details-marker {
-  display: none;
-}
-.hub-why summary::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(-45deg);
-  transition: transform var(--d-fast) var(--ease-out);
-}
-.hub-why[open] summary::before {
-  transform: rotate(45deg);
-}
-.hub-why summary:hover {
-  color: var(--text);
-}
-.hub-factors {
-  display: grid;
-  gap: var(--sp-2);
-  margin: var(--sp-2) 0 var(--sp-2) !important;
-  font-size: var(--fs-14);
-}
-.hub-factors li {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  color: var(--text-2);
-}
-.hub-why-note {
-  font-size: var(--fs-12);
-  color: var(--text-2);
-  margin-top: var(--sp-1) !important;
-}
-
 /* Readiness */
 .hub-ready {
   display: grid;
@@ -796,9 +735,6 @@
   .hub-side-sub {
     font-size: var(--fs-12);
   }
-  .hub-why summary {
-    min-height: 44px;
-  }
   .hub-ready {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--sp-2);
@@ -876,9 +812,6 @@
 @media (prefers-reduced-motion: reduce) {
   .hub-toast {
     animation-name: ui-fade;
-  }
-  .hub-why summary::before {
-    transition: none;
   }
 }
 .hub-side-sub .hub-side-name::after {

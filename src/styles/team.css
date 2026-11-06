@@ -123,23 +123,6 @@
 .strat .ui-meter + .ui-meter {
   margin-top: var(--sp-3);
 }
-.strat .why {
-  margin-top: var(--sp-4);
-  padding: var(--sp-3) var(--sp-4);
-  background: var(--s2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-}
-.strat .why summary {
-  color: var(--text);
-  font-size: var(--fs-14);
-  font-weight: 600;
-  cursor: pointer;
-}
-.strat .why li {
-  color: var(--text-2);
-  font-size: var(--fs-14);
-}
 .trait-list {
   display: grid;
   gap: var(--sp-3);

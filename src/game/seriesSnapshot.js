@@ -265,10 +265,11 @@ export function seriesChanges(state, session, mvp = null) {
           label: 'Playoff line',
           value: done ? (posA <= PLAYOFF_SPOTS ? 'In' : 'Out') : gapA > 0 ? `+${gapA}` : String(gapA),
           delta: done || gapB == null ? null : gapA - gapB || null,
-          unit: 'points',
+          unit: 'series',
+          // Same term as Standings ("N series clear of 5th"): one point is one series won.
           note: done
             ? posA <= PLAYOFF_SPOTS ? 'Top four · playoffs next' : 'Missed the top four'
-            : gapA > 0 ? `pts clear of 5th` : gapA === 0 ? 'level with the line' : 'pts behind 4th',
+            : gapA > 0 ? 'series clear of 5th' : gapA === 0 ? 'level with the line' : 'series behind 4th',
         })
       }
     }

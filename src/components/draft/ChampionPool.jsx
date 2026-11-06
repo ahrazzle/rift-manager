@@ -1,7 +1,7 @@
 import { Button, EmptyState, Icon, RoleIcon, Seg } from '../ui/index.js'
 import { cx } from '../ui/cx.js'
 import { DRAFT_ROLES } from '../../game/draft.js'
-import { ChampArt } from './ChampGlyph.jsx'
+import { ChampArt } from '../ui/index.js'
 import { ROLE_WORD } from './copy.js'
 
 const STATE_LONG = {

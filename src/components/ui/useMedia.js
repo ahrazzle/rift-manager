@@ -17,5 +17,5 @@ export function useMedia(query) {
   return matches
 }
 
-/** The shell's one breakpoint: rail → tabbar, draft columns → strip + sheet. */
+/** The shell's one breakpoint: rail → tabbar, draft columns → strip + sheet, dialogs → bottom sheets. */
 export const NARROW = '(max-width: 900px)'

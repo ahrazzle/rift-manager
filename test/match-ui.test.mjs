@@ -66,9 +66,9 @@ try {
   assert.equal(state.round, 1)
   await click('Enter game 2 →')
   await click('Skip to call')
-  // Escape hatch: the shotcaller (the user's support) picks a call from this game's seed.
+  // Escape hatch: the team picks a call from this game's seed.
   const seed = state.matchSession.current.seed
-  await click('Let Keria decide')
+  await click('Let the team decide')
   assert.equal(state.matchSession.current.callId, state.matchSession.current.prompt.options[(seed >>> 0) % 7].id)
   assert.ok(tree.root.findAll(n => n.props.className === 'feed-item feed-blue feed-pin' || n.props.className === 'feed-item feed-red feed-pin').length === 1, 'the call is posted to the play-by-play')
   await click('Finish game')

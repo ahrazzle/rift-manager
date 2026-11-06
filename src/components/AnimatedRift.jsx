@@ -3,7 +3,7 @@ import { mapSnapshot, playbackLimit, physicalSide } from '../game/mapSimulation.
 import { iglCallById } from '../game/igl.js'
 import { readMapDisplay, mapDisplay } from '../game/mapDisplay.js'
 import { Button, Card, Chip, Seg } from './ui/index.js'
-import { ModeBarActions, useModeBarState } from './shell/modeBar.jsx'
+import { ModeBarActions, useHasModeBar } from './shell/index.js'
 import Scorebug from './match/Scorebug.jsx'
 import RiftMap from './match/RiftMap.jsx'
 import EventFeed from './match/EventFeed.jsx'
@@ -29,8 +29,7 @@ const IMPACT_TITLE = { tower: 'Tower destroyed', dragon: 'Dragon secured', baron
  * isolated renders) they render inline so every action stays reachable.
  */
 function PlaybackActions({ children }) {
-  const modeBar = useModeBarState()
-  if (modeBar) return <ModeBarActions>{children}</ModeBarActions>
+  if (useHasModeBar()) return <ModeBarActions>{children}</ModeBarActions>
   return <div className="match-playback-inline">{children}</div>
 }
 

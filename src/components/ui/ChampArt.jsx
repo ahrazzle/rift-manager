@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CHAMP_BY_ID } from '../../data/champions.js'
 import { champPortrait } from '../../game/draft.js'
-import { cx } from '../ui/cx.js'
+import { cx } from './cx.js'
 
 /** Stable hue (0–359) from a champion id, so a glyph keeps its colour everywhere. */
 export function glyphHue(id) {

@@ -26,12 +26,7 @@ export function recordLine(state, teamId) {
   return played ? `${row.W}–${row.L} · ${ordinal(pos)}` : `${row.W}–${row.L}`
 }
 
-/** Plain-language read of a win chance. */
-export function oddsWord(pct) {
-  if (pct >= 56) return 'Favoured'
-  if (pct <= 44) return 'Underdog'
-  return 'Close match'
-}
+export { oddsWord } from '../ui/odds.js'
 
 /** Regional weeks are best of three (needWins 2). */
 export const REGIONAL_BEST_OF = 3
