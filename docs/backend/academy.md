@@ -14,7 +14,7 @@ Run migration explicitly on load. Command validation may read an in-memory migra
 
 ## Decisions and persistence
 
-Promotion replaces precisely the selected bench player, preserving roster size and starter lineup. A cut cannot remove the last player of a role unless the promoted player fills that role. The academy flag is stripped, all other prospect data retained, and arrival fields become morale 74, contract 2, joinedSeason equal to the current Career season. Form starts at 50. The cut player's form entry is deleted and they enter FA at morale 60, with no fee or teammate morale penalty.
+Promotion replaces precisely the selected bench player, preserving roster size and starter lineup. A cut cannot remove the last player of a role unless the promoted player fills that role. The academy flag is stripped, all other prospect data retained, and arrival fields become morale 74, the existing contract (default 2), joinedSeason equal to the current Career season. Form starts at 50. The cut player's form entry is deleted and they enter FA at morale 60, with no fee or teammate morale penalty.
 
 An existing offseason report receives an `academyPromotions` record naming the promotion and cut. The same structured effect and immediate log provide evidence when there is no report. No academy stats grow or age automatically.
 

@@ -87,7 +87,7 @@ export function resolveAcademy(state, action) {
   if (cut.role !== prospect.role && !roster.some((p) => p.id !== cut.id && p.role === cut.role)) return deny(state, 'LAST_OF_ROLE', `Keep at least one ${cut.role} player on the roster.`)
   if (Object.values(s.teams ?? {}).flat().some((p) => p.id === prospect.id) || (s.faPool ?? []).some((p) => p.id === prospect.id || p.id === cut.id)) return deny(state, 'DUPLICATE_PLAYER', 'Resolve the duplicate player identity before promoting.')
   const { academy: _academy, ...data } = prospect
-  const promoted = { ...data, team: s.teamId, morale: 74, contract: 2, joinedSeason: s.career.seasonIndex }
+  const promoted = { ...data, team: s.teamId, morale: 74, contract: data.contract ?? 2, joinedSeason: s.career.seasonIndex }
   const form = { ...s.form, [promoted.id]: 50 }
   delete form[cut.id]
   const message = `${promoted.name} joins the main roster. ${cut.name} is released and becomes a free agent. No fee is received.`
