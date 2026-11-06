@@ -1450,7 +1450,7 @@
 }
 
 /* ---------------- Review room (MatchReview.jsx) ---------------- */
-.match-review h2 { margin: 0 0 8px; font-size: clamp(20px, 3vw, 27px); letter-spacing: -.035em; line-height: 1.2; }
+.match-review h2 { margin: 4px 0 8px; }
 .prep-footer { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-top: 18px; }
 .prep-footer .hint { margin: 0; max-width: 550px; line-height: 1.6; }
 .prep-footer button { flex-shrink: 0; }

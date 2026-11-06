@@ -51,7 +51,8 @@ function MatchActions({ state, dispatch, match, roundIndex, matchIndex, isOpen, 
       )}
       {ready && (
         <Button
-          variant={match.isUser ? 'primary' : 'secondary'}
+          // One primary per view: the bracket's "Enter next match" below is the primary.
+          variant="secondary"
           disabled={manual && !match.forcedWinner}
           onClick={() => dispatch({ type: 'PREVIEW_MATCH', action: { type: 'PLAY_TOURNAMENT_ROUND', matchIndex } })}
         >
