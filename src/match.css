@@ -114,9 +114,18 @@
   background: none;
   display: flex;
   flex-direction: column;
+  gap: 6px;
   min-height: 0;
-  height: 100%;
-  overflow: hidden;
+  overflow: visible;
+}
+.rift-coaching .igl-decision > :not(.igl-call-grid) {
+  flex-shrink: 0;
+  min-width: 0;
+}
+.rift-coaching .igl-decision h2 {
+  overflow-wrap: anywhere;
+  padding-inline: 4px;
+  margin-inline: 0;
 }
 .rift-coaching h2 { font-size: 18px; margin: 8px 0; }
 .rift-coaching .eyebrow { font-size: 9px; color: #edce8c; }
@@ -137,8 +146,8 @@
 .rift-coaching .igl-call-option strong { font-size: 12px; margin-bottom: 4px; }
 .rift-coaching .igl-call-option span { font-size: 10px; }
 @media (max-width: 780px) {
-  .rift-sidebar.rift-coaching { display: block; }
-  .rift-coaching .igl-call-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rift-sidebar.rift-coaching { display: flex; flex-direction: column; }
+  .rift-coaching .igl-call-grid { grid-template-columns: 1fr; }
 }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .tabs .tab:disabled { cursor: default; opacity: .5; }

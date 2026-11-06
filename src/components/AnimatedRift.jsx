@@ -119,6 +119,8 @@ export default function AnimatedRift({
   const [paused, setPaused] = useState(reducedMotion)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [impact, setImpact] = useState(null)
+  const mapWrapRef = useRef(null)
+  const mapRef = useRef(null)
   const previousTime = useRef(initialTime)
   const seeking = useRef(false)
   const callbacks = useRef({})
@@ -174,6 +176,27 @@ export default function AnimatedRift({
     const timer = setTimeout(() => setImpact(null), 850)
     return () => clearTimeout(timer)
   }, [impact, paused, decision])
+  useEffect(() => {
+    const wrap = mapWrapRef.current
+    const svg = mapRef.current
+    if (!wrap || !svg) return
+    const syncSize = () => {
+      const width = wrap.clientWidth
+      const height = wrap.clientHeight
+      if (width < 1 || height < 1) return
+      const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
+      const pxW = Math.round(width * dpr)
+      const pxH = Math.round(height * dpr)
+      svg.setAttribute('width', String(pxW))
+      svg.setAttribute('height', String(pxH))
+      svg.style.width = `${width}px`
+      svg.style.height = `${height}px`
+    }
+    syncSize()
+    const observer = new ResizeObserver(syncSize)
+    observer.observe(wrap)
+    return () => observer.disconnect()
+  }, [])
   const burst = impact
     ? eventLocation(
         impact,
@@ -198,6 +221,9 @@ export default function AnimatedRift({
           {decision ? 'TACTICAL PAUSE' : snapshot.ended ? 'FINAL' : paused ? 'PAUSED' : 'ON AIR'}
         </span>
       </div>
+      <div
+        className={`rift-arena-grid${decision ? ' rift-arena-grid--decision' : ''}`}
+      >
       <div className="rift-scoreboard">
         {['A', 'B'].map((physical) => {
           const side = game.blueSide === 'B' ? (physical === 'A' ? 'B' : 'A') : physical
@@ -243,9 +269,15 @@ export default function AnimatedRift({
           </small>
         </div>
       </div>
-      <div className={`rift-layout${decision ? ' rift-layout--decision' : ''}`}>
-        <div className="rift-map-wrap">
-          <svg className="rift-map" viewBox="0 0 100 100" role="img" aria-labelledby={`${id}-title ${id}-desc`}>
+        <div className="rift-map-wrap" ref={mapWrapRef}>
+          <svg
+            ref={mapRef}
+            className="rift-map"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="xMidYMid meet"
+            role="img"
+            aria-labelledby={`${id}-title ${id}-desc`}
+          >
             <title id={`${id}-title`}>Rift map at {clockLabel(time)}</title>
             <desc id={`${id}-desc`}>
               Ten player icons move between three lanes, jungle and objective pits. Blue circles represent{' '}
@@ -453,7 +485,6 @@ export default function AnimatedRift({
             </>
           )}
         </aside>
-      </div>
       <div className="rift-controls">
         <button
           type="button"
@@ -549,6 +580,7 @@ export default function AnimatedRift({
         Illustrative simulation · Positions follow recorded events and calls. Blue circles / red squares identify
         teams.
       </p>
+      </div>
     </section>
   )
 }

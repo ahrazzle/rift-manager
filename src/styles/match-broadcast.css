@@ -515,6 +515,22 @@
   .broadcast-match .igl-call-grid {
     grid-template-columns: 1fr;
   }
+  .broadcast-match .rift-coaching .igl-decision {
+    padding: 4px 8px 0;
+    gap: 8px;
+  }
+  .broadcast-match .rift-coaching .igl-decision h2 {
+    font-size: clamp(22px, 6.2vw, 28px);
+    line-height: 1.12;
+    margin: 6px 0 8px;
+  }
+  .broadcast-match .rift-coaching .igl-decision > p:not(.hint) {
+    margin-bottom: 10px;
+  }
+  .broadcast-match .rift-coaching .igl-call-grid {
+    margin-top: 4px;
+    max-height: min(50vh, 400px);
+  }
   .broadcast-intermission {
     padding: 28px 15px;
   }

@@ -191,28 +191,66 @@
   font-size: 11px;
   padding: 5px;
 }
-.rift-arena .rift-layout {
+.rift-arena .rift-arena-grid {
+  --rift-sidebar-width: 280px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(205px, 26%);
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) var(--rift-sidebar-width);
+  grid-template-areas:
+    'score score'
+    'map side'
+    'controls controls'
+    'display display'
+    'caption caption';
   align-items: stretch;
   background: #07111c;
 }
+.rift-arena .rift-arena-grid .rift-scoreboard {
+  grid-area: score;
+}
+.rift-arena .rift-arena-grid .rift-map-wrap {
+  grid-area: map;
+}
+.rift-arena .rift-arena-grid .rift-sidebar {
+  grid-area: side;
+}
+.rift-arena .rift-arena-grid .rift-controls {
+  grid-area: controls;
+}
+.rift-arena .rift-arena-grid .rift-display-controls {
+  grid-area: display;
+}
+.rift-arena .rift-arena-grid .rift-caption {
+  grid-area: caption;
+}
+.rift-arena .rift-arena-grid--decision {
+  container-type: inline-size;
+  container-name: rift-arena-stage;
+  align-items: start;
+}
+.rift-arena .rift-arena-grid--decision .rift-map-wrap {
+  align-self: start;
+}
 .rift-arena .rift-map-wrap {
   min-width: 0;
+  width: 100%;
+  aspect-ratio: 1;
   padding: 0;
   position: relative;
   background: #07121c;
   overflow: hidden;
   border-right: 1px solid var(--arena-line);
+  box-sizing: border-box;
 }
 .rift-arena .rift-map {
   display: block;
   width: 100%;
-  height: auto;
-  aspect-ratio: 1;
+  height: 100%;
   max-height: none;
   border-radius: 0;
   background: #091623;
+  vertical-align: top;
 }
 .rift-arena .rift-player {
   transition:
@@ -260,25 +298,19 @@
   min-width: 0;
   border-left: 0;
 }
-.rift-arena .rift-layout.rift-layout--decision {
-  container-type: inline-size;
-  container-name: rift-decision-stage;
-  align-items: start;
-}
-.rift-arena .rift-layout.rift-layout--decision .rift-map-wrap {
-  align-self: start;
-}
 .rift-arena .rift-sidebar.rift-coaching {
   display: flex;
   flex-direction: column;
   align-self: start;
   box-sizing: border-box;
-  max-height: calc(100cqw - max(205px, 26cqw));
+  max-height: calc(100cqw - var(--rift-sidebar-width));
   overflow: hidden;
 }
-.rift-arena .rift-sidebar.rift-coaching .igl-decision {
-  flex: 1 1 auto;
-  min-height: 0;
+@media (min-width: 701px) {
+  .rift-arena .rift-sidebar.rift-coaching .igl-decision {
+    height: 100%;
+    overflow: hidden;
+  }
 }
 .rift-arena .rift-sidebar.rift-coaching .igl-decision h2 {
   font-family: 'Barlow Condensed', sans-serif;
@@ -584,22 +616,27 @@
   }
 }
 @media (max-width: 700px) {
-  .rift-arena .rift-layout {
+  .rift-arena .rift-arena-grid {
     grid-template-columns: minmax(0, 1fr);
-    display: contents;
+    grid-template-areas:
+      'score'
+      'map'
+      'controls'
+      'display'
+      'side'
+      'caption';
   }
   .rift-arena .rift-map-wrap {
     border-right: 0;
     border-bottom: 1px solid var(--arena-line);
-    order: 1;
     align-self: stretch;
+    width: 100%;
   }
   .rift-arena .rift-sidebar {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0 18px;
     padding: 14px;
-    order: 3;
     border-top: 1px solid var(--arena-line);
   }
   .rift-arena .rift-sidebar > h3 {
@@ -613,9 +650,12 @@
     display: flex;
     flex-direction: column;
     max-height: none;
+    overflow: visible;
   }
   .rift-arena .rift-sidebar.rift-coaching .igl-decision {
-    max-height: min(56vh, 460px);
+    max-height: none;
+    height: auto;
+    overflow: visible;
   }
   .rift-arena .rift-feed p {
     grid-template-columns: 17px 35px minmax(0, 1fr);
@@ -646,7 +686,6 @@
   .rift-arena .rift-controls {
     gap: 7px;
     padding: 10px;
-    order: 2;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -663,15 +702,7 @@
     font-size: 10px;
     gap: 4px;
   }
-  .rift-arena.rift-view {
-    display: flex;
-    flex-direction: column;
-  }
-  .rift-arena .rift-caption {
-    order: 4;
-  }
   .rift-arena .rift-controls button.rift-settings {
-    order: 0;
     min-width: 44px;
     padding: 8px;
   }
@@ -744,11 +775,11 @@
   }
 }
 @media (min-width: 900px) {
-  .rift-arena .rift-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(245px, 0.52fr);
+  .rift-arena .rift-arena-grid {
+    --rift-sidebar-width: 300px;
   }
   .rift-arena .rift-sidebar.rift-coaching {
-    max-height: calc(100cqw - max(245px, 34.2cqw));
+    max-height: calc(100cqw - var(--rift-sidebar-width));
   }
   .rift-arena .rift-roster > div {
     padding: 3px 0;
@@ -770,16 +801,9 @@
     padding-bottom: 12px;
   }
 }
-@media (min-width: 900px) and (min-height: 650px) {
-  .rift-arena.rift-view {
-    max-width: 920px;
-    margin-inline: auto;
-  }
-  .rift-arena .rift-layout {
-    grid-template-columns: minmax(0, 1fr) 265px;
-  }
-  .rift-arena .rift-sidebar.rift-coaching {
-    max-height: calc(100cqw - 265px);
+@media (min-width: 1100px) {
+  .rift-arena .rift-arena-grid {
+    --rift-sidebar-width: 320px;
   }
 }
 @media (max-width: 700px), (pointer: coarse) {
