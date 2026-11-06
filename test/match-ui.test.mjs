@@ -92,7 +92,9 @@ try {
     state = reducer(state, currentStep(d).side !== d.userSide ? { type: 'MATCH_DRAFT_AI' } : { ...move, type: move.type === 'ban' ? 'MATCH_DRAFT_BAN' : 'MATCH_DRAFT_PICK' })
   }
   await act(async () => { tree = create(React.createElement(Host)) })
-  await click('Play this game →')
+  // The draft board's done state carries the lock CTA as "Start game N" (Broadcast Night SPEC §3.3);
+  // it dispatches the same MATCH_DRAFT_LOCK the old "Play this game →" button did.
+  await click('Start game 1')
   assert.equal(state.matchSession.stage, 'between', 'the game-stage effect finishes a draft-only game')
   await act(async () => tree.unmount())
   console.log('React toggles, map controls, IGL checkpoint/timers and draft-only lifecycle pass')

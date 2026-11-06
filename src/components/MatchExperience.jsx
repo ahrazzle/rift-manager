@@ -3,7 +3,7 @@ import MatchOptions from './MatchOptions.jsx'
 import Draft from './Draft.jsx'
 import AnimatedRift from './AnimatedRift.jsx'
 import MatchDetail from './MatchDetail.jsx'
-import { currentStep, draftReadyToPlay } from '../game/draft.js'
+import { currentStep } from '../game/draft.js'
 import { iglCallById } from '../game/igl.js'
 import MatchIcon from './MatchIcon.jsx'
 import TeamCrest from './TeamCrest.jsx'
@@ -124,7 +124,7 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
             : ` · Game ${session.games.length + (stage === 'between' ? 0 : 1)}`}
         {stage === 'decision' ? ' · Tactical pause' : ''}
       </h1>
-      {!liveMap && (
+      {!liveMap && stage !== 'draft' && (
         <header
           className={`match-heading broadcast-billboard home-${teamSide('home')} ${stage === 'setup' ? 'is-prematch' : ''}`}
         >
@@ -247,38 +247,26 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
         </div>
       )}
       {stage === 'draft' && (
-        <>
-          <Draft
-            key={session.games.length}
-            draft={session.draft}
-            userSide={session.draft.userSide}
-            gameLabel={`Game ${session.games.length + 1}`}
-            fearlessCount={session.fearlessUsed?.length ?? 0}
-            fearlessActive={!!session.fearlessActive}
-            onBan={(champId) => dispatch({ type: 'MATCH_DRAFT_BAN', champId })}
-            onPick={(champId, role) => dispatch({ type: 'MATCH_DRAFT_PICK', champId, role })}
-            onPickFlex={(champId) => dispatch({ type: 'MATCH_DRAFT_FLEX', champId })}
-            onAssignFlex={(champId, role) => dispatch({ type: 'MATCH_DRAFT_ASSIGN_FLEX', champId, role })}
-            onRearrange={(payload) => dispatch({ type: 'MATCH_DRAFT_REARRANGE', side: session.draft.userSide, ...payload })}
-          />
-          {session.draft.done && (
-            <>
-              {!draftReadyToPlay(session.draft) && (
-                <p className="hint" role="status">
-                  Assign every flex pick to a role before you lock. Open roles and the flex list are above.
-                </p>
-              )}
-              <button
-                type="button"
-                className="primary big"
-                disabled={!draftReadyToPlay(session.draft)}
-                onClick={send('MATCH_DRAFT_LOCK')}
-              >
-                {options.igl || options.showSimulation ? 'Take your comp onto the Rift →' : 'Play this game →'}
-              </button>
-            </>
-          )}
-        </>
+        <Draft
+          key={session.games.length}
+          draft={session.draft}
+          userSide={session.draft.userSide}
+          gameLabel={`Game ${session.games.length + 1}`}
+          fearlessCount={session.fearlessUsed?.length ?? 0}
+          fearlessActive={!!session.fearlessActive}
+          teams={
+            draftHomeBlue
+              ? { BLUE: { id: c.homeId, name: c.homeName, lineup: c.homeLineup }, RED: { id: c.awayId, name: c.awayName, lineup: c.awayLineup } }
+              : { BLUE: { id: c.awayId, name: c.awayName, lineup: c.awayLineup }, RED: { id: c.homeId, name: c.homeName, lineup: c.homeLineup } }
+          }
+          series={{ label: c.label, needWins: c.needWins, gameNumber: session.games.length + 1, homeId: c.homeId, awayId: c.awayId, aWins: session.aWins, bWins: session.bWins }}
+          onBan={(champId) => dispatch({ type: 'MATCH_DRAFT_BAN', champId })}
+          onPick={(champId, role) => dispatch({ type: 'MATCH_DRAFT_PICK', champId, role })}
+          onPickFlex={(champId) => dispatch({ type: 'MATCH_DRAFT_FLEX', champId })}
+          onAssignFlex={(champId, role) => dispatch({ type: 'MATCH_DRAFT_ASSIGN_FLEX', champId, role })}
+          onRearrange={(payload) => dispatch({ type: 'MATCH_DRAFT_REARRANGE', side: session.draft.userSide, ...payload })}
+          onLock={send('MATCH_DRAFT_LOCK')}
+        />
       )}
       {['map', 'decision'].includes(stage) && (
         <>
