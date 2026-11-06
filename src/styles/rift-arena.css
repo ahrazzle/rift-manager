@@ -818,12 +818,14 @@
 @media (min-width: 1200px) {
   .rift-arena.rift-view {
     --rift-gutter: clamp(12px, 1.6vw, 28px);
-    --rift-sidebar-width: clamp(420px, 26vw, 520px);
-    --rift-stage-chrome: 248px;
+    --rift-min-sidebar: 420px;
+    /* topbar + content pad + label + compact score + controls row + buffer */
+    --rift-stage-chrome: 314px;
+    container-type: inline-size;
+    container-name: rift-arena;
     --rift-map-side: min(
       calc(100dvh - var(--rift-stage-chrome)),
-      60vw,
-      calc(100vw - var(--rift-sidebar-width) - 2 * var(--rift-gutter) - 4px)
+      calc(100cqw - var(--rift-min-sidebar))
     );
     width: 100%;
     max-width: none;
@@ -831,43 +833,49 @@
     border-radius: 4px;
   }
   .rift-arena .rift-broadcast-label {
-    padding: 6px 14px;
+    padding: 5px 14px;
   }
   .rift-arena .rift-arena-grid {
-    grid-template-columns: var(--rift-map-side) minmax(420px, 520px);
-    grid-template-rows: auto auto auto auto auto;
+    grid-template-columns: var(--rift-map-side) minmax(var(--rift-min-sidebar), 1fr);
+    grid-template-rows: auto var(--rift-map-side) auto auto;
     grid-template-areas:
       'score score'
       'map side'
       'controls side'
-      'display display'
-      'caption caption';
+      'display display';
     width: 100%;
     max-width: none;
-    justify-content: start;
     column-gap: 0;
+  }
+  .rift-arena .rift-arena-grid .rift-caption {
+    display: none;
   }
   .rift-arena .rift-arena-grid--decision {
     container-type: normal;
   }
   .rift-arena .rift-map-wrap {
-    width: var(--rift-map-side);
-    height: var(--rift-map-side);
-    max-width: 100%;
+    width: 100%;
+    height: auto;
     aspect-ratio: 1;
+    max-width: var(--rift-map-side);
+    max-height: var(--rift-map-side);
     justify-self: start;
     align-self: start;
   }
   .rift-arena .rift-arena-grid .rift-controls {
-    width: var(--rift-map-side);
-    max-width: 100%;
+    width: 100%;
+    max-width: var(--rift-map-side);
     justify-self: start;
     box-sizing: border-box;
   }
   .rift-arena .rift-arena-grid .rift-sidebar {
+    grid-row: 2 / 4;
     align-self: stretch;
     min-height: 0;
+    max-height: calc(var(--rift-map-side) + 3.25rem);
+    min-width: var(--rift-min-sidebar);
     border-left: 1px solid var(--arena-line);
+    overflow: hidden;
   }
   .rift-arena .rift-sidebar.rift-coaching {
     max-height: none;
@@ -880,36 +888,47 @@
     overflow: hidden;
   }
   .rift-arena .rift-scoreboard {
-    grid-template-columns: minmax(0, 1fr) 96px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 88px minmax(0, 1fr);
+    width: 100%;
   }
   .rift-arena .rift-score {
-    padding: 8px 18px 10px;
+    padding: 6px 16px 8px;
   }
   .rift-arena .rift-score strong {
-    font-size: 22px;
+    font-size: 20px;
   }
   .rift-arena .rift-score b {
-    font-size: 30px;
+    font-size: 28px;
   }
   .rift-arena .rift-score > div {
-    margin: 2px 0 4px;
+    margin: 1px 0 3px;
+  }
+  .rift-arena .rift-score .eyebrow {
+    font-size: 8px;
   }
   .rift-arena .rift-clock {
-    padding: 6px 4px;
+    padding: 4px;
   }
   .rift-arena .rift-clock strong {
-    font-size: 26px;
+    font-size: 24px;
   }
   .rift-arena .rift-objective-score {
-    gap: 10px;
-    font-size: 10px;
+    gap: 8px;
+    font-size: 9px;
   }
   .rift-arena .rift-controls {
-    padding: 8px 12px;
-    flex-wrap: nowrap;
+    padding: 6px 10px;
+    flex-wrap: wrap;
+    min-height: 0;
   }
-  .rift-arena .rift-caption {
-    padding: 6px 14px;
+  .rift-arena .rift-controls button {
+    min-height: 30px;
+    padding: 5px 8px;
+  }
+}
+@media (min-width: 1200px) and (max-height: 860px) {
+  .rift-arena.rift-view {
+    --rift-stage-chrome: 352px;
   }
 }
 @media (max-width: 700px), (pointer: coarse) {
