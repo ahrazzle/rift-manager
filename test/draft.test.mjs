@@ -111,7 +111,7 @@ assert(getDraftDebrief(createDraft('RED')).length === 0, 'fresh draft has empty 
 // ---------- meta heuristic ----------
 assert(champMeta('jarvan') === 6, `jarvan meta = engage(3)+teamfight(3) (${champMeta('jarvan')})`)
 assert(champMeta('jarvan') > champMeta('karma'), 'engage/teamfight outranks poke/protect')
-assert(CHAMPIONS.length === 60, '60 champions in pool')
+assert(CHAMPIONS.length === 173, '173 champions in pool')
 assert(CHAMPIONS.every((c) => c.ddragon && c.ddragon.endsWith('.png')), 'every champ has a ddragon filename')
 
 console.log(failures === 0 ? '\nDRAFT: ALL PASSED' : `\nDRAFT: ${failures} FAILURE(S)`)
