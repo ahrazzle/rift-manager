@@ -12,5 +12,6 @@ import './styles/matchday-broadcast.css'
 import './styles/match-broadcast.css'
 import './styles/rift-arena.css'
 import './styles/shell.css'
+import './styles/draft.css'
 
 createRoot(document.getElementById('root')).render(<App />)
