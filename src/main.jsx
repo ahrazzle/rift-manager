@@ -14,5 +14,6 @@ import './styles/shell.css'
 import './styles/draft.css'
 import './styles/hub.css'
 import './styles/result.css'
+import './styles/compete.css'
 
 createRoot(document.getElementById('root')).render(<App />)

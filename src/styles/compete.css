@@ -1,0 +1,821 @@
+/* Broadcast Night · Compete (Standings, Results, Bracket) plus the Gauntlet and
+   Scenario screens. Tokens and the shared kit only; no hex. Gold appears on
+   the champion chip and nowhere else here. Team color is the thin "you" bar. */
+
+/* ---------- shared bits ---------- */
+.cmp-team {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.cmp-team-name {
+  min-width: 0;
+  font-weight: 600;
+}
+.cmp-you-tag {
+  flex: none;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--s3);
+  color: var(--text-2);
+}
+.cmp-note {
+  margin: 0;
+  font-size: var(--fs-12);
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.cmp-lede {
+  margin: 0;
+  color: var(--text-2);
+  max-width: 62ch;
+}
+.cmp-sub {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-2);
+  font-size: var(--fs-14);
+}
+.cmp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-5);
+}
+.cmp-stack {
+  display: grid;
+  gap: var(--sp-6);
+}
+.cmp-stack > .ui-card > .cmp-lede + .cmp-note,
+.cmp-stack > .ui-card > .cmp-note {
+  margin-top: var(--sp-3);
+}
+.cmp-dash {
+  color: var(--text-3);
+}
+.cmp-shot {
+  background: var(--s1);
+}
+
+/* ---------- layout ---------- */
+.cmp-split {
+  display: grid;
+  grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+  gap: var(--sp-6);
+  align-items: start;
+}
+.cmp-main,
+.cmp-side {
+  display: grid;
+  gap: var(--sp-6);
+  min-width: 0;
+}
+
+/* ---------- standings table ---------- */
+.cmp-table-wrap {
+  overflow-x: auto;
+}
+.cmp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-14);
+  font-variant-numeric: tabular-nums;
+}
+.cmp-table th,
+.cmp-table td {
+  padding: 0 var(--sp-3);
+  height: 48px;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+  font-weight: 400;
+  vertical-align: middle;
+}
+.cmp-table .c-wl,
+.cmp-table .c-gd {
+  white-space: nowrap;
+}
+.cmp-table thead th {
+  height: auto;
+  padding-top: var(--sp-2);
+  padding-bottom: var(--sp-3);
+  font-size: var(--fs-12);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.cmp-table abbr {
+  text-decoration: underline dotted var(--text-3);
+  text-underline-offset: 3px;
+  cursor: help;
+}
+.cmp-table .c-pos {
+  width: 40px;
+  text-align: left;
+  color: var(--text-2);
+}
+.cmp-table .c-team {
+  text-align: left;
+}
+.cmp-table tbody th.c-team {
+  color: var(--text);
+}
+.cmp-table .c-team .cmp-team-name {
+  font-weight: 600;
+}
+.cmp-table .c-form {
+  text-align: center;
+  width: 1%;
+  white-space: nowrap;
+}
+.cmp-table .c-move {
+  width: 64px;
+  text-align: center;
+}
+.cmp-table .c-gd {
+  font-weight: 600;
+}
+.cmp-table .c-gd.is-pos {
+  color: var(--win);
+}
+.cmp-table .c-gd.is-neg {
+  color: var(--loss);
+}
+.cmp-row:hover > * {
+  background: var(--s2);
+}
+.cmp-row.you > * {
+  background: var(--s2);
+}
+.cmp-row.you > :first-child {
+  box-shadow: inset 3px 0 0 var(--team);
+}
+.cmp-row.cut > * {
+  border-bottom: 2px solid var(--line-strong);
+}
+.cmp-cutrow td {
+  height: auto;
+  padding: 6px var(--sp-3);
+  border-bottom: 0;
+  text-align: left;
+  font-size: var(--fs-12);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.cmp-cutrow td span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cmp-cutrow td span::before {
+  content: "";
+  width: 16px;
+  height: 2px;
+  background: var(--line-strong);
+}
+.cmp-caption {
+  caption-side: bottom;
+  text-align: left;
+  padding-top: var(--sp-4);
+  font-size: var(--fs-12);
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.cmp-table--plain .c-wl {
+  width: 56px;
+}
+.cmp-table-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+.cmp-table-foot .btn {
+  min-height: 36px;
+  margin-left: calc(var(--sp-3) * -1);
+}
+
+/* ---------- playoff picture + stakes ---------- */
+.cmp-picture .ui-card-h {
+  margin-bottom: var(--sp-4);
+}
+.cmp-picture-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: center;
+}
+.cmp-picture-col {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.cmp-picture-col .label {
+  margin: 0;
+}
+.cmp-picture .cmp-note {
+  margin-top: var(--sp-4);
+}
+.cmp-stake-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+.cmp-stake-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: start;
+  font-size: var(--fs-14);
+  color: var(--text-2);
+}
+.cmp-stake-list li .ui-icon {
+  margin-top: 2px;
+  color: var(--text-2);
+}
+.cmp-stake-list b {
+  color: var(--text);
+}
+.cmp-stakes .ui-card-h {
+  margin-bottom: var(--sp-4);
+}
+
+/* ---------- match box (picture + bracket) ---------- */
+.cmp-mt {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--s2);
+}
+.cmp-mt.is-you::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--team);
+  z-index: 1;
+}
+.cmp-mt-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  min-height: 40px;
+  font-size: var(--fs-14);
+  min-width: 0;
+}
+.cmp-mt-row + .cmp-mt-row {
+  border-top: 1px solid var(--line);
+}
+.cmp-mt-row.is-you {
+  background: var(--s3);
+}
+.cmp-mt-seed {
+  flex: none;
+  width: 14px;
+  color: var(--text-2);
+  font-size: var(--fs-12);
+}
+.cmp-mt-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cmp-mt-tbd {
+  color: var(--text-3);
+}
+.cmp-mt-row .cmp-you-tag {
+  margin-left: 0;
+}
+.cmp-mt-row.is-loser .cmp-mt-name {
+  color: var(--text-2);
+}
+.cmp-mt-row.is-winner .cmp-mt-name {
+  font-weight: 700;
+}
+.cmp-mt-score {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 18px;
+  justify-content: flex-end;
+  font-family: var(--font-display);
+  font-size: var(--fs-18);
+  font-weight: 700;
+  color: var(--text-2);
+}
+.cmp-mt-row.is-winner .cmp-mt-score {
+  color: var(--win);
+}
+.cmp-mt.is-tbd .cmp-mt-row {
+  color: var(--text-3);
+}
+.cmp-mt-actions {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+.cmp-mt-pick {
+  display: grid;
+  gap: var(--sp-2);
+}
+.cmp-mt-actions .btn {
+  min-height: 36px;
+  justify-content: center;
+  width: 100%;
+}
+.cmp-mt-actions .btn-quiet {
+  width: auto;
+  justify-self: start;
+  min-height: 32px;
+  margin-left: calc(var(--sp-3) * -1);
+}
+
+/* ---------- results ---------- */
+.cmp-results {
+  display: grid;
+  gap: var(--sp-6);
+}
+.cmp-results-bar {
+  display: flex;
+  justify-content: flex-start;
+}
+.cmp-week .ui-card-h {
+  margin-bottom: var(--sp-3);
+}
+.cmp-series-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cmp-series {
+  position: relative;
+  padding: var(--sp-4) var(--sp-3);
+  border-bottom: 1px solid var(--line);
+}
+.cmp-series:last-child {
+  border-bottom: 0;
+}
+.cmp-series.is-you {
+  background: var(--s2);
+  border-radius: var(--r-md);
+  box-shadow: inset 3px 0 0 var(--team);
+  border-bottom-color: transparent;
+}
+.cmp-series-top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.cmp-series-top .label {
+  margin-right: auto;
+}
+.cmp-series-score {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px minmax(0, 1fr) 128px;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.cmp-club {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+  color: var(--text-2);
+}
+.cmp-club.home {
+  justify-content: flex-end;
+  text-align: right;
+}
+.cmp-club .cmp-team-name {
+  font-weight: 500;
+}
+.cmp-club.is-winner {
+  color: var(--text);
+}
+.cmp-club.is-winner .cmp-team-name {
+  font-weight: 700;
+}
+.cmp-score {
+  font-family: var(--font-display);
+  font-size: var(--fs-32);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  min-width: 4ch;
+  text-align: center;
+}
+.cmp-series-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+.cmp-series-actions .btn {
+  min-height: 36px;
+}
+.cmp-log {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-14);
+  color: var(--text-2);
+}
+.cmp-log summary {
+  cursor: pointer;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+/* ---------- bracket ---------- */
+.cmp-bracket-page {
+  display: grid;
+  gap: var(--sp-6);
+  min-width: 0;
+}
+.cmp-br-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-6);
+}
+.cmp-br-title h2 {
+  margin: 0;
+  font-size: var(--fs-24);
+  font-weight: 600;
+}
+.cmp-scroll-hint {
+  display: none;
+  margin-bottom: var(--sp-3);
+}
+.cmp-br-scroll {
+  overflow-x: auto;
+  padding-bottom: var(--sp-2);
+  border-radius: var(--r-md);
+}
+.cmp-bracket {
+  --gap: 56px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(232px, 1fr));
+  column-gap: var(--gap);
+  min-width: calc(var(--cols) * 232px + (var(--cols) - 1) * var(--gap));
+}
+.cmp-br-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.cmp-br-round {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-12);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.cmp-br-round span {
+  color: var(--text-3);
+}
+.cmp-br-slots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.cmp-br-slot {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: var(--sp-2) 0;
+}
+.cmp-br-slot > .cmp-mt {
+  width: 100%;
+}
+/* connectors: out-stub, vertical join, in-stub (--line-strong; --team on your path) */
+.cmp-br-slot:not(.is-last)::after {
+  content: "";
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  width: calc(var(--gap) / 2);
+  border-top: 2px solid var(--line-strong);
+}
+.cmp-br-slot:not(.is-last)::before {
+  content: "";
+  position: absolute;
+  left: calc(100% + var(--gap) / 2 - 2px);
+  border-left: 2px solid var(--line-strong);
+}
+.cmp-br-slot:not(.is-last):nth-child(odd)::before {
+  top: 50%;
+  bottom: 0;
+}
+.cmp-br-slot:not(.is-last):nth-child(even)::before {
+  top: 0;
+  bottom: 50%;
+}
+.cmp-br-feed {
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  width: calc(var(--gap) / 2);
+  border-top: 2px solid var(--line-strong);
+}
+.cmp-br-slot.on-path::after,
+.cmp-br-slot.on-path::before {
+  border-color: var(--team);
+}
+.cmp-br-slot.on-path .cmp-br-feed {
+  border-color: var(--team);
+}
+.cmp-br-foot {
+  display: grid;
+  gap: var(--sp-3);
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--line);
+}
+.cmp-br-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.cmp-resolver {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-14);
+  color: var(--text-2);
+}
+.cmp-resolver select {
+  width: auto;
+  min-height: 44px;
+}
+.cmp-br-detail {
+  min-width: 0;
+}
+
+/* ---------- gauntlet ---------- */
+.cmp-gauntlet {
+  display: grid;
+  gap: var(--sp-5);
+}
+.cmp-gauntlet .cmp-actions {
+  margin-top: 0;
+}
+.cmp-verdict {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-56);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.cmp-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-8);
+  padding: var(--sp-4) 0;
+}
+.cmp-vs-side {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-2);
+  text-align: center;
+  min-width: 0;
+}
+.cmp-vs-side strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-24);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.cmp-vs-sub {
+  font-size: var(--fs-12);
+  color: var(--text-2);
+}
+.cmp-vs-mid {
+  font-family: var(--font-display);
+  font-size: var(--fs-32);
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+}
+.cmp-gauntlet-wins {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  justify-content: center;
+}
+.cmp-scout {
+  margin: 0;
+  font-size: var(--fs-14);
+  color: var(--text-2);
+}
+.cmp-scout strong {
+  color: var(--text);
+}
+.cmp-gauntlet .ui-card--inset .ui-card-h {
+  margin-bottom: var(--sp-2);
+}
+
+/* ---------- scenario ---------- */
+.cmp-champ {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin: var(--sp-3) 0 0;
+}
+.cmp-node.is-current {
+  box-shadow: var(--e1), inset 3px 0 0 var(--team);
+}
+.cmp-node-vs {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin: 0 0 var(--sp-3);
+}
+.cmp-vs-small {
+  font-size: var(--fs-12);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.cmp-slots {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-1);
+}
+.cmp-slot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  min-height: 36px;
+  font-size: var(--fs-14);
+  color: var(--text-2);
+}
+.cmp-slot--played {
+  display: block;
+}
+.cmp-slot--played > .btn {
+  margin-left: calc(var(--sp-3) * -1);
+  gap: var(--sp-2);
+}
+.cmp-slot-detail {
+  margin-top: var(--sp-2);
+}
+.cmp-exhibition {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+  margin-top: var(--sp-4);
+}
+.cmp-pick {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.cmp-pick-text {
+  display: grid;
+  gap: var(--sp-1);
+  flex: 1;
+  min-width: 0;
+}
+.cmp-pick-text select {
+  width: 100%;
+}
+.cmp-roster-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-1);
+}
+.cmp-roster-list > li > .btn {
+  gap: var(--sp-2);
+  margin-left: calc(var(--sp-3) * -1);
+}
+.cmp-roster {
+  list-style: none;
+  margin: 0 0 var(--sp-2) calc(var(--sp-3) + 24px);
+  padding: 0;
+  display: grid;
+  gap: var(--sp-1);
+  font-size: var(--fs-14);
+}
+.cmp-roster .label {
+  display: inline-block;
+  min-width: 36px;
+}
+
+/* ---------- tablet and phone ---------- */
+@media (max-width: 900px) {
+  .cmp-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cmp-table .hide-m {
+    display: none;
+  }
+  .cmp-table th,
+  .cmp-table td {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  .cmp-table .c-move {
+    width: 48px;
+  }
+  .cmp-table-card {
+    padding: var(--sp-4);
+  }
+  /* "You" stays in the row's accessible text; the bar and s2 carry it visually */
+  .cmp-table .cmp-you-tag {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .cmp-series-score {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: var(--sp-2);
+  }
+  .cmp-series-actions {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+  .cmp-score {
+    font-size: var(--fs-24);
+    min-width: 3ch;
+  }
+  .cmp-club {
+    flex-direction: column;
+    gap: var(--sp-1);
+    text-align: center;
+    justify-content: center;
+  }
+  .cmp-club.home {
+    flex-direction: column-reverse;
+  }
+  .cmp-club .cmp-team-name {
+    font-size: var(--fs-14);
+    overflow-wrap: anywhere;
+  }
+  .cmp-verdict {
+    font-size: var(--fs-40);
+  }
+  .cmp-vs {
+    gap: var(--sp-4);
+  }
+  .cmp-vs-side svg {
+    width: 56px;
+    height: 56px;
+  }
+  .cmp-exhibition {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cmp-br-title h2 {
+    font-size: var(--fs-20);
+  }
+  .cmp-scroll-hint {
+    display: block;
+  }
+}
