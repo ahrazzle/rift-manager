@@ -13,6 +13,7 @@ import { mulberry32 } from '../game/useGameState.js'
 import { TEAMS } from '../data/lck.js'
 import MatchReview from './MatchReview.jsx'
 import MatchIcon from './MatchIcon.jsx'
+import TeamCrest from './TeamCrest.jsx'
 
 const STATIC_NAME = Object.fromEntries(TEAMS.map((t) => [t.id, t.name]))
 
@@ -21,12 +22,15 @@ function nameOf(state, teamId) {
 }
 const ROLE_ORDER = ['TOP', 'JNG', 'MID', 'BOT', 'SUP']
 
+// Marker shape carries the event type (square tower, diamond dragon, triangle
+// baron, circle kill/fight); colour stays neutral so it never reads as a side
+// or an outcome.
 const EVENT_META = {
-  tower: { color: '#eab308', label: 'Tower' },
-  dragon: { color: 'var(--win)', label: 'Dragon' },
-  baron: { color: '#a855f7', label: 'Baron' },
-  teamfight: { color: 'var(--red)', label: 'Teamfight' },
-  ace: { color: '#fff', label: 'Ace' },
+  tower: { color: 'var(--text)', label: 'Tower' },
+  dragon: { color: 'var(--text)', label: 'Dragon' },
+  baron: { color: 'var(--text)', label: 'Baron' },
+  teamfight: { color: 'var(--text-2)', label: 'Teamfight' },
+  ace: { color: 'var(--text)', label: 'Ace' },
   kill: { color: 'var(--text-2)', label: 'Kill' },
 }
 
@@ -195,7 +199,7 @@ function GoldGraph({ timeline, events, durationMin, youAreA }) {
       return (
         <g key={i} {...common}>
           <title>{title}</title>
-          <rect x={cx - 4} y={cy - 4} width={8} height={8} transform={`rotate(45 ${cx} ${cy})`} fill={meta.color} stroke="#0b0e13" strokeWidth={1} />
+          <rect x={cx - 4} y={cy - 4} width={8} height={8} transform={`rotate(45 ${cx} ${cy})`} fill={meta.color} stroke="var(--bg)" strokeWidth={1} />
           <rect x={cx - 12} y={cy - 12} width={24} height={24} fill="transparent" />
         </g>
       )
@@ -204,7 +208,7 @@ function GoldGraph({ timeline, events, durationMin, youAreA }) {
       return (
         <g key={i} {...common}>
           <title>{title}</title>
-          <polygon points={`${cx},${cy - 5} ${cx - 5},${cy + 4} ${cx + 5},${cy + 4}`} fill={meta.color} stroke="#0b0e13" strokeWidth={1} />
+          <polygon points={`${cx},${cy - 5} ${cx - 5},${cy + 4} ${cx + 5},${cy + 4}`} fill={meta.color} stroke="var(--bg)" strokeWidth={1} />
           <rect x={cx - 12} y={cy - 12} width={24} height={24} fill="transparent" />
         </g>
       )
@@ -213,7 +217,7 @@ function GoldGraph({ timeline, events, durationMin, youAreA }) {
       return (
         <g key={i} {...common}>
           <title>{title}</title>
-          <rect x={cx - 4} y={cy - 4} width={8} height={8} fill={meta.color} stroke="#0b0e13" strokeWidth={1} />
+          <rect x={cx - 4} y={cy - 4} width={8} height={8} fill={meta.color} stroke="var(--bg)" strokeWidth={1} />
           <rect x={cx - 12} y={cy - 12} width={24} height={24} fill="transparent" />
         </g>
       )
@@ -221,7 +225,7 @@ function GoldGraph({ timeline, events, durationMin, youAreA }) {
     return (
       <g key={i} {...common}>
         <title>{title}</title>
-        <circle cx={cx} cy={cy} r={r} fill={meta.color} stroke="#0b0e13" strokeWidth={1} />
+        <circle cx={cx} cy={cy} r={r} fill={meta.color} stroke="var(--bg)" strokeWidth={1} />
         <circle cx={cx} cy={cy} r={12} fill="transparent" />
       </g>
     )
@@ -240,7 +244,7 @@ function GoldGraph({ timeline, events, durationMin, youAreA }) {
             <rect x={PL} y={zeroY} width={pw} height={ph / 2} />
           </clipPath>
         </defs>
-        <line x1={PL} y1={zeroY} x2={W - PR} y2={zeroY} stroke="#3a4150" strokeWidth={1} strokeDasharray="5 4" />
+        <line x1={PL} y1={zeroY} x2={W - PR} y2={zeroY} stroke="var(--line-strong)" strokeWidth={1} strokeDasharray="5 4" />
         <path d={areaTop} fill="var(--win)" opacity={0.18} clipPath={`url(#${clipId}-a)`} />
         <path d={areaTop} fill="var(--loss)" opacity={0.18} clipPath={`url(#${clipId}-b)`} />
         <path d={line} fill="none" stroke="var(--win)" strokeWidth={2} clipPath={`url(#${clipId}-a)`} />
@@ -251,7 +255,7 @@ function GoldGraph({ timeline, events, durationMin, youAreA }) {
         {xTicks.map((t) => (
           <text key={t} x={X(t)} y={H - 8} textAnchor="middle" className="md-axis">{t}&prime;</text>
         ))}
-        <circle cx={X(last.t)} cy={Y(last.diff)} r={4} fill="var(--text)" stroke="#0b0e13" strokeWidth={1} />
+        <circle cx={X(last.t)} cy={Y(last.diff)} r={4} fill="var(--text)" stroke="var(--bg)" strokeWidth={1} />
         <text x={Math.min(X(last.t) - 6, W - PR - 52)} y={Y(last.diff) - 8} className="md-axis">{fmtGold(last.diff)}</text>
         {visEvents.map(evShape)}
       </svg>
@@ -458,12 +462,17 @@ export default function MatchDetail({ round, homeId, awayId, aWins, bWins, userS
     <div className="card md">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 4 }}>
         <div className="md-series" style={{ margin: 0 }}>
-          <span className="rw">{typeof round === 'number' ? `Week ${round}` : round} · {homeLabel} {aWins}–{bWins} {awayLabel}</span>
+          <span className="rw">
+            {typeof round === 'number' ? `Week ${round}` : round} ·{' '}
+            <span className="md-club"><TeamCrest teamId={homeId} name={nameOf(state, homeId)} size={20} /> {homeLabel}</span>{' '}
+            {aWins}–{bWins}{' '}
+            <span className="md-club"><TeamCrest teamId={awayId} name={nameOf(state, awayId)} size={20} /> {awayLabel}</span>
+          </span>
           {isUser && (
             <span className={youWonSeries ? 'outcome win' : 'outcome loss'}>{youWonSeries ? 'WIN' : 'LOSS'}</span>
           )}
         </div>
-        <button type="button" className="ghost" onClick={onBack}>← Back</button>
+        {onBack && <button type="button" className="ghost" onClick={onBack}>← Back</button>}
       </div>
       {(!games || games.length === 0) ? (
         <p className="hint">No game data recorded for this series.</p>

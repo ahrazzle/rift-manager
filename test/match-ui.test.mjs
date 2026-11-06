@@ -49,7 +49,7 @@ try {
   }
   await act(async () => { tree = create(React.createElement(Host)) })
   await click('Enter the Rift →')
-  await click('Jump to call')
+  await click('Skip to call')
   assert.equal(state.matchSession.stage, 'decision')
   assert.equal(byText('Finish game'), undefined)
   assert.ok(tree.root.findAllByType('svg').length > 0)
@@ -61,11 +61,15 @@ try {
   assert.equal(state.matchSession.stage, 'between')
   assert.equal(state.round, 1)
   await click('Enter game 2 →')
-  await click('Jump to call')
-  await act(async () => tree.root.findAllByType('button').find(b => b.props.className === 'igl-call-option').props.onClick())
+  await click('Skip to call')
+  // Escape hatch: the shotcaller (the user's support) picks a call from this game's seed.
+  const seed = state.matchSession.current.seed
+  await click('Let Keria decide')
+  assert.equal(state.matchSession.current.callId, state.matchSession.current.prompt.options[(seed >>> 0) % 7].id)
+  assert.ok(tree.root.findAll(n => n.props.className === 'feed-item feed-blue feed-pin' || n.props.className === 'feed-item feed-red feed-pin').length === 1, 'the call is posted to the play-by-play')
   await click('Finish game')
   if (state.matchSession.stage === 'between') {
-    await click('Enter game 3 →'); await click('Jump to call')
+    await click('Enter game 3 →'); await click('Skip to call')
     await act(async () => tree.root.findAllByType('button').find(b => b.props.className === 'igl-call-option').props.onClick())
     await click('Finish game')
   }
