@@ -8,7 +8,7 @@ export default function MatchOptions({ options, onChange, spectator = false }) {
     ['igl', 'IGL', 'Lead from the animated map. Pause at a key moment and make the macro call.'],
     ['showSimulation', 'Show simulation', 'Watch players rotate, fight and take objectives on the map.'],
   ]
-  return <fieldset className="match-options">
+  return <fieldset className="match-options" data-tour="tour-match-options">
     <legend>Match options</legend>
     <p className="hint">Combine these with any story mode. Change them again before each match.</p>
     <div className="match-option-grid">{rows.map(([key, label, description]) => {

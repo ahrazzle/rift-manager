@@ -10,7 +10,7 @@ export default function Preparation({ state, dispatch, suggestedFocus }) {
   const chosen = PREPARATION_FOCI.find((f) => f.id === (prepared ? plan?.focus : selected))
   const bonus = preparationBonus(state)
   return (
-    <section className="card preparation" id="weekly-preparation" aria-labelledby="prep-title">
+    <section className="card preparation" id="weekly-preparation" data-tour="tour-prep" aria-labelledby="prep-title">
       <div className="prep-heading">
         <div>
           <span className="eyebrow">Coach’s office · Week {state.round}</span>

@@ -12,6 +12,7 @@ import Tournament, { phaseLabel } from './Tournament.jsx'
 import Matchday from './Matchday.jsx'
 import Preparation from './Preparation.jsx'
 import MatchReview from './MatchReview.jsx'
+import { TutorialReviewTip } from './TutorialHost.jsx'
 import TeamCrest from './TeamCrest.jsx'
 import MatchIcon from './MatchIcon.jsx'
 import { fmtMoney } from '../game/economy.js'
@@ -216,7 +217,7 @@ function OffseasonReportPanel({ report, dispatch }) {
   )
 }
 
-export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
+export default function Dashboard({ state, dispatch, setTab, totalRounds, tutorial, persistTutorial, skipTutorial }) {
   const [busy, setBusy] = useState(false)
   // view: 'preview' shows the upcoming week's matchup; 'result' shows the
   // week just simulated inline (full MatchDetail) so the player never has to
@@ -315,7 +316,11 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
     }
 
     const advanceOrNew = isCareer ? (
-      <button className="primary big" onClick={() => dispatch({ type: 'ADVANCE_SEASON' })}>
+      <button
+        className="primary big"
+        data-tour="tour-advance-season"
+        onClick={() => dispatch({ type: 'ADVANCE_SEASON' })}
+      >
         Advance to Season {state.career.seasonIndex + 1} →
       </button>
     ) : (
@@ -549,6 +554,14 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
         </div>
 
         <MatchReview games={userGames || []} userSide={userResult.userSide} onPrepare={!state.finished ? (focus) => { setPreparationFocus(focus); setView('preview') } : null} />
+        {tutorial && persistTutorial && (
+          <TutorialReviewTip
+            show
+            tutorial={tutorial}
+            persistTutorial={persistTutorial}
+            onSkipAll={skipTutorial}
+          />
+        )}
         <HeadlinesCard state={state} userGames={userGames} />
         <AchievementsCard state={state} gamesByRound={gamesByRound} />
 
@@ -623,7 +636,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
       >
         <span className="eyebrow">Week {round} of {totalRounds}{state.league ? ` · ${state.league}` : ''}</span>
         {myMatch ? (
-          <div className="matchup">
+          <div className="matchup" data-tour="tour-matchup">
             <div className="side">
               <TeamCrest teamId={state.teamId} name={nameOf(state, state.teamId)} size={88} />
               <div className="side-sub"><strong>{nameOf(state, state.teamId)}</strong> · You</div>
@@ -685,6 +698,7 @@ export default function Dashboard({ state, dispatch, setTab, totalRounds }) {
         <div className="actions" style={{ marginTop: 14 }}>
           <button
             className="primary big"
+            data-tour="tour-play-week"
             disabled={busy || !myMatch}
             onClick={playWeek}
           >

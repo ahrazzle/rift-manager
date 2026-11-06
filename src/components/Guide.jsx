@@ -32,7 +32,7 @@ function parseGuideSections(md) {
   return { intro: intro.join('\n').trim(), sections }
 }
 
-export default function Guide({ onClose }) {
+export default function Guide({ onClose, onReplayWalkthrough }) {
   const { intro, sections } = useMemo(() => parseGuideSections(guideMd), [])
   const [activeId, setActiveId] = useState(sections[0]?.id ?? 'overview')
   const bodyRef = useRef(null)
@@ -111,6 +111,18 @@ export default function Guide({ onClose }) {
               Want to improve the sim or docs? See <strong>CONTRIBUTING.md</strong> in the repo for setup, tests, and PR expectations.
               Your browser saves automatically; staging uses a separate key from the live site.
             </p>
+            {typeof onReplayWalkthrough === 'function' && (
+              <button
+                type="button"
+                className="ghost"
+                onClick={() => {
+                  onReplayWalkthrough()
+                  onClose()
+                }}
+              >
+                Replay walkthrough
+              </button>
+            )}
           </footer>
         </div>
       </div>
