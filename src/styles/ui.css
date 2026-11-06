@@ -1,0 +1,349 @@
+/* Broadcast Night · shared React UI kit (src/components/ui). Tokens only.
+   Builds on primitives.css (.btn .chip .seg .pip .meter); adds what the kit needs. */
+
+/* ---------- Icons ---------- */
+.ui-icon,
+.ui-role {
+  flex: none;
+  display: inline-block;
+  vertical-align: middle;
+}
+.ui-role {
+  color: var(--text-2);
+}
+
+/* ---------- Buttons (extends primitives .btn) ---------- */
+.btn.icon-btn {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+}
+.btn:focus-visible {
+  border-radius: var(--r-md);
+}
+.btn-primary[disabled],
+.btn-primary[aria-disabled="true"] {
+  background: transparent;
+}
+
+/* ---------- Chips ---------- */
+.chip-warn {
+  background: var(--s2);
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 45%, transparent);
+}
+
+/* ---------- Seg ---------- */
+.seg button:hover {
+  color: var(--text);
+}
+.seg button:focus-visible {
+  outline-offset: 0;
+  border-radius: 8px;
+}
+.seg-fill {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+}
+.seg-fill button {
+  justify-content: center;
+}
+
+/* ---------- Card ---------- */
+.ui-card {
+  position: relative;
+  background: var(--s1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e1);
+  padding: var(--sp-6);
+  min-width: 0;
+}
+.ui-card--inset {
+  background: var(--s2);
+  box-shadow: none;
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+}
+.ui-card--hero {
+  overflow: hidden;
+  padding: var(--sp-8);
+}
+.ui-card--hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(600px 240px at 0% 0%, color-mix(in srgb, var(--team) 12%, transparent), transparent 70%);
+}
+.ui-card--hero > * {
+  position: relative;
+}
+.ui-card-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+.ui-card-h-text {
+  min-width: 0;
+}
+.ui-card-h h2,
+.ui-card-h h3 {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--fs-18);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ui-card-h .label {
+  margin: 0 0 var(--sp-1);
+}
+.ui-card-h-action {
+  flex: none;
+}
+.ui-card-h-action .btn {
+  min-height: 36px;
+  padding: 0 var(--sp-3);
+}
+
+/* ---------- Delta ---------- */
+.ui-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--fs-12);
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.ui-delta--up {
+  color: var(--win);
+}
+.ui-delta--down {
+  color: var(--loss);
+}
+.ui-delta--flat {
+  color: var(--text-2);
+}
+
+/* ---------- Meter ---------- */
+.ui-meter {
+  display: grid;
+  gap: var(--sp-2);
+}
+.ui-meter-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+  font-size: var(--fs-14);
+  color: var(--text-2);
+}
+.ui-meter-row strong {
+  color: var(--text);
+}
+.ui-meter-mid {
+  color: var(--text-2);
+}
+.ui-meter-bar {
+  display: flex;
+  height: 10px;
+  border-radius: var(--r-pill);
+  overflow: hidden;
+  background: var(--s3);
+}
+.ui-meter-bar i {
+  display: block;
+  background: var(--text);
+  border-radius: var(--r-pill) 0 0 var(--r-pill);
+}
+.ui-meter .meter > i {
+  transition: width var(--d-base) var(--ease-out);
+}
+
+/* ---------- EmptyState ---------- */
+.ui-empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-2);
+  padding: var(--sp-6);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-md);
+  color: var(--text-2);
+}
+.ui-empty-icon {
+  color: var(--text-2);
+}
+.ui-empty-title {
+  margin: 0;
+  color: var(--text);
+  font-weight: 600;
+}
+.ui-empty-body {
+  margin: 0;
+  font-size: var(--fs-14);
+}
+.ui-empty-action {
+  margin-top: var(--sp-2);
+}
+
+/* ---------- Dialog / BottomSheet ---------- */
+.ui-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  background: rgba(5, 8, 12, 0.72);
+  animation: ui-fade var(--d-base) var(--ease-out) both;
+}
+.ui-dialog {
+  width: min(560px, 100%);
+  max-height: min(88vh, 860px);
+  display: flex;
+  flex-direction: column;
+  background: var(--s1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e3);
+  color: var(--text);
+  overflow: hidden;
+  animation: ui-rise var(--d-base) var(--ease-out) both;
+}
+.ui-dialog:focus {
+  outline: none;
+}
+.ui-dialog--sm {
+  width: min(420px, 100%);
+}
+.ui-dialog--lg {
+  width: min(880px, 100%);
+}
+.ui-dialog-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-4) var(--sp-2) var(--sp-6);
+}
+.ui-dialog-h h2 {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--fs-20);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ui-dialog-desc {
+  margin: 0;
+  padding: 0 var(--sp-6);
+  color: var(--text-2);
+  font-size: var(--fs-14);
+}
+.ui-dialog-body {
+  padding: var(--sp-4) var(--sp-6) var(--sp-6);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ui-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-6);
+  border-top: 1px solid var(--line);
+  background: var(--s1);
+}
+
+/* Bottom sheet: always for .ui-scrim--sheet, and for every dialog under 900px. */
+.ui-scrim--sheet {
+  align-items: flex-end;
+  padding: 0;
+}
+.ui-scrim--sheet .ui-dialog {
+  width: 100%;
+  max-width: 640px;
+  max-height: 88vh;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border-bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  animation-name: ui-sheet;
+}
+@media (max-width: 900px) {
+  .ui-scrim:not(.ui-scrim--center) {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .ui-scrim:not(.ui-scrim--center) .ui-dialog {
+    width: 100%;
+    max-height: 88vh;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    border-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    animation-name: ui-sheet;
+  }
+  .ui-dialog-h {
+    padding-left: var(--sp-4);
+  }
+  .ui-dialog-desc,
+  .ui-dialog-body,
+  .ui-dialog-actions {
+    padding-left: var(--sp-4);
+    padding-right: var(--sp-4);
+  }
+  .ui-dialog-actions .btn {
+    flex: 1 1 auto;
+  }
+}
+@keyframes ui-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ui-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes ui-sheet {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+/* ---------- Form controls ---------- */
+.ui-select {
+  min-height: 44px;
+  width: 100%;
+  padding: 0 36px 0 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-strong);
+  background: var(--s1)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23B4BDC9' stroke-width='2'/%3E%3C/svg%3E")
+    no-repeat right 12px center;
+  appearance: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-14);
+  cursor: pointer;
+}
+.ui-select:hover {
+  background-color: var(--s2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-scrim,
+  .ui-dialog {
+    animation-name: ui-fade !important;
+  }
+}
