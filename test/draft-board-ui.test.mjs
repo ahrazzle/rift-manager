@@ -84,6 +84,14 @@ try {
   assert.ok(textOf(tile('corki')).includes('Picked') && textOf(tile('corki')).includes(', picked'), 'picked: on the tile and in the name')
   await press(tile('orianna'))
   assert.deepEqual(calls, [['pick', 'orianna', 'MID']])
+  // Once MID is filled the pool filter returns to All (filter only; no rule change).
+  await act(async () => tree.update(React.createElement(DraftBoard, {
+    draft: { ...pickDraft, step: 11, picks: { ...pickDraft.picks, BLUE: { ...pickDraft.picks.BLUE, MID: 'orianna' } } },
+    userSide: 'BLUE', teams, ...handlers,
+  })))
+  const allBtn = tree.root.find((n) => n.type === 'button' && n.props['aria-pressed'] !== undefined && textOf(n) === 'All')
+  assert.equal(allBtn.props['aria-pressed'], true, 'filled filter role resets the pool filter to All')
+  assert.ok(tree.root.findAll((n) => n.type === 'button' && n.props['data-champ'] === 'leona').length === 1, 'pool shows every role again')
 
   // ---------- Flex: a 2-role champion picked with no role goes to the flex list ----------
   await render(pickDraft)

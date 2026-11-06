@@ -85,6 +85,13 @@ export default function DraftBoard({
     if (swapSource) setPickTargetRole(null)
   }, [swapSource])
 
+  // Pool filter only: once the role you were browsing is filled on your comp,
+  // go back to All so the next pick turn doesn't open on an all-disabled pool.
+  const filteredRoleFilled = roleFilter !== 'ALL' && !!draft.picks[userSide]?.[roleFilter]
+  useEffect(() => {
+    if (filteredRoleFilled) setRoleFilter('ALL')
+  }, [filteredRoleFilled])
+
   // Lock-in pop: champions that landed in a slot since the last render.
   const prevPicked = useRef(null)
   const [just, setJust] = useState(() => new Set())
