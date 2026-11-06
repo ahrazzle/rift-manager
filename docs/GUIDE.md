@@ -149,6 +149,6 @@ The sim itself is instant. The reveal pacing is theater, and you control it: Slo
 
 ## Saving, contributing, and starting over
 
-Your browser saves automatically. Staging keeps a separate save from the live game. If storage is full or blocked, a warning offers Retry saving; keep the tab open until it succeeds. New Game asks before replacing your current session. Drafts, IGL decisions, map playback, gauntlets and teamless historical replays resume after refresh. Older standalone Draft/IGL saves become Season saves with the corresponding add-on enabled; unfinished matches are retained.
+Your browser saves automatically. Staging keeps a separate save from the live game. If storage is full or blocked, a warning offers Retry saving; keep the tab open until it succeeds. New Game asks before replacing your current session. Drafts, IGL decisions, map playback, gauntlets and teamless historical replays resume after refresh. Older standalone Draft/IGL saves become Season saves with the corresponding add-on enabled; unfinished matches are retained. The first-run coach walkthrough is skippable anytime and can be replayed from **How to Play → Replay walkthrough**.
 
 Developers and contributors: see **CONTRIBUTING.md** in the repository for local setup, `npm test`, and pull-request expectations. In the live game, open **About / Community** from the footer or New Game screen for the short project pitch and contribute links (public repo wording until a license file exists).

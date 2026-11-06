@@ -24,6 +24,8 @@ import { fmtMoney } from './game/economy.js'
 import ConfirmDialog from './components/ConfirmDialog.jsx'
 import SiteFooter from './components/SiteFooter.jsx'
 import AboutCommunity from './components/AboutCommunity.jsx'
+import TutorialHost, { TutorialIglTip } from './components/TutorialHost.jsx'
+import { normalizeTutorial, readTutorial, writeTutorial } from './game/tutorial.js'
 
 function Brand({ compact = false }) {
   return <div className={`broadcast-brand${compact ? ' broadcast-brand-compact' : ''}`}>
@@ -121,6 +123,17 @@ export default function App() {
   const [guideOpen, setGuideOpen] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
   const [resetPending, setResetPending] = useState(false)
+  const [tutorial, setTutorial] = useState(() => readTutorial())
+  const [hubTourRequest, setHubTourRequest] = useState(0)
+  const persistTutorial = useCallback((next) => {
+    const base = typeof next === 'function' ? next(readTutorial()) : next
+    const normalized = normalizeTutorial(base)
+    writeTutorial(normalized)
+    setTutorial(normalized)
+  }, [])
+  const skipTutorial = useCallback(() => {
+    persistTutorial({ ...readTutorial(), status: 'skipped' })
+  }, [persistTutorial])
   const prevActiveTab = useRef(null)
   const setTab = useCallback((id) => {
     setTabRaw(id)
@@ -149,6 +162,13 @@ export default function App() {
   const isCampaign = state.mode === 'campaign'
   const isCareer = state.mode === 'career'
   const isRetired = isCareer && state.career?.status === 'retired'
+  const TAB_TOUR = {
+    lineup: 'tour-lineup-tab',
+    market: 'tour-market-tab',
+    squad: 'tour-squad-tab',
+    tactics: 'tour-tactics-tab',
+    strategy: 'tour-strategy-tab',
+  }
   const nav = onNewGameScreen
     ? [['dashboard', 'Dashboard']]
     : isSeasonReplay
@@ -217,8 +237,24 @@ export default function App() {
         </main>
 
         <SiteFooter onOpenAbout={openAbout} />
-        {guideOpen && <Guide onClose={() => setGuideOpen(false)} />}
+        {guideOpen && (
+          <Guide
+            onClose={() => setGuideOpen(false)}
+            onReplayWalkthrough={() => setHubTourRequest((n) => n + 1)}
+          />
+        )}
         {aboutOpen && <AboutCommunity onClose={() => setAboutOpen(false)} />}
+        <TutorialHost
+          state={state}
+          activeTab="dashboard"
+          setTab={() => {}}
+          onNewGameScreen
+          tutorial={tutorial}
+          persistTutorial={persistTutorial}
+          skipTutorial={skipTutorial}
+          hubTourRequest={hubTourRequest}
+          onHubTourRequestHandled={() => {}}
+        />
       </div>
     )
   }
@@ -286,7 +322,7 @@ export default function App() {
           </div>
         )}
         {!state.matchSession && !isCampaign && !isSeasonReplay && state.board && (
-          <div className="manager-strip">
+          <div className="manager-strip" data-tour="tour-board">
             <span><MatchIcon name="target" size={16} /> <strong>{state.board.expectation}</strong></span>
             {/* Warn below 40 matches BoardCard pressure band; sack at ≤0 in useGameState ADVANCE_SEASON */}
             <span className={state.board.confidence < 40 ? 'board-trust-warn' : 'board-trust'}>
@@ -302,14 +338,24 @@ export default function App() {
             <button
               key={id}
               className={activeTab === id ? 'tab active' : 'tab'}
-              aria-current={activeTab === id ? 'page' : undefined} onClick={() => setTab(id)}
+              aria-current={activeTab === id ? 'page' : undefined}
+              onClick={() => setTab(id)}
+              {...(TAB_TOUR[id] ? { 'data-tour': TAB_TOUR[id] } : {})}
             >
               <MatchIcon name={id} size={15} />{label}
             </button>
           ))}
         </nav>}
 
-        {state.matchSession ? <MatchExperience state={state} dispatch={dispatch} /> : isRetired ? (
+        {state.matchSession ? (
+          <MatchExperience
+            state={state}
+            dispatch={dispatch}
+            tutorial={tutorial}
+            persistTutorial={persistTutorial}
+            skipTutorial={skipTutorial}
+          />
+        ) : isRetired ? (
           <CareerEpitaph state={state} dispatch={dispatch} />
         ) : (
           <>
@@ -319,7 +365,15 @@ export default function App() {
             {activeTab === 'dashboard' && !isCampaign && (
               state.mode === 'gauntlet'
                 ? <Gauntlet state={state} dispatch={dispatch} />
-                : <Dashboard state={state} dispatch={dispatch} setTab={setTab} totalRounds={seasonRounds} />
+                : <Dashboard
+                    state={state}
+                    dispatch={dispatch}
+                    setTab={setTab}
+                    totalRounds={seasonRounds}
+                    tutorial={tutorial}
+                    persistTutorial={persistTutorial}
+                    skipTutorial={skipTutorial}
+                  />
             )}
             {activeTab === 'lineup' && <Lineup state={state} dispatch={dispatch} />}
             {activeTab === 'tactics' && <Tactics state={state} dispatch={dispatch} />}
@@ -353,8 +407,21 @@ export default function App() {
         }}>
         This replaces your current saved session. Your progress will be lost.
       </ConfirmDialog>}
-      {guideOpen && <Guide onClose={() => setGuideOpen(false)} />}
+      {guideOpen && (
+        <Guide onClose={() => setGuideOpen(false)} onReplayWalkthrough={() => setHubTourRequest((n) => n + 1)} />
+      )}
       {aboutOpen && <AboutCommunity onClose={() => setAboutOpen(false)} />}
+      <TutorialHost
+        state={state}
+        activeTab={activeTab}
+        setTab={setTab}
+        onNewGameScreen={false}
+        tutorial={tutorial}
+        persistTutorial={persistTutorial}
+        skipTutorial={skipTutorial}
+        hubTourRequest={hubTourRequest}
+        onHubTourRequestHandled={() => {}}
+      />
     </div>
   )
 }

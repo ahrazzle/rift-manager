@@ -8,7 +8,7 @@ export default function MatchReview({ games, userSide, onPrepare }) {
   if (!review) return null
   const { stats, notes, focus } = review
   return (
-    <section className="card match-review" aria-labelledby={titleId}>
+    <section className="card match-review" aria-labelledby={titleId} data-tour="tour-review">
       <span className="eyebrow">The review room</span>
       <h2 id={titleId}>A result is something to learn from.</h2>
       <div className="review-objectives">

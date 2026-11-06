@@ -10,8 +10,9 @@ import TeamCrest from './TeamCrest.jsx'
 import venue from '../assets/rift-venue.webp'
 import { simSpeedMs } from '../game/useGameState.js'
 import { scrollContentToTop } from '../utils/scrollToTop.js'
+import { TutorialIglTip } from './TutorialHost.jsx'
 
-export default function MatchExperience({ state, dispatch }) {
+export default function MatchExperience({ state, dispatch, tutorial, persistTutorial, skipTutorial }) {
   const session = state.matchSession
   const { context: c, stage, options, current } = session
 
@@ -51,7 +52,7 @@ export default function MatchExperience({ state, dispatch }) {
           <MatchIcon name="flag" size={16} /> IGL · Tactical pause · {Math.floor(current.cursor)}:
           {String(Math.floor((current.cursor % 1) * 60)).padStart(2, '0')}
         </span>
-        <h2 id="igl-call-title" ref={callHeading} tabIndex={-1}>
+        <h2 id="igl-call-title" ref={callHeading} tabIndex={-1} data-tour="tour-igl-decision">
           The map is yours. Make the call.
         </h2>
         <p>{current.prompt.context}</p>
@@ -106,6 +107,14 @@ export default function MatchExperience({ state, dispatch }) {
   }
   return (
     <div className={`match-experience broadcast-match stage-${stage}`} style={{ '--venue': `url(${venue})` }}>
+      {tutorial && persistTutorial && (
+        <TutorialIglTip
+          stage={stage}
+          tutorial={tutorial}
+          persistTutorial={persistTutorial}
+          onSkipAll={skipTutorial}
+        />
+      )}
       <h1 className="sr-only">
         {c.homeName} versus {c.awayName} · {c.label}
         {stage === 'setup'

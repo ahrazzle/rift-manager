@@ -79,3 +79,11 @@ Append-only per the project-files SOP. One line per change:
 2026-11-06T01:05:00Z | mithrax | src/styles.css, src/styles/rift-arena.css, CHANGELOG.md | Desktop arena fills frame: map column + 1fr IGL sidebar (no right gutter); tighter stage-chrome / short-viewport tuning; grid row lock + zero app bottom pad so map/score/controls fit without scroll.
 
 2026-11-06T01:15:00Z | mithrax | src/styles/rift-arena.css, scripts/igl-scroll-verify.mjs, CHANGELOG.md | Desktop IGL pause: bounded flex scroll on .igl-call-grid (flex 1 1 0, min-height 0, overflow-y auto); header/intro fixed above list; verify script scrolls to last call and clicks through.
+
+2026-11-06T03:30:00Z | mithrax | src/game/tutorial.js, src/components/TutorialOverlay.jsx, src/components/TutorialHost.jsx, App.jsx, Dashboard.jsx, MatchExperience.jsx, MatchOptions.jsx, MatchReview.jsx, Preparation.jsx, Guide.jsx, styles.css, docs/GUIDE.md, test/tutorial.test.mjs | First-run guided walkthrough: localStorage tutorial prefs, Hub tour (Career/Season), contextual tips (New Game options, IGL, Review, Advance, Tactics/Strategy first visit), Guide replay; hand-rolled spotlight overlay, no new deps.
+
+2026-11-06T03:45:00Z | mithrax | src/components/TutorialOverlay.jsx, src/game/tutorialScroll.js, test/tutorial.test.mjs, scripts/tutorial-shots.mjs | Fix mobile hub-tour jitter: scrollIntoView only on step/anchor change; scroll/resize listeners remeasure layout only; instant scroll on narrow viewports.
+
+2026-11-06T04:05:00Z | mithrax | src/game/tutorialScroll.js, src/components/TutorialOverlay.jsx, src/styles.css, test/tutorial.test.mjs, scripts/tutorial-shots.mjs | Mobile tab tour steps: scrollIntoView block center + scroll-margin + topbar nudge so Lineup nav and tip card stay on screen after prep → lineup Next.
+
+2026-11-06T04:20:00Z | mithrax | src/components/TutorialOverlay.jsx, test/tutorial.test.mjs, scripts/tutorial-igl-mobile-shot.mjs | Viewport clamp on tip card skips igl-safe placement so scrolled IGL tips may sit off-screen without covering .igl-call-grid.
