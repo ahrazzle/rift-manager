@@ -85,3 +85,5 @@ Append-only per the project-files SOP. One line per change:
 2026-11-06T03:45:00Z | mithrax | src/components/TutorialOverlay.jsx, src/game/tutorialScroll.js, test/tutorial.test.mjs, scripts/tutorial-shots.mjs | Fix mobile hub-tour jitter: scrollIntoView only on step/anchor change; scroll/resize listeners remeasure layout only; instant scroll on narrow viewports.
 
 2026-11-06T04:05:00Z | mithrax | src/game/tutorialScroll.js, src/components/TutorialOverlay.jsx, src/styles.css, test/tutorial.test.mjs, scripts/tutorial-shots.mjs | Mobile tab tour steps: scrollIntoView block center + scroll-margin + topbar nudge so Lineup nav and tip card stay on screen after prep → lineup Next.
+
+2026-11-06T04:20:00Z | mithrax | src/components/TutorialOverlay.jsx, test/tutorial.test.mjs, scripts/tutorial-igl-mobile-shot.mjs | Viewport clamp on tip card skips igl-safe placement so scrolled IGL tips may sit off-screen without covering .igl-call-grid.

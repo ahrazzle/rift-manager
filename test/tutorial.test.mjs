@@ -90,8 +90,6 @@ try {
   writeTutorial(skipped)
   assert.equal(readTutorial().status, 'skipped')
 
-  assert.equal(readTutorial().status, 'skipped')
-
   assert.equal(tutorialScrollBehavior({ reducedMotion: true, viewportWidth: 1280 }), 'auto')
   assert.equal(tutorialScrollBehavior({ reducedMotion: false, viewportWidth: 390 }), 'auto')
   assert.equal(tutorialScrollBehavior({ reducedMotion: false, viewportWidth: TUTORIAL_MOBILE_MAX_WIDTH }), 'auto')
@@ -190,6 +188,56 @@ try {
   )
   await act(async () => skip.props.onClick())
   assert.equal(skippedWalk, 1, 'Skip control fires handler')
+
+  const gridRect = { top: 150, left: 8, right: 382, bottom: 500, width: 374, height: 350 }
+  const mapRect = { top: 72, left: 0, right: 390, bottom: 360, width: 390, height: 288 }
+  const coachingRect = { top: 360, left: 0, right: 390, bottom: 844, width: 390, height: 484 }
+  globalThis.innerWidth = 390
+  globalThis.innerHeight = 844
+  globalThis.document.querySelector = (sel) => {
+    const s = String(sel)
+    if (s.includes('tour-scroll-test')) return mockEl
+    if (s === '.igl-call-grid') return { getBoundingClientRect: () => gridRect }
+    if (s === '.rift-map-wrap') return { getBoundingClientRect: () => mapRect }
+    if (s === '.rift-sidebar.rift-coaching') return { getBoundingClientRect: () => coachingRect }
+    return null
+  }
+
+  let layoutTree
+  await act(async () => {
+    layoutTree = create(
+      React.createElement(TutorialOverlay, {
+        open: true,
+        placement: 'igl-safe',
+        steps: [{ anchor: 'tour-scroll-test', copy: 'IGL tip' }],
+        stepIndex: 0,
+        totalSteps: 1,
+        onNext: () => {},
+        onSkip: () => {},
+      }),
+    )
+  })
+  const iglCardTop = layoutTree.root.findByProps({ className: 'tutorial-card card' }).props.style.top
+  assert.ok(iglCardTop < 12, 'igl-safe placement keeps off-screen cardTop (not viewport-clamped to 12)')
+
+  mockEl.getBoundingClientRect = () => ({ top: 720, left: 10, width: 120, height: 36, right: 130, bottom: 756 })
+  await act(async () => {
+    layoutTree.update(
+      React.createElement(TutorialOverlay, {
+        open: true,
+        placement: 'default',
+        steps: [{ anchor: 'tour-scroll-test', copy: 'Hub tip' }],
+        stepIndex: 0,
+        totalSteps: 1,
+        onNext: () => {},
+        onSkip: () => {},
+      }),
+    )
+  })
+  const hubCardTop = layoutTree.root.findByProps({ className: 'tutorial-card card' }).props.style.top
+  assert.ok(hubCardTop >= 12, 'default placement clamps card into viewport')
+  assert.ok(hubCardTop <= 844 - 12, 'default placement keeps card top within viewport')
+  await act(async () => layoutTree.unmount())
 
   await rm(temp, { recursive: true, force: true })
   delete globalThis.document

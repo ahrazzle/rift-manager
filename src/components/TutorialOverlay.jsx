@@ -103,8 +103,10 @@ export default function TutorialOverlay({
       } else if (cardTop + cardH > vh - 8) {
         cardTop = Math.max(12, top - cardH - 12)
       }
-      cardTop = clamp(cardTop, 12, Math.max(12, vh - cardH - 12))
-      cardLeft = clamp(cardLeft, 12, Math.max(12, vw - cardW - 12))
+      if (placement !== 'igl-safe') {
+        cardTop = clamp(cardTop, 12, Math.max(12, vh - cardH - 12))
+        cardLeft = clamp(cardLeft, 12, Math.max(12, vw - cardW - 12))
+      }
       setCardPos({ top: cardTop, left: cardLeft })
     },
     [isEndCard, placement],
