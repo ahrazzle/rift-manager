@@ -619,7 +619,7 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
 .bars { display: flex; gap: 7px; flex-wrap: wrap; }
 .mini { display: flex; align-items: center; gap: 4px; }
 .mini-l { color: var(--text-3); font-size: 10px; font-weight: 700; }
-.mini-bar { width: 36px; height: 6px; background: #0b0e13; border-radius: 3px; overflow: hidden; }
+.mini-bar { width: 36px; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
 .mini-bar span { display: block; height: 100%; border-radius: 3px; }
 .badge { background: linear-gradient(135deg, #ff2b4d, var(--team)); color: #fff; font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 800; letter-spacing: 0.06em; }
 
@@ -689,13 +689,13 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
 .md-series { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 10px 0 6px; font-size: 16px; font-weight: 800; flex-wrap: wrap; }
 .md-gamesline { color: var(--text-2); font-size: 13px; margin-bottom: 6px; }
 .md-gchip { white-space: nowrap; }
-.md-game { background: rgba(13, 18, 26, 0.85); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: 12px 0; }
+.md-game { background: var(--s2); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: 12px 0; }
 .md-gamehead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
 .md-gametitle { font-size: 16px; font-weight: 800; }
 .md-wtag { font-weight: 800; padding: 3px 11px; border-radius: 7px; background: var(--s3); color: var(--text); font-size: 13px; }
 .md-dur { color: var(--text-2); font-size: 13px; font-variant-numeric: tabular-nums; }
 .md-avg { color: var(--text-2); font-size: 13px; margin-left: auto; }
-.md-block { background: rgba(11, 14, 19, 0.6); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: 16px 0; }
+.md-block { background: var(--s1); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: 16px 0; }
 .md-block-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-2); margin-bottom: 10px; font-weight: 800; }
 .md-gold { width: 100%; height: 220px; display: block; }
 .md-axis { fill: var(--text-2); font-size: 11px; }
@@ -705,20 +705,20 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
 .md-swatch { display: inline-block; width: 16px; height: 3px; border-radius: 2px; }
 .md-swatch.good { background: var(--win); }
 .md-swatch.bad { background: var(--loss); }
-.md-swatch.even { background: transparent; border-top: 1px dashed #3a4150; height: 0; width: 16px; }
+.md-swatch.even { background: transparent; border-top: 1px dashed var(--line-strong); height: 0; width: 16px; }
 .md-chip { background: var(--s2); border: 1px solid var(--line); border-radius: 7px; color: var(--text); font-size: 12px; padding: 4px 9px; cursor: pointer; font-weight: 600; }
 .md-chip.off { opacity: 0.45; }
 .md-marker { cursor: pointer; }
 .md-role { color: var(--text-2); font-weight: 700; }
-.md-youhead { background: rgba(34,197,94,0.12); }
-.md-youcell { background: rgba(34,197,94,0.06); }
+.md-youhead { background: var(--s3); }
+.md-youcell { background: var(--s2); }
 .md-youcell .md-pname, .md-pstack .md-pname { color: var(--text); }
 .md-pname { font-weight: 700; }
 .md-mvp { color: var(--gold); }
 .md-p { font-size: 13px; }
 .md-pnums { font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .md-rate { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
-.md-rbar { display: inline-block; width: 64px; min-width: 48px; height: 6px; background: #0b0e13; border-radius: 3px; overflow: hidden; }
+.md-rbar { display: inline-block; width: 64px; min-width: 48px; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
 .md-rbar span { display: block; height: 100%; border-radius: 3px; }
 .md-rnum { font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .md-missing { color: var(--text-2); }

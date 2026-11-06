@@ -1,13 +1,18 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import MatchOptions from './MatchOptions.jsx'
 import Draft from './Draft.jsx'
 import AnimatedRift from './AnimatedRift.jsx'
 import MatchDetail from './MatchDetail.jsx'
 import { currentStep } from '../game/draft.js'
 import { iglCallById } from '../game/igl.js'
+import { physicalSide } from '../game/mapSimulation.js'
+import { allowsAutoTips } from '../game/tutorial.js'
 import MatchIcon from './MatchIcon.jsx'
 import TeamCrest from './TeamCrest.jsx'
-import venue from '../assets/rift-venue.webp'
+import { Button, Card, Icon, RoleIcon } from './ui/index.js'
+import SeriesHeader from './match/SeriesHeader.jsx'
+import DecisionDialog from './match/DecisionDialog.jsx'
+import { clockLabel, ROLE_ORDER } from './match/matchModel.js'
 import { simSpeedMs } from '../game/useGameState.js'
 import { scrollContentToTop } from '../utils/scrollToTop.js'
 import { TutorialIglTip } from './TutorialHost.jsx'
@@ -19,10 +24,6 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
   useEffect(() => {
     scrollContentToTop()
   }, [stage])
-  const callHeading = useRef(null)
-  useEffect(() => {
-    if (stage === 'decision') callHeading.current?.focus({ preventScroll: true })
-  }, [stage])
   const step = session.draft ? currentStep(session.draft) : null
   useEffect(() => {
     if (stage !== 'draft' || !step || step.side === session.draft.userSide) return
@@ -32,53 +33,113 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
   useEffect(() => {
     if (stage === 'game') dispatch({ type: 'MATCH_FINISH_GAME' })
   }, [stage, dispatch])
-  const liveMap = ['map', 'decision'].includes(stage)
+
+  // IGL decision dialog: opens at every tactical pause. Esc or Close hides it;
+  // the callout beside the map reopens it. Play stays paused either way.
+  const [dialogOpen, setDialogOpen] = useState(true)
+  const [delegated, setDelegated] = useState({})
+  useEffect(() => {
+    if (stage === 'decision') setDialogOpen(true)
+  }, [stage, session.games.length])
+  // Closing the dialog hands focus to the callout that reopens it.
+  const makeCallRef = useRef(null)
+  const closeDialog = () => {
+    setDialogOpen(false)
+    setTimeout(() => makeCallRef.current?.focus(), 0)
+  }
+  // While the first-run IGL tip is up, the dialog stays open under it (so the
+  // tip can point at it) and is not dismissible; Esc belongs to the tip.
+  const iglTipPending =
+    stage === 'decision' && !!(tutorial && persistTutorial && allowsAutoTips(tutorial) && !tutorial.seen?.igl)
+
+  const send = (type) => () => dispatch({ type })
   // Draft ownership is relative to the coach; engine A/B remains home/away.
-  // Setup and series results have no single physical map side to advertise.
   const draftHomeBlue =
     stage === 'draft' && session.draft ? (session.draft.userSide === 'BLUE') === (c.userSide !== 'away') : null
-  const displayedGame = stage === 'between' ? session.games.at(-1) : current?.game
-  const homeBlue =
-    draftHomeBlue ??
-    (stage !== 'setup' && stage !== 'result' && displayedGame?.blueSide ? displayedGame.blueSide === 'A' : null)
-  const teamSide = (side) => (homeBlue == null ? 'neutral' : (side === 'home') === homeBlue ? 'blue' : 'red')
+  const gameNumber = session.games.length + (stage === 'between' ? 0 : 1)
+  const userEngine = c.userSide === 'away' ? 'B' : 'A'
+  const userLineup = c.userSide === 'away' ? c.awayLineup : c.homeLineup
+  const iglName = userLineup?.SUP?.name ?? 'your support'
   const winnerSide = session.aWins > session.bWins ? 'home' : 'away'
   const winnerName = winnerSide === 'home' ? c.homeName : c.awayName
-  const send = (type) => () => dispatch({ type })
-  const decisionPanel =
-    stage === 'decision' ? (
-      <section className="igl-decision" aria-labelledby="igl-call-title">
-        <span className="eyebrow">
-          <MatchIcon name="flag" size={16} /> IGL · Tactical pause · {Math.floor(current.cursor)}:
-          {String(Math.floor((current.cursor % 1) * 60)).padStart(2, '0')}
-        </span>
-        <h2 id="igl-call-title" ref={callHeading} tabIndex={-1} data-tour="tour-igl-decision">
-          The map is yours. Make the call.
-        </h2>
-        <p>{current.prompt.context}</p>
-        <div className="igl-call-grid">
-          {current.prompt.options.map((call, index) => (
-            <button
-              type="button"
-              className="igl-call-option"
-              key={call.id}
-              onClick={() => dispatch({ type: 'MATCH_CALL', callId: call.id })}
-            >
-              <span className="call-index" aria-hidden="true">
-                {String(index + 1).padStart(2, '0')}
-              </span>
-              <strong>{call.label}</strong>
-              <span>{call.desc}</span>
-              <MatchIcon name="chevron" size={18} />
-            </button>
-          ))}
+  const badges = [
+    options.draft && 'Draft',
+    session.fearlessActive && 'Fearless',
+    options.igl && 'IGL',
+    (options.showSimulation || options.igl) && 'Map simulation',
+  ].filter(Boolean)
+
+  const makeCall = (callId, byIgl = false) => {
+    if (byIgl) setDelegated((d) => ({ ...d, [session.games.length]: true }))
+    dispatch({ type: 'MATCH_CALL', callId })
+  }
+  // "Let the IGL decide": the shotcaller picks one of the same calls, chosen
+  // from this game's seed. It is graded like any other call (fit or misread).
+  const delegateCall = () => {
+    const calls = current?.prompt?.options ?? []
+    if (!calls.length) return
+    makeCall(calls[(current.seed >>> 0) % calls.length].id, true)
+  }
+
+  // Live-stage callout (beside the map, inside the Objectives card).
+  let callout = null
+  let extraFeed = []
+  if (['map', 'decision'].includes(stage) && options.igl && current) {
+    const evaluation = current.evaluation
+    const chosen = current.callId ? iglCallById(current.callId) : null
+    const byIgl = !!delegated[session.games.length]
+    if (stage === 'decision') {
+      callout = (
+        <div className="match-callout is-warn">
+          <Icon name="alert" size={20} />
+          <p>
+            <b>Tactical pause.</b> {iglName} wants your call. The game waits while you decide.
+          </p>
+          <Button ref={makeCallRef} variant="primary" onClick={() => setDialogOpen(true)}>
+            Make the call
+          </Button>
         </div>
-        <p className="hint">
-          Choose a call to resume play. The team will move into position; the quality of the call affects its
-          strength for the remainder of this game.
+      )
+    } else if (chosen) {
+      const verdict =
+        evaluation?.modifier > 0
+          ? 'Well read. This call fits the game.'
+          : `Coach’s read: ${iglCallById(evaluation?.optimalCallId)?.label ?? 'a different call'}.`
+      callout = (
+        <div className="match-callout is-done" role="status">
+          <Icon name="check" size={20} />
+          <p>
+            <b>
+              {byIgl ? `${iglName}’s call` : 'Your call'}: {chosen.label}.
+            </b>{' '}
+            {verdict}
+            {current.prompt?.rationale && <span className="callout-note">{current.prompt.rationale}</span>}
+          </p>
+        </div>
+      )
+      const tone = physicalSide(current.game, userEngine) === 'A' ? 'blue' : 'red'
+      extraFeed = [
+        {
+          key: `igl-${session.games.length}`,
+          t: current.decisionAt,
+          side: tone,
+          actor: byIgl ? `${iglName}’s call` : 'Your call',
+          text: `${chosen.label}. ${evaluation?.modifier > 0 ? 'Well read.' : 'A misread; small penalty.'}`,
+          pin: true,
+        },
+      ]
+    } else {
+      callout = (
+        <p className="match-callout is-quiet">
+          <Icon name="alert" size={18} />
+          <span>
+            Your IGL call comes at about <b className="num">{clockLabel(current.decisionAt)}</b>. Play pauses there.
+          </span>
         </p>
-      </section>
-    ) : null
+      )
+    }
+  }
+
   const gameTape = (
     <div className="broadcast-game-tape" aria-label="Completed games">
       {session.games.map((game, index) => (
@@ -105,147 +166,106 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
     bWins: session.bWins,
     games: session.games,
   }
+  const lastGame = session.games.at(-1)
+  // Sides alternate by game (engine A is home); watch-only series carry their own.
+  const nextBlueHome =
+    (session.automatic
+      ? session.automatic.games[session.games.length]?.blueSide
+      : session.games.length % 2 === 0
+        ? 'A'
+        : 'B') !== 'B'
+  const skipSeries = session.automatic
+    ? () => {
+        // Watch-only series are fully simulated up front; finishing the
+        // remaining games in order reaches the same result.
+        dispatch({ type: 'MATCH_FINISH_GAME' })
+        for (let i = session.games.length + 1; i < session.automatic.games.length; i++) {
+          dispatch({ type: 'MATCH_NEXT_GAME' })
+          dispatch({ type: 'MATCH_FINISH_GAME' })
+        }
+      }
+    : null
+
   return (
-    <div className={`match-experience broadcast-match stage-${stage}`} style={{ '--venue': `url(${venue})` }}>
+    <div className={`match-experience broadcast-match stage-${stage}`}>
       {tutorial && persistTutorial && (
-        <TutorialIglTip
-          stage={stage}
-          tutorial={tutorial}
-          persistTutorial={persistTutorial}
-          onSkipAll={skipTutorial}
-        />
+        <TutorialIglTip stage={stage} tutorial={tutorial} persistTutorial={persistTutorial} onSkipAll={skipTutorial} />
       )}
       <h1 className="sr-only">
         {c.homeName} versus {c.awayName} · {c.label}
-        {stage === 'setup'
-          ? ' · Match setup'
-          : stage === 'result'
-            ? ' · Match result'
-            : ` · Game ${session.games.length + (stage === 'between' ? 0 : 1)}`}
+        {stage === 'setup' ? ' · Match setup' : stage === 'result' ? ' · Match result' : ` · Game ${gameNumber}`}
         {stage === 'decision' ? ' · Tactical pause' : ''}
       </h1>
-      {!liveMap && stage !== 'draft' && (
-        <header
-          className={`match-heading broadcast-billboard home-${teamSide('home')} ${stage === 'setup' ? 'is-prematch' : ''}`}
-        >
-          <div className="broadcast-context">
-            <span className="eyebrow">{c.label}</span>
-            <span>
-              {c.userSide ? `Coaching ${c.userSide === 'home' ? c.homeName : c.awayName}` : 'Spectating'} · First
-              to {c.needWins}
-            </span>
-          </div>
-          <div className="broadcast-faceoff">
-            <div className={`broadcast-club side-${teamSide('home')}`}>
-              <TeamCrest teamId={c.homeId} name={c.homeName} size={76} />
-              <strong className="broadcast-club-name">{c.homeName}</strong>
-              <span>{homeBlue == null ? 'Home team' : `${homeBlue ? 'Blue' : 'Red'} side`}</span>
-            </div>
-            <div className="broadcast-series">
-              <span className="eyebrow">{stage === 'setup' ? 'Series preview' : 'Series score'}</span>
-              <strong>{stage === 'setup' ? 'VS' : `${session.aWins} : ${session.bWins}`}</strong>
-              <span>
-                {stage === 'result'
-                  ? 'Final'
-                  : stage === 'setup'
-                    ? ''
-                    : `Game ${session.games.length + (stage === 'between' ? 0 : 1)}`}
-              </span>
-            </div>
-            <div className={`broadcast-club side-${teamSide('away')}`}>
-              <TeamCrest teamId={c.awayId} name={c.awayName} size={76} />
-              <strong className="broadcast-club-name">{c.awayName}</strong>
-              <span>{homeBlue == null ? 'Away team' : `${homeBlue ? 'Red' : 'Blue'} side`}</span>
-            </div>
-          </div>
-          <div className="match-badges">
-            {options.draft && (
-              <span>
-                <MatchIcon name="draft" size={14} /> Draft
-              </span>
-            )}
-            {session.fearlessActive && (
-              <span title="Fearless draft — champions picked in earlier games cannot be chosen again this series">
-                <MatchIcon name="eye" size={14} /> Fearless
-              </span>
-            )}
-            {options.igl && (
-              <span>
-                <MatchIcon name="flag" size={14} /> IGL
-              </span>
-            )}
-            {(options.showSimulation || options.igl) && (
-              <span>
-                <MatchIcon name="eye" size={14} /> Map simulation
-              </span>
-            )}
-          </div>
-        </header>
-      )}
-      {c.locked && (
-        <p className="card match-notice">
-          {c.kind === 'campaign'
-            ? 'Historical result: this slot is a fixed loss. Draft and IGL let you practise within it; the story keeps its recorded outcome.'
-            : 'The bracket resolver has a selected winner. You can still draft, make calls or watch the match; the selected outcome stays fixed.'}
+      {(c.locked || c.kind === 'exhibition') && stage !== 'result' && (
+        <p className="match-notice">
+          <Icon name="alert" size={18} />
+          <span>
+            {c.kind === 'exhibition'
+              ? 'Practice with this historical roster. This exhibition does not alter the recorded standings.'
+              : c.kind === 'campaign'
+                ? 'Historical result: this slot is a fixed loss. Draft and IGL let you practise within it; the story keeps its recorded outcome.'
+                : 'The bracket resolver has a selected winner. You can still draft, make calls or watch the match; the selected outcome stays fixed.'}
+          </span>
         </p>
       )}
-      {c.kind === 'exhibition' && (
-        <p className="card match-notice">
-          Practice with this historical roster. This exhibition does not alter the recorded standings.
-        </p>
-      )}
+
       {stage === 'setup' && (
-        <div className="card broadcast-setup">
-          <MatchOptions
-            options={options}
-            spectator={!c.userSide}
-            onChange={(key, value) => dispatch({ type: 'SET_MATCH_OPTION', key, value })}
-            seriesFearless={!!state.seriesOptions?.fearless}
-            onSeriesFearlessChange={c.userSide ? (value) => dispatch({ type: 'SET_SERIES_OPTION', key: 'fearless', value }) : null}
-            draftEnabled={!!options.draft}
-          />
+        <>
+          <SeriesHeader context={c} preview badges={badges} />
+          <Card className="match-setup-options">
+            <MatchOptions
+              options={options}
+              spectator={!c.userSide}
+              onChange={(key, value) => dispatch({ type: 'SET_MATCH_OPTION', key, value })}
+              seriesFearless={!!state.seriesOptions?.fearless}
+              onSeriesFearlessChange={
+                c.userSide ? (value) => dispatch({ type: 'SET_SERIES_OPTION', key: 'fearless', value }) : null
+              }
+              draftEnabled={!!options.draft}
+            />
+          </Card>
           <div className="match-starting-five">
             {[
-              ['home', c.homeLineup],
-              ['away', c.awayLineup],
-            ].map(([side, lineup]) => (
-              <div key={side} className={`lineup-${side}`}>
-                <h2>
-                  <TeamCrest
-                    teamId={side === 'home' ? c.homeId : c.awayId}
-                    name={side === 'home' ? c.homeName : c.awayName}
-                    size={28}
-                  />
-                  {side === 'home' ? c.homeName : c.awayName}
-                  <small>Starting five</small>
-                </h2>
-                {Object.entries(lineup).map(([role, p]) => (
-                  <p key={role}>
-                    <span>
-                      <MatchIcon name={role} size={17} />
-                      {role}
-                    </span>
-                    <strong>{p.name}</strong>
-                    <small>{p.ovr} OVR</small>
-                  </p>
-                ))}
-              </div>
+              ['home', c.homeId, c.homeName, c.homeLineup],
+              ['away', c.awayId, c.awayName, c.awayLineup],
+            ].map(([side, id, name, lineup]) => (
+              <Card
+                key={side}
+                className={`lineup-card lineup-${side}`}
+                title={
+                  <>
+                    <TeamCrest teamId={id} name={name} size={28} />
+                    <span>{name}</span>
+                  </>
+                }
+                action={<span className="label">Starting five</span>}
+              >
+                <ul className="lineup-list">
+                  {ROLE_ORDER.filter((role) => lineup[role]).map((role) => (
+                    <li key={role}>
+                      <span className="ll-role">
+                        <RoleIcon role={role} size={16} />
+                        {role}
+                      </span>
+                      <b>{lineup[role].name}</b>
+                      <span className="ll-ovr num">{lineup[role].ovr} OVR</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
             ))}
           </div>
-          <div className="actions">
-            <button type="button" className="primary big" onClick={send('MATCH_START')}>
-              {options.draft
-                ? 'Enter draft →'
-                : options.igl || options.showSimulation
-                  ? 'Enter the Rift →'
-                  : 'Play match →'}
-            </button>
-            <button type="button" className="ghost" onClick={send('MATCH_CANCEL')}>
+          <div className="match-actions">
+            <Button variant="quiet" className="desk-only" onClick={send('MATCH_CANCEL')}>
               Back to preparation
-            </button>
+            </Button>
+            <Button variant="primary" size="lg" onClick={send('MATCH_START')}>
+              {options.draft ? 'Enter draft →' : options.igl || options.showSimulation ? 'Enter the Rift →' : 'Play match →'}
+            </Button>
           </div>
-        </div>
+        </>
       )}
+
       {stage === 'draft' && (
         <Draft
           key={session.games.length}
@@ -268,77 +288,110 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
           onLock={send('MATCH_DRAFT_LOCK')}
         />
       )}
+
       {['map', 'decision'].includes(stage) && (
         <>
-          {stage === 'map' && (
-            <h2 className="sr-only">Game {session.games.length + 1} map simulation and player tracker</h2>
-          )}
           <AnimatedRift
             key={session.games.length}
-            seriesLabel={`${c.label} · FIRST TO ${c.needWins}`}
-            homeWins={session.aWins}
-            awayWins={session.bWins}
             game={current.game}
             homeName={c.homeName}
             awayName={c.awayName}
+            homeId={c.homeId}
+            awayId={c.awayId}
+            userSide={c.userSide}
+            homeWins={session.aWins}
+            awayWins={session.bWins}
+            needWins={c.needWins}
             speed={state.simSpeed}
             initialTime={current.cursor}
             decisionAt={options.igl ? current.decisionAt : null}
             callMade={!!current.callId}
             decision={stage === 'decision'}
-            decisionPanel={decisionPanel}
+            callout={callout}
+            extraFeed={extraFeed}
+            onSkipSeries={skipSeries}
             onCheckpoint={send('MATCH_DECISION')}
             onComplete={send('MATCH_FINISH_GAME')}
             onCursor={(minute) => dispatch({ type: 'MATCH_CURSOR', minute })}
             onSpeedChange={(speed) => dispatch({ type: 'SET_SIM_SPEED', speed })}
           />
-          {current.callId && (
-            <div className="card igl-feedback">
-              <span className="eyebrow">Your call · {iglCallById(current.callId)?.label}</span>
-              <p>
-                {current.evaluation?.modifier > 0
-                  ? 'Well read. This call fits the situation.'
-                  : `Coach’s read: ${iglCallById(current.evaluation?.optimalCallId)?.label}.`}
-              </p>
-              <p className="hint">{current.prompt?.rationale}</p>
-            </div>
+          {stage === 'decision' && dialogOpen && current.prompt && (
+            <DecisionDialog
+              prompt={current.prompt}
+              clock={clockLabel(current.cursor)}
+              gameNumber={gameNumber}
+              iglName={iglName}
+              holdOpen={iglTipPending}
+              withTip={iglTipPending}
+              onChoose={(callId) => makeCall(callId)}
+              onDelegate={delegateCall}
+              onClose={closeDialog}
+            />
           )}
         </>
       )}
+
       {stage === 'game' && <p role="status">Resolving this game…</p>}
+
       {stage === 'between' && (
-        <div className="card match-intermission broadcast-intermission">
-          <span className="eyebrow">
-            <MatchIcon name="flag" size={16} />{' '}
-            {session.games.length ? `Game ${session.games.length} complete` : 'Ready to resume'}
-          </span>
-          <h2>
-            {session.games.length
-              ? `${session.games.at(-1).winner === 'A' ? c.homeName : c.awayName} takes the game.`
-              : 'Return to the Rift.'}
-          </h2>
-          <p>First to {c.needWins} wins the match.</p>
-          {session.fearlessActive && session.games.length > 0 && (
-            <p className="hint">
-              Fearless: champions your teams locked in earlier games stay out of the pool for the rest of this
-              series. Bans reset each game.
+        <>
+          <SeriesHeader
+            context={c}
+            homeWins={session.aWins}
+            awayWins={session.bWins}
+            caption={`After game ${session.games.length}`}
+          />
+          <Card className="match-between">
+            <p className="label">
+              {session.games.length ? `Game ${session.games.length} complete` : 'Ready to resume'}
             </p>
-          )}
-          {gameTape}
-          <button type="button" className="primary big" onClick={send('MATCH_NEXT_GAME')}>
-            {options.draft ? `Draft game ${session.games.length + 1}` : `Enter game ${session.games.length + 1}`} →
-          </button>
-          <details>
-            <summary>Review the games so far</summary>
-            <MatchDetail {...matchProps} />
-          </details>
-        </div>
+            <h2 className="between-title">
+              {session.games.length
+                ? `${session.games.at(-1).winner === 'A' ? c.homeName : c.awayName} take game ${session.games.length}`
+                : 'Return to the Rift'}
+            </h2>
+            <p className="between-lede">
+              {lastGame && (
+                <>
+                  {lastGame.winner === 'A' ? c.homeName : c.awayName} closed it in {lastGame.durationMin} minutes
+                  {Number.isFinite(lastGame.killsA) && Number.isFinite(lastGame.killsB)
+                    ? `, ${Math.max(lastGame.killsA, lastGame.killsB)}–${Math.min(lastGame.killsA, lastGame.killsB)} on kills`
+                    : ''}
+                  .{' '}
+                </>
+              )}
+              First to {c.needWins} wins the series.
+              {session.fearlessActive && session.games.length > 0 && (
+                <>
+                  {' '}
+                  Fearless: champions locked in earlier games stay out of the pool for the rest of this series. Bans
+                  reset each game.
+                </>
+              )}
+            </p>
+            {gameTape}
+            <p className="between-next">
+              <b>Game {session.games.length + 1}:</b> {nextBlueHome ? c.homeName : c.awayName} on blue side,{' '}
+              {nextBlueHome ? c.awayName : c.homeName} on red side.
+            </p>
+            <div className="match-actions">
+              <Button variant="primary" size="lg" onClick={send('MATCH_NEXT_GAME')}>
+                {options.draft ? `Draft game ${session.games.length + 1}` : `Enter game ${session.games.length + 1}`} →
+              </Button>
+            </div>
+            <details className="match-review-details">
+              <summary>Review the games so far</summary>
+              <MatchDetail {...matchProps} />
+            </details>
+          </Card>
+        </>
       )}
+
+      {/* ---- Result stage: one block. The Result stage lane mounts <ResultStage /> here. ---- */}
       {stage === 'result' && (
         <>
-          <div
-            className={`card match-intermission broadcast-intermission broadcast-victory victory-${winnerSide}`}
-          >
+          <SeriesHeader context={c} homeWins={session.aWins} awayWins={session.bWins} caption="Final" />
+          <div className={`card match-intermission broadcast-intermission broadcast-victory victory-${winnerSide}`}>
             <div className="winner-seal">
               <TeamCrest teamId={winnerSide === 'home' ? c.homeId : c.awayId} name={winnerName} size={72} />
               <MatchIcon name="trophy" size={30} />
@@ -362,6 +415,7 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
           <MatchDetail {...matchProps} />
         </>
       )}
+      {/* ---- End result stage ---- */}
     </div>
   )
 }

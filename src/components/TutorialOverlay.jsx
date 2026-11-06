@@ -82,6 +82,29 @@ export default function TutorialOverlay({
       let cardTop = top + height + 12
       let cardLeft = clamp(left, 12, vw - cardW - 12)
 
+      // The IGL decision is a dialog (centred on desktop, bottom sheet on
+      // phones). Park the tip beside it, then above it, then below it: never
+      // over the call grid.
+      const iglPanel = placement === 'igl-safe' ? globalThis.document.querySelector('.igl-decision') : null
+      const iglGrid = iglPanel ? globalThis.document.querySelector('.igl-call-grid') : null
+      if (iglPanel && iglGrid) {
+        const pr = iglPanel.getBoundingClientRect()
+        const gr = iglGrid.getBoundingClientRect()
+        const fits = (r) => r.top >= 8 && r.left >= 8 && r.left + cardW <= vw - 8 && r.top + cardH <= vh - 8
+        const clear = (r) => !rectsOverlap({ top: r.top, left: r.left, right: r.left + cardW, bottom: r.top + cardH }, gr)
+        const midTop = clamp(pr.top, 12, Math.max(12, vh - cardH - 12))
+        const midLeft = clamp(pr.left + (pr.width - cardW) / 2, 12, Math.max(12, vw - cardW - 12))
+        const candidates = [
+          { top: midTop, left: pr.left - cardW - 16 },
+          { top: midTop, left: pr.right + 16 },
+          { top: pr.top - cardH - 12, left: midLeft },
+          { top: pr.bottom + 12, left: midLeft },
+          { top: gr.top - cardH - 12, left: midLeft },
+        ]
+        const pick = candidates.find((r) => fits(r) && clear(r)) ?? candidates.find(clear) ?? candidates[4]
+        setCardPos({ top: pick.top, left: pick.left })
+        return
+      }
       if (placement === 'igl-safe') {
         const grid = globalThis.document.querySelector('.igl-call-grid')
         const coaching = globalThis.document.querySelector('.rift-sidebar.rift-coaching')
