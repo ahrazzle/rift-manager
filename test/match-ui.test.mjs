@@ -75,7 +75,11 @@ try {
   }
   assert.equal(state.matchSession.stage, 'result')
   assert.equal(state.round, 2)
-  assert.ok(byText('Return to season →'))
+  // Broadcast Night Phase 3: the result stage is ResultStage. "Continue" (MATCH_CLOSE)
+  // replaces the old "Return to season →", and the IGL calls show in the games list.
+  assert.ok(byText('Continue'))
+  assert.ok(byText('Review the series'))
+  assert.ok(text(tree.root).includes('Your call: '), 'games list credits the IGL call')
   await act(async () => tree.unmount())
 
   // Timer-driven instant playback must still stop for IGL; it cannot bypass a call.

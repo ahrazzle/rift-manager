@@ -210,68 +210,6 @@
   color: #081525;
   border-radius: 3px;
 }
-.broadcast-next-match {
-  background:
-    linear-gradient(180deg, #0c1a2ac9, #0c1a2af5),
-    url('../assets/rift-venue.webp') center 48% / cover !important;
-  border: 1px solid #3c536b;
-  border-radius: 4px;
-  overflow: hidden;
-}
-.broadcast-next-match .eyebrow {
-  color: #92dbe2;
-}
-.broadcast-next-match .side {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.broadcast-next-match .side-sub {
-  margin-top: 12px;
-}
-.broadcast-next-match .vs-label {
-  color: #ff9988;
-  font-family: 'Barlow Condensed', sans-serif;
-}
-.broadcast-next-match .prob {
-  color: #7eeef2;
-}
-.broadcast-watch-option {
-  margin-top: 22px;
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #102b3b;
-  border: 1px solid #385d70;
-  border-radius: 3px;
-  color: #79e9ef;
-  cursor: pointer;
-}
-.broadcast-watch-option span {
-  flex: 1;
-}
-.broadcast-watch-option strong {
-  display: block;
-  color: #e0f7fb;
-  font-size: 14px;
-}
-.broadcast-watch-option small {
-  display: block;
-  margin-top: 3px;
-  color: #a9c6d4;
-  font-size: 12px;
-}
-.broadcast-watch-option input {
-  accent-color: #58e8ee;
-  width: 21px;
-  height: 21px;
-  flex-shrink: 0;
-}
-.broadcast-watch-option:focus-within {
-  outline: 2px solid #58e8ee;
-  outline-offset: 3px;
-}
 .broadcast-matchday {
   background:
     linear-gradient(180deg, #06101dd9, #06101ded),

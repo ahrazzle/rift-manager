@@ -16,6 +16,7 @@ import { clockLabel, ROLE_ORDER } from './match/matchModel.js'
 import { simSpeedMs } from '../game/useGameState.js'
 import { scrollContentToTop } from '../utils/scrollToTop.js'
 import { TutorialIglTip } from './TutorialHost.jsx'
+import ResultStage from './result/ResultStage.jsx'
 
 export default function MatchExperience({ state, dispatch, tutorial, persistTutorial, skipTutorial }) {
   const session = state.matchSession
@@ -60,8 +61,6 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
   const userEngine = c.userSide === 'away' ? 'B' : 'A'
   const userLineup = c.userSide === 'away' ? c.awayLineup : c.homeLineup
   const iglName = userLineup?.SUP?.name ?? 'your support'
-  const winnerSide = session.aWins > session.bWins ? 'home' : 'away'
-  const winnerName = winnerSide === 'home' ? c.homeName : c.awayName
   const badges = [
     options.draft && 'Draft',
     session.fearlessActive && 'Fearless',
@@ -387,33 +386,16 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
         </>
       )}
 
-      {/* ---- Result stage: one block. The Result stage lane mounts <ResultStage /> here. ---- */}
+      {/* ---- Result stage: ResultStage owns the whole stage, including the scoreline hero. ---- */}
       {stage === 'result' && (
-        <>
-          <SeriesHeader context={c} homeWins={session.aWins} awayWins={session.bWins} caption="Final" />
-          <div className={`card match-intermission broadcast-intermission broadcast-victory victory-${winnerSide}`}>
-            <div className="winner-seal">
-              <TeamCrest teamId={winnerSide === 'home' ? c.homeId : c.awayId} name={winnerName} size={72} />
-              <MatchIcon name="trophy" size={30} />
-            </div>
-            <span className="eyebrow">Match complete</span>
-            <h2>
-              {winnerName} wins {Math.max(session.aWins, session.bWins)}–{Math.min(session.aWins, session.bWins)}.
-            </h2>
-            <p className="result-perspective">
-              {!c.userSide
-                ? 'Spectator view · Series winner confirmed.'
-                : c.userSide === winnerSide
-                  ? 'Your team takes the series.'
-                  : 'Your team falls in this series. Review the games before your next match.'}
-            </p>
-            {gameTape}
-            <button type="button" className="primary big" onClick={send('MATCH_CLOSE')}>
-              Return to {state.mode === 'campaign' ? 'the scenario' : state.mode} →
-            </button>
-          </div>
-          <MatchDetail {...matchProps} />
-        </>
+        <ResultStage
+          state={state}
+          session={session}
+          onContinue={send('MATCH_CLOSE')}
+          tutorial={tutorial}
+          persistTutorial={persistTutorial}
+          skipTutorial={skipTutorial}
+        />
       )}
       {/* ---- End result stage ---- */}
     </div>
