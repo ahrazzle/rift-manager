@@ -17,7 +17,7 @@ import {
   contextualTipDef,
   markSeen,
 } from '../src/game/tutorial.js'
-import { tutorialScrollBehavior, TUTORIAL_MOBILE_MAX_WIDTH } from '../src/game/tutorialScroll.js'
+import { tutorialScrollBehavior, TUTORIAL_MOBILE_MAX_WIDTH, tutorialScrollBlock } from '../src/game/tutorialScroll.js'
 
 const values = new Map()
 globalThis.localStorage = {
@@ -96,6 +96,9 @@ try {
   assert.equal(tutorialScrollBehavior({ reducedMotion: false, viewportWidth: 390 }), 'auto')
   assert.equal(tutorialScrollBehavior({ reducedMotion: false, viewportWidth: TUTORIAL_MOBILE_MAX_WIDTH }), 'auto')
   assert.equal(tutorialScrollBehavior({ reducedMotion: false, viewportWidth: TUTORIAL_MOBILE_MAX_WIDTH + 1 }), 'smooth')
+  assert.equal(tutorialScrollBlock('tour-lineup-tab', 390), 'center')
+  assert.equal(tutorialScrollBlock('tour-lineup-tab', 1280), 'nearest')
+  assert.equal(tutorialScrollBlock('tour-prep', 390), 'nearest')
 
   const temp = await mkdtemp(new URL('./.tutorial-ui-', import.meta.url).pathname)
   let scrollIntoViewCalls = 0

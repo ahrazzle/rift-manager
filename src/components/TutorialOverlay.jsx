@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
-import { tutorialScrollBehavior } from '../game/tutorialScroll.js'
+import { scrollTourAnchorIntoView } from '../game/tutorialScroll.js'
 
 const PAD = 10
 
@@ -103,6 +103,8 @@ export default function TutorialOverlay({
       } else if (cardTop + cardH > vh - 8) {
         cardTop = Math.max(12, top - cardH - 12)
       }
+      cardTop = clamp(cardTop, 12, Math.max(12, vh - cardH - 12))
+      cardLeft = clamp(cardLeft, 12, Math.max(12, vw - cardW - 12))
       setCardPos({ top: cardTop, left: cardLeft })
     },
     [isEndCard, placement],
@@ -133,11 +135,9 @@ export default function TutorialOverlay({
       onNext?.({ missingAnchor: true })
       return
     }
-    el.scrollIntoView({
-      block: 'nearest',
-      behavior: tutorialScrollBehavior({ reducedMotion }),
-    })
-    applyLayoutFromElement(el)
+    scrollTourAnchorIntoView(el, anchor, { reducedMotion })
+    const positioned = findAnchor(anchor) ?? el
+    applyLayoutFromElement(positioned)
   }, [open, stepIndex, anchor, isEndCard, reducedMotion, applyLayoutFromElement, onNext])
 
   useEffect(() => {

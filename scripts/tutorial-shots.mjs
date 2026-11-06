@@ -25,8 +25,25 @@ async function waitForServer(url, ms = 60000) {
 }
 
 async function dismissCareerModals(page) {
-  await page.locator('.modal-backdrop:not(.guide-backdrop) button').first().click({ timeout: 2000 }).catch(() => {})
-  await page.getByRole('button', { name: /^Leave$/i }).click({ timeout: 1500 }).catch(() => {})
+  const press = page.locator('.modal-backdrop').filter({ hasText: /Press Conference/i })
+  if (await press.count()) {
+    await press.locator('button.tac').first().click({ timeout: 5000 }).catch(async () => {
+      await press.getByRole('button', { name: /^Leave$/i }).click({ timeout: 3000 })
+    })
+  }
+  await page.locator('.modal-backdrop:not(.guide-backdrop)').first().waitFor({ state: 'hidden', timeout: 8000 }).catch(() => {})
+  await page.locator('.modal-backdrop:not(.guide-backdrop) button').first().click({ timeout: 1500 }).catch(() => {})
+}
+
+async function waitLineupTabVisible(page) {
+  await page.waitForFunction(() => {
+    const tab = document.querySelector('[data-tour="tour-lineup-tab"]')
+    const bar = document.querySelector('.topbar')
+    if (!tab || !bar) return false
+    const clearance = bar.getBoundingClientRect().bottom + 4
+    const r = tab.getBoundingClientRect()
+    return r.top >= clearance && r.bottom <= window.innerHeight - 8
+  })
 }
 
 async function seedHubCompleted(page) {
@@ -63,6 +80,17 @@ async function enterIglDecision(page) {
   await page.waitForTimeout(400)
 }
 
+async function waitTipEyebrowVisible(page, textPattern) {
+  const reSource = textPattern instanceof RegExp ? textPattern.source : String(textPattern)
+  await page.locator('.tutorial-card').filter({ hasText: textPattern }).waitFor({ state: 'visible', timeout: 15000 })
+  await page.waitForFunction((re) => {
+    const el = document.querySelector('.tutorial-card')
+    if (!el || !new RegExp(re, 'i').test(el.textContent || '')) return false
+    const rect = el.getBoundingClientRect()
+    return rect.top >= 8 && rect.bottom <= window.innerHeight - 8
+  }, reSource)
+}
+
 async function startCareer(page) {
   await page.goto(baseUrl, { waitUntil: 'networkidle' })
   await page.evaluate((key) => {
@@ -72,6 +100,18 @@ async function startCareer(page) {
   await page.reload({ waitUntil: 'networkidle' })
   await page.getByRole('button', { name: /Start Career/i }).click()
   await page.getByRole('button', { name: /^Dashboard$/i }).waitFor({ timeout: 20000 })
+  await page.evaluate(() => {
+    const key = 'lck-manager-save-v1'
+    try {
+      const state = JSON.parse(localStorage.getItem(key) || 'null')
+      if (state?.press) state.press.pending = false
+      if (state) localStorage.setItem(key, JSON.stringify(state))
+    } catch {
+      /* ignore */
+    }
+  })
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await page.getByRole('button', { name: /Play Week/i }).waitFor({ state: 'visible', timeout: 15000 })
   await dismissCareerModals(page)
 }
 
@@ -140,18 +180,18 @@ const browser = await chromium.launch()
   const next = page.getByRole('button', { name: /^Next$/i })
   await next.click()
   await next.click()
-  await page.locator('[data-tour="tour-prep"]').waitFor({ timeout: 10000 })
+  await waitTipEyebrowVisible(page, /3 of 6/)
   await page.screenshot({ path: `${outDir}/mobile-prep-step-before-next.png`, fullPage: false })
   await next.click()
-  await page.locator('[data-tour="tour-lineup-tab"]').waitFor({ timeout: 10000 })
-  await page.waitForTimeout(200)
+  await waitTipEyebrowVisible(page, /4 of 6/)
+  await page.locator('.tutorial-card').filter({ hasText: /starter per role/i }).waitFor({ state: 'visible' })
+  await waitLineupTabVisible(page)
+  await page.waitForTimeout(150)
   await page.screenshot({ path: `${outDir}/mobile-lineup-step-after-next.png`, fullPage: false })
   await page.waitForTimeout(400)
-  await context.close()
   const video = page.video()
-  if (video) {
-    await video.saveAs(`${outDir}/mobile-prep-to-lineup-next.webm`)
-  }
+  if (video) await video.saveAs(`${outDir}/mobile-prep-to-lineup-next.webm`)
+  await context.close()
 }
 
 await browser.close()

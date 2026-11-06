@@ -1021,3 +1021,9 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
 }
 .tutorial-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 14px; }
 .tutorial-actions .primary { margin-left: auto; }
+
+/* Hub tour tab steps: keep nav targets clear of the sticky topbar when scrolled into view. */
+.broadcast-shell .tabs .tab[data-tour] {
+  scroll-margin-top: 92px;
+  scroll-margin-bottom: 20px;
+}
