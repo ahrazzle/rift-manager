@@ -25,7 +25,7 @@ export const DRAFT_STEPS = [
   { type: 'pick', side: 'BLUE' }, { type: 'pick', side: 'RED' },
 ]
 
-export const DDRAGON_URL = 'https://ddragon.leagueoflegends.com/cdn/15.20.1/img/champion'
+export const DDRAGON_URL = 'https://ddragon.leagueoflegends.com/cdn/16.22.1/img/champion'
 export function champPortrait(champ) {
   const c = typeof champ === 'string' ? CHAMP_BY_ID[champ] : champ
   return c?.ddragon ? `${DDRAGON_URL}/${c.ddragon}` : null

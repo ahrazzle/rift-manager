@@ -1,7 +1,7 @@
 // Active Coach draft tests. Run: node test/draft.test.mjs
 import {
   DRAFT_STEPS, createDraft, currentStep, applyBan, applyPick,
-  legalBans, legalPicks, aiDraftMove, scoreComp, getDraftDebrief, champMeta,
+  legalBans, legalPicks, aiDraftMove, scoreComp, getDraftDebrief, champMeta, champPortrait,
 } from '../src/game/draft.js'
 import { CHAMPIONS } from '../src/data/champions.js'
 
@@ -12,6 +12,13 @@ function throws(fn, m) {
   console.error('FAIL:', m); failures++
 }
 function rng32(seed) { let a = seed >>> 0; return function () { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 } }
+
+// ---------- roster portrait integration ----------
+for (const [id, filename] of [['locke', 'Locke.png'], ['zaahen', 'Zaahen.png']]) {
+  assert(champPortrait(id) === `https://ddragon.leagueoflegends.com/cdn/16.22.1/img/champion/${filename}`, `${id} portrait uses the roster's Data Dragon patch`)
+}
+assert(champPortrait('unknown') === null && champPortrait(null) === null && champPortrait({}) === null,
+  'missing champions and portrait metadata retain the null fallback')
 
 // ---------- draft order ----------
 assert(DRAFT_STEPS.length === 20, 'DRAFT_STEPS has 20 steps')
@@ -111,7 +118,7 @@ assert(getDraftDebrief(createDraft('RED')).length === 0, 'fresh draft has empty 
 // ---------- meta heuristic ----------
 assert(champMeta('jarvan') === 6, `jarvan meta = engage(3)+teamfight(3) (${champMeta('jarvan')})`)
 assert(champMeta('jarvan') > champMeta('karma'), 'engage/teamfight outranks poke/protect')
-assert(CHAMPIONS.length === 60, '60 champions in pool')
+assert(CHAMPIONS.length === 173, '173 champions in pool')
 assert(CHAMPIONS.every((c) => c.ddragon && c.ddragon.endsWith('.png')), 'every champ has a ddragon filename')
 
 console.log(failures === 0 ? '\nDRAFT: ALL PASSED' : `\nDRAFT: ${failures} FAILURE(S)`)
