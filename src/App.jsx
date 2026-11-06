@@ -17,7 +17,6 @@ import Guide, { GuideSections } from './components/Guide.jsx'
 import { exportPng } from './utils/exportPng.js'
 import { scrollContentToTop } from './utils/scrollToTop.js'
 import { EventModal, PromotionModal } from './components/CareerModals.jsx'
-import PressModal from './components/PressModal.jsx'
 import ConfirmDialog from './components/ConfirmDialog.jsx'
 import SiteFooter from './components/SiteFooter.jsx'
 import AboutCommunity from './components/AboutCommunity.jsx'
@@ -357,9 +356,6 @@ export default function App() {
           ADVANCE_SEASON, and that button lives on the Dashboard. */}
       {!state.matchSession && state.pendingEvent && <EventModal state={state} dispatch={dispatch} />}
       {!state.matchSession && state.pendingPromotion && <PromotionModal state={state} dispatch={dispatch} />}
-      {!state.matchSession && state.press?.pending && !isSeasonReplay && (
-        <PressModal state={state} dispatch={dispatch} onClose={() => dispatch({ type: 'PRESS_SKIP' })} />
-      )}
 
       {resetPending && <ConfirmDialog title="Start a new game?" confirmLabel="Start new game"
         onCancel={() => setResetPending(false)}

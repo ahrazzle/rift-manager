@@ -12,5 +12,7 @@ import './styles/match-broadcast.css'
 import './styles/matchday.css'
 import './styles/shell.css'
 import './styles/draft.css'
+import './styles/hub.css'
+import './styles/result.css'
 
 createRoot(document.getElementById('root')).render(<App />)

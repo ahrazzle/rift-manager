@@ -1,0 +1,891 @@
+/* Broadcast Night · Hub (src/components/hub, Dashboard.jsx). Tokens only.
+   Layout and rhythm from prototypes/hub.html: 8/4 grid, 24px card gap,
+   one primary (Play week) per view, team color only on crests and thin accents. */
+
+.hub {
+  display: grid;
+  grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+  gap: var(--sp-6);
+  align-items: start;
+}
+.hub-col {
+  display: grid;
+  gap: var(--sp-6);
+  min-width: 0;
+}
+.hub .ui-card p,
+.hub .ui-card h2,
+.hub .ui-card h3,
+.hub .ui-card ul,
+.hub .ui-card dl,
+.hub .ui-card dd {
+  margin: 0;
+}
+.hub .ui-card ul,
+.hub .ui-card ol {
+  list-style: none;
+  padding: 0;
+}
+.hub .ui-card {
+  animation: none;
+}
+.hub-count {
+  font-size: var(--fs-14);
+}
+.hub .is-up {
+  color: var(--win);
+}
+.hub .is-down {
+  color: var(--loss);
+}
+
+/* ---------- Hero: next match ---------- */
+.hub-hero {
+  position: relative;
+  overflow: hidden;
+  padding: var(--sp-8);
+}
+.hub-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(600px 240px at 0% 0%, color-mix(in srgb, var(--team) 22%, transparent), transparent 70%),
+    radial-gradient(600px 240px at 100% 0%, color-mix(in srgb, var(--s3) 80%, transparent), transparent 70%);
+}
+.hub-hero > * {
+  position: relative;
+}
+.hub-hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.hub-hero-chips {
+  display: inline-flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.hub-versus {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-6);
+  margin: var(--sp-8) 0 var(--sp-6);
+}
+.hub-side {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+.hub-side.is-right {
+  justify-content: flex-end;
+  text-align: right;
+}
+.hub-side .team-crest {
+  flex: none;
+}
+.hub-side-id {
+  font-size: var(--fs-40);
+  line-height: 1;
+  color: var(--text);
+}
+.hub-side > div {
+  min-width: 0;
+  max-width: 100%;
+}
+.hub-side-sub {
+  margin-top: var(--sp-1) !important;
+  color: var(--text-2);
+  font-size: var(--fs-14);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hub-vs {
+  font-size: var(--fs-20);
+  color: var(--text-3);
+}
+
+/* Odds bar + Why */
+.hub-odds .ui-meter-row strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-20);
+  letter-spacing: 0.02em;
+}
+.hub-odds .ui-meter-row {
+  align-items: center;
+}
+.hub-why {
+  margin-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+  padding-top: var(--sp-2);
+}
+.hub-why summary {
+  cursor: pointer;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-2);
+  font-size: var(--fs-14);
+  font-weight: 600;
+  list-style: none;
+}
+.hub-why summary::-webkit-details-marker {
+  display: none;
+}
+.hub-why summary::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--d-fast) var(--ease-out);
+}
+.hub-why[open] summary::before {
+  transform: rotate(45deg);
+}
+.hub-why summary:hover {
+  color: var(--text);
+}
+.hub-factors {
+  display: grid;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 var(--sp-2) !important;
+  font-size: var(--fs-14);
+}
+.hub-factors li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  color: var(--text-2);
+}
+.hub-why-note {
+  font-size: var(--fs-12);
+  color: var(--text-2);
+  margin-top: var(--sp-1) !important;
+}
+
+/* Readiness */
+.hub-ready {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin: var(--sp-6) 0 !important;
+}
+.hub-ready li {
+  display: grid;
+  min-width: 0;
+}
+.hub-ready-item {
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  min-height: 64px;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--s2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  min-width: 0;
+  transition: border-color var(--d-fast) var(--ease-out);
+}
+.hub-ready-item:hover {
+  border-color: var(--line-strong);
+}
+.hub-ready-k {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-12);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.hub-ready-item.is-ok .ui-icon {
+  color: var(--win);
+}
+.hub-ready-item.is-todo .ui-icon {
+  color: var(--warn);
+}
+.hub-ready-v {
+  font-size: var(--fs-14);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* CTA row */
+.hub-cta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.hub-cta .btn-lg .ui-icon {
+  width: 16px;
+  height: 16px;
+}
+.hub-watch.shell-switch {
+  margin-left: auto;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 44px;
+  text-align: right;
+}
+.hub-watch strong {
+  margin-bottom: 0;
+  font-size: var(--fs-14);
+  font-weight: 600;
+}
+.hub-watch small {
+  display: block;
+  color: var(--text-2);
+  font-size: var(--fs-12);
+}
+
+/* ---------- Starting five ---------- */
+.hub-roster {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+.hub-roster li {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--s2);
+  min-width: 0;
+}
+.hub-roster li.is-empty {
+  background: transparent;
+  border: 1px dashed var(--line-strong);
+}
+.hub-roster-role {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-12);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+}
+.hub-roster b {
+  font-size: var(--fs-16);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hub-roster-ovr {
+  font-family: var(--font-display);
+  font-size: var(--fs-24);
+  font-weight: 700;
+  line-height: 1.1;
+}
+.hub-roster-form {
+  font-size: var(--fs-12);
+  color: var(--text-2);
+}
+.hub-roster-form.is-up {
+  color: var(--win);
+}
+.hub-roster-form.is-down {
+  color: var(--loss);
+}
+
+/* ---------- Coach's office ---------- */
+.hub-prep:focus {
+  outline: none;
+}
+.hub-prep {
+  scroll-margin-top: calc(var(--topbar) + var(--sp-4));
+}
+.hub-prep .ui-card-h-action .chip {
+  height: 28px;
+}
+.hub-prep-scout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+.hub-prep-scout > div {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--s2);
+  min-width: 0;
+}
+.hub-prep-scout dt {
+  font-size: var(--fs-12);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin-bottom: 2px;
+}
+.hub-prep-scout dd {
+  font-size: var(--fs-14);
+}
+.hub-prep-scout b {
+  font-size: var(--fs-16);
+}
+.hub-prep-reason {
+  margin: var(--sp-4) 0 var(--sp-3) !important;
+  font-size: var(--fs-14);
+  color: var(--text-2);
+}
+.hub-prep-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+.hub-prep-option {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--s2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+  transition:
+    border-color var(--d-fast) var(--ease-out),
+    background var(--d-fast) var(--ease-out);
+}
+.hub-prep-option:hover {
+  border-color: var(--line-strong);
+}
+.hub-prep-option[aria-pressed="true"] {
+  background: var(--s3);
+  border-color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--text);
+}
+.hub-prep-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  font-size: var(--fs-14);
+}
+.hub-prep-rec {
+  font-size: var(--fs-12);
+  font-weight: 600;
+  color: var(--text-2);
+}
+.hub-prep-option[aria-pressed="true"] .hub-prep-rec {
+  color: var(--text);
+}
+.hub-prep-desc {
+  font-size: var(--fs-12);
+  color: var(--text-2);
+  line-height: 1.4;
+}
+.hub-prep-fx {
+  font-size: var(--fs-12);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+.hub-prep-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-4);
+  margin-top: var(--sp-4);
+}
+.hub-prep-foot p {
+  font-size: var(--fs-12);
+  color: var(--text-2);
+}
+.hub-prep-foot .btn {
+  flex: none;
+}
+.hub-prep-done {
+  margin-top: var(--sp-4);
+  display: grid;
+  gap: var(--sp-3);
+  font-size: var(--fs-14);
+  color: var(--text-2);
+}
+.hub-prep-done b {
+  color: var(--text);
+}
+.hub-prep-gains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.hub-prep-gains li {
+  padding: 6px var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--s2);
+  font-size: var(--fs-12);
+}
+
+/* ---------- Fixtures ---------- */
+.hub-fixtures {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+.hub-fixtures li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--s2);
+  font-size: var(--fs-14);
+  font-weight: 600;
+}
+.hub-fixtures li.is-you {
+  box-shadow: inset 0 0 0 1px var(--line-strong), inset 3px 0 0 var(--team);
+}
+.hub-fx-team {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.hub-fx-team.is-right {
+  justify-content: flex-end;
+}
+.hub-fx-at {
+  color: var(--text-3);
+  font-size: var(--fs-12);
+}
+
+/* ---------- Table (top four + cut) ---------- */
+.hub-table {
+  table-layout: fixed;
+}
+.hub-table td {
+  height: 40px;
+}
+.hub-table th {
+  white-space: nowrap;
+}
+.hub-table th:nth-child(1) {
+  width: 36px;
+}
+.hub-table th:nth-child(3) {
+  width: 52px;
+}
+.hub-table th:nth-child(4) {
+  width: 84px;
+}
+.hub-teamcell span:not(.sr-only) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hub-table tbody tr:nth-child(2) td,
+.hub-table tbody tr:nth-child(4) td {
+  border-bottom: 2px solid var(--line-strong);
+}
+.hub-table .pips {
+  justify-content: flex-end;
+}
+.hub-teamcell {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.hub-table-gap td {
+  height: 24px;
+  text-align: center !important;
+  color: var(--text-3);
+  letter-spacing: 0.2em;
+}
+.hub-table-note {
+  margin-top: var(--sp-3) !important;
+  font-size: var(--fs-12);
+  color: var(--text-2);
+}
+
+/* ---------- Inbox ---------- */
+.hub-inbox {
+  display: grid;
+  gap: var(--sp-2);
+}
+.hub-inbox > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--s2);
+}
+.hub-inbox-ic {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--s3);
+  color: var(--text-2);
+}
+.hub-inbox b {
+  display: block;
+  font-size: var(--fs-14);
+}
+.hub-inbox p {
+  font-size: var(--fs-14);
+  color: var(--text-2);
+  margin-top: 2px !important;
+}
+.hub-inbox-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.hub-inbox-acts .btn {
+  min-height: 36px;
+  padding: 0 var(--sp-3);
+}
+.hub-press {
+  margin-top: var(--sp-2);
+}
+.hub-press-q {
+  color: var(--text) !important;
+  font-weight: 500;
+}
+.hub-press-answers {
+  display: grid;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2) !important;
+}
+.hub-press-answer {
+  width: 100%;
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-strong);
+  background: var(--s1);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-14);
+  text-align: left;
+  cursor: pointer;
+}
+.hub-press-answer:hover {
+  background: var(--s3);
+}
+.hub-press-answer b {
+  display: inline;
+}
+.hub-press-fx {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.hub-press-fx .chip {
+  height: 24px;
+}
+
+/* ---------- Fan hype ---------- */
+.hub-hype {
+  display: grid;
+  gap: var(--sp-3);
+}
+.hub-hype-h {
+  margin-bottom: 0;
+  align-items: center;
+}
+.hub-hype-h b {
+  font-size: var(--fs-18);
+}
+.hub-hype .meter > i {
+  background: linear-gradient(90deg, var(--line-strong), var(--text-2));
+}
+.hub-hype-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-1);
+  font-size: var(--fs-12);
+  color: var(--text-3);
+}
+.hub-hype-scale .is-on {
+  color: var(--text);
+  font-weight: 600;
+}
+.hub-hype-form {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-12);
+}
+
+/* ---------- Career / off-season / season status ---------- */
+.hub-career .btn {
+  margin-top: var(--sp-3);
+  margin-left: calc(-1 * var(--sp-3));
+}
+.hub-career p {
+  font-size: var(--fs-14);
+}
+.hub-offseason {
+  scroll-margin-top: calc(var(--topbar) + var(--sp-4));
+}
+.hub-offseason:focus {
+  outline: none;
+}
+.hub-offseason h3 {
+  margin: var(--sp-5) 0 var(--sp-2) !important;
+  font-size: var(--fs-12);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.hub-os-lede {
+  font-size: var(--fs-14);
+}
+.hub-os-roster li,
+.hub-os-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-14);
+}
+.hub-os-roster li:last-child,
+.hub-os-list li:last-child {
+  border-bottom: 0;
+}
+.hub-os-roster b {
+  min-width: 8rem;
+}
+.hub-season {
+  position: relative;
+  overflow: hidden;
+  padding: var(--sp-8);
+}
+.hub-season::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(600px 240px at 0% 0%, color-mix(in srgb, var(--team) 18%, transparent), transparent 70%);
+}
+.hub-season.is-gold::before {
+  background: radial-gradient(120% 80% at 50% 0%, var(--gold-bg), transparent 60%);
+}
+.hub-season > * {
+  position: relative;
+}
+.hub-season-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+.hub-season-title {
+  font-size: var(--fs-40);
+  line-height: 1;
+  margin-top: var(--sp-1) !important;
+}
+.hub-season-chip {
+  margin-left: auto;
+}
+.hub-season-text {
+  margin: var(--sp-5) 0 var(--sp-6) !important;
+  color: var(--text-2);
+  max-width: 60ch;
+}
+
+/* ---------- Toasts ---------- */
+.hub-toasts {
+  position: fixed;
+  right: var(--sp-6);
+  bottom: var(--sp-6);
+  z-index: 60;
+  display: grid;
+  gap: var(--sp-2);
+  pointer-events: none;
+}
+.hub-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--s2);
+  border: 1px solid var(--line);
+  box-shadow: var(--e3);
+  font-size: var(--fs-14);
+  animation: hub-toast-in var(--d-base) var(--ease-out) both;
+}
+.hub-toast .ui-icon {
+  color: var(--gold);
+}
+.hub-toast b {
+  color: var(--gold);
+  margin-right: var(--sp-1);
+}
+@keyframes hub-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1180px) {
+  .hub {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hub-prep-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 900px) {
+  .hub,
+  .hub-col {
+    gap: var(--sp-4);
+  }
+  .hub .ui-card {
+    padding: var(--sp-4);
+  }
+  .hub-hero {
+    padding: var(--sp-5) var(--sp-4) !important;
+  }
+  .hub-versus {
+    gap: var(--sp-3);
+    margin: var(--sp-4) 0;
+  }
+  .hub-side,
+  .hub-side.is-right {
+    flex-direction: column;
+    gap: var(--sp-2);
+    text-align: center;
+  }
+  .hub-side.is-right {
+    flex-direction: column-reverse;
+  }
+  .hub-side .team-crest {
+    width: 56px;
+    height: 56px;
+  }
+  .hub-side-id {
+    font-size: var(--fs-32);
+  }
+  .hub-side-sub {
+    font-size: var(--fs-12);
+  }
+  .hub-why summary {
+    min-height: 44px;
+  }
+  .hub-ready {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-2);
+    margin: var(--sp-3) 0 var(--sp-4) !important;
+  }
+  .hub-ready-item {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--sp-3);
+    min-height: 44px;
+    padding: var(--sp-2) var(--sp-3);
+  }
+  .hub-cta {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-2);
+  }
+  .hub-cta .btn {
+    width: 100%;
+  }
+  .hub-watch.shell-switch {
+    margin-left: 0;
+    text-align: left;
+    padding: 0 var(--sp-1);
+  }
+  .hub-roster {
+    gap: 6px;
+  }
+  .hub-roster li {
+    padding: var(--sp-2) 4px;
+    text-align: center;
+    justify-items: center;
+  }
+  .hub-roster-role {
+    justify-content: center;
+    letter-spacing: 0.02em;
+  }
+  .hub-roster-role .ui-role {
+    display: none;
+  }
+  .hub-roster b {
+    font-size: var(--fs-12);
+    max-width: 100%;
+  }
+  .hub-roster-ovr {
+    font-size: var(--fs-20);
+  }
+  .hub-roster-form {
+    font-size: 11px;
+  }
+  .hub-prep-scout,
+  .hub-prep-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hub-prep-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .hub-fixtures {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hub-season {
+    padding: var(--sp-5) var(--sp-4) !important;
+  }
+  .hub-season-title {
+    font-size: var(--fs-32);
+  }
+  .hub-toasts {
+    left: var(--sp-4);
+    right: var(--sp-4);
+    bottom: calc(var(--tabbar) + env(safe-area-inset-bottom) + var(--sp-3));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-toast {
+    animation-name: ui-fade;
+  }
+  .hub-why summary::before {
+    transition: none;
+  }
+}
+.hub-side-sub .hub-side-name::after {
+  content: " · ";
+}
+@media (max-width: 900px) {
+  .hub-side-sub .hub-side-name {
+    display: none;
+  }
+}
