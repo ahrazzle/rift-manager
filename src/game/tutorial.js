@@ -16,17 +16,17 @@ const STEP_COPY = {
   matchOptions:
     'Draft, IGL, and Show simulation are optional. IGL pauses the map once per game for your macro call — a strong pick on your first run if you want coaching on the map. Defaults are off. Turn on what you want before you start.',
   board:
-    'The board sets your job and tracks confidence out of 100. Hit zero in Career and you are sacked. Budget pays signing fees.',
+    'The board sets your job and tracks confidence out of 100. Hit zero in Career and you are sacked. Budget pays signing fees. Both live in Club.',
   matchup:
     'Each week shows your next series and an estimated win chance. Treat the percent as a forecast, not a promise.',
   prep:
     'Coach’s office is optional prep. Each session lists its exact form and match bonus. Form carries; matchup prep expires after this series.',
   lineup:
-    'Set one starter per role on Lineup. Form rises and falls with results. Rotate cold starters.',
+    'Team › Lineup: set one starter per role. Form rises and falls with results. Rotate cold starters.',
   market:
-    'Market is free agents. Fees come from your budget; unaffordable deals stay disabled. A signing becomes that role’s starter.',
+    'Team › Market holds free agents. Fees come from your budget; unaffordable deals stay disabled. A signing becomes that role’s starter.',
   squad:
-    'Squad holds trades and your head coach. Career free agents still sign from offseason and academy flows. Check the Guide for the full front office.',
+    'Team › Squad holds trades and your head coach. Career free agents still sign from offseason and academy flows. Check the Guide for the full front office.',
   playWeek:
     'When you are ready, Play Week. You decide the plan; the sim resolves the series. Then read the result and adjust next week.',
   tactics:
@@ -46,14 +46,18 @@ const HUB_KEYS = {
   season: ['board', 'matchup', 'prep', 'lineup', 'market', 'playWeek'],
 }
 
+// Nav anchors live in the shell (components/shell): lineup, market and squad
+// point at the Team destination (rail on desktop, tabbar on mobile); the board
+// step points at the topbar board chip on desktop and the Club tab on mobile.
+// Tactics/Strategy tips point at the Team page's segment tabs.
 const ANCHORS = {
   matchOptions: 'tour-match-options',
   board: 'tour-board',
   matchup: 'tour-matchup',
   prep: 'tour-prep',
-  lineup: 'tour-lineup-tab',
-  market: 'tour-market-tab',
-  squad: 'tour-squad-tab',
+  lineup: 'tour-team-nav',
+  market: 'tour-team-nav',
+  squad: 'tour-team-nav',
   playWeek: 'tour-play-week',
   tactics: 'tour-tactics-tab',
   strategy: 'tour-strategy-tab',

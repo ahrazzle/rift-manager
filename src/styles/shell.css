@@ -1,0 +1,846 @@
+/* Broadcast Night · app shell (src/components/shell). Tokens only.
+   Layout contract for screens:
+   - Content column: .shell-content, max-width 1360px, padding 32px (16px under 900px).
+   - Mode screens (Draft/Matchday): max-width 1400px; full-bleed on the live map.
+   - Bottom 76px + safe-area is reserved for the mobile tabbar; nothing fixed may sit there. */
+
+/* ---------- Frame ---------- */
+.shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.shell--game {
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr);
+}
+.shell-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.shell-content {
+  flex: 1 0 auto;
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: var(--sp-8);
+}
+.shell-content:focus {
+  outline: none;
+}
+.mob-only {
+  display: none !important;
+}
+
+/* ---------- Brand ---------- */
+.shell-brand {
+  display: flex;
+  align-items: center;
+  flex: none;
+  min-height: 44px;
+}
+.shell-brand img {
+  display: block;
+  height: auto;
+}
+
+/* ---------- Rail ---------- */
+.shell-rail {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  padding: var(--sp-5) var(--sp-4);
+  border-right: 1px solid var(--line);
+  background: var(--bg);
+}
+.shell-club {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--s1);
+  border: 1px solid var(--line);
+  min-width: 0;
+}
+.shell-club > div {
+  min-width: 0;
+}
+.shell-club b {
+  display: block;
+  font-size: var(--fs-14);
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shell-club span {
+  display: block;
+  font-size: var(--fs-12);
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shell-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.shell-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 44px;
+  padding: 10px var(--sp-3);
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-14);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--d-fast) var(--ease-out),
+    color var(--d-fast) var(--ease-out);
+}
+.shell-nav-item:hover {
+  background: var(--s1);
+  color: var(--text);
+}
+.shell-nav .shell-nav-item[aria-current="page"] {
+  background: var(--s2);
+  color: var(--text);
+  box-shadow: inset 3px 0 0 var(--team);
+}
+.shell-rail-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* ---------- Topbar ---------- */
+.shell-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: var(--topbar);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: 0 var(--sp-8);
+  background: rgba(11, 15, 21, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.shell-topbar .spacer {
+  flex: 1;
+}
+.shell-ctx {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.shell-ctx b {
+  font-size: var(--fs-16);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.shell-ctx b .faint {
+  font-weight: 600;
+}
+.shell-ctx-detail {
+  color: var(--text-2);
+  font-size: var(--fs-14);
+  white-space: nowrap;
+}
+.shell-ctx-detail::first-letter {
+  text-transform: uppercase;
+}
+.shell-chips {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.shell-chips .chip {
+  gap: 5px;
+}
+.shell-chip-goal::first-letter {
+  text-transform: uppercase;
+}
+.shell-top-crest {
+  align-items: center;
+}
+
+/* ---------- Track (season phases / gauntlet ladder / scenario path) ---------- */
+.shell-track {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.shell-track li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-12);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.shell-track li + li::before {
+  content: "";
+  width: 28px;
+  height: 2px;
+  background: var(--line);
+  margin: 0 var(--sp-2);
+}
+.shell-track .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--text-3);
+  flex: none;
+}
+.shell-track .is-done {
+  color: var(--text-2);
+}
+.shell-track .is-done .dot {
+  background: var(--text-2);
+  border-color: var(--text-2);
+}
+.shell-track .is-now {
+  color: var(--text);
+}
+.shell-track .is-now .dot {
+  border-color: var(--text);
+  box-shadow: 0 0 0 3px rgba(242, 245, 248, 0.15);
+}
+.shell-track .is-lost {
+  color: var(--loss);
+}
+.shell-track .is-lost .dot {
+  border-color: var(--loss);
+  background: var(--loss-bg);
+}
+
+/* ---------- Mode bar (Draft / Matchday) ---------- */
+.shell--mode .shell-topbar {
+  position: static;
+  padding: 0 var(--sp-6);
+}
+.shell-back {
+  flex: none;
+  margin-left: calc(var(--sp-3) * -1);
+  padding: 0 var(--sp-3);
+}
+.shell-back-spacer {
+  width: 0;
+}
+.shell-modebar-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.shell-modebar-title strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-24);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+.shell-modebar-title span {
+  color: var(--text-2);
+  font-size: var(--fs-14);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shell-modebar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.shell-modebar-actions:empty {
+  display: none;
+}
+.shell--mode .shell-content {
+  max-width: 1400px;
+  padding-top: var(--sp-4);
+}
+/* Live map and IGL call: full width (kept from the pre-shell arena layout). */
+.shell--mode:has(.stage-map, .stage-decision) .shell-content {
+  max-width: none;
+}
+.shell--mode .match-experience {
+  width: 100%;
+  min-width: 0;
+}
+@media (min-width: 1200px) {
+  .shell--mode:has(.stage-map, .stage-decision) .shell-content {
+    padding: var(--sp-2) clamp(12px, 1.6vw, 28px) 0;
+  }
+  .shell--mode:has(.stage-map, .stage-decision) .shell-topbar {
+    padding-inline: clamp(12px, 1.6vw, 28px);
+  }
+  .shell--mode:has(.stage-map, .stage-decision) .match-experience {
+    gap: 8px;
+    max-width: none;
+  }
+  .shell--mode:has(.stage-map, .stage-decision) .site-footer {
+    display: none;
+  }
+}
+
+/* ---------- Page header (destination title + segments) ---------- */
+.shell-page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-6);
+}
+.shell-page-title {
+  min-width: 0;
+}
+.shell-page-title h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-40);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+.shell-page-title p {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-2);
+}
+.shell-page-title p::first-letter {
+  text-transform: uppercase;
+}
+.shell-page-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.shell-page-tools .seg button {
+  min-height: 40px;
+}
+.shell-panel {
+  min-width: 0;
+}
+.shell-panel:focus {
+  outline: none;
+}
+
+/* ---------- Mobile tabbar ---------- */
+.shell-tabbar {
+  display: none;
+}
+
+/* ---------- Overflow sheet ---------- */
+.shell-more-status {
+  margin-bottom: var(--sp-4);
+}
+.shell-more-status .shell-chips {
+  flex-wrap: wrap;
+}
+.shell-more-list {
+  display: grid;
+  gap: 2px;
+  margin: 0 calc(var(--sp-2) * -1);
+}
+.shell-more-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 48px;
+  padding: 0 var(--sp-2);
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+.shell-more-item .ui-icon {
+  color: var(--text-2);
+}
+.shell-more-item:hover {
+  background: var(--s2);
+}
+.shell-more-speed {
+  display: grid;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- Club page ---------- */
+.shell-club-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-6);
+  align-items: start;
+}
+.shell-club-wide {
+  grid-column: 1 / -1;
+}
+.shell-club-goal {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0 0 var(--sp-5);
+}
+.shell-club-goal strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-32);
+  font-weight: 700;
+  line-height: 1.05;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+.shell-club-note {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  margin: var(--sp-4) 0 0;
+  color: var(--text-2);
+  font-size: var(--fs-14);
+}
+.shell-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+}
+.shell-stats div {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--s2);
+}
+.shell-stats dt {
+  font-size: var(--fs-12);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.shell-stats dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-24);
+  font-weight: 700;
+}
+.shell-trophies,
+.shell-achs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--sp-2);
+}
+.shell-trophies li,
+.shell-achs li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--s2);
+}
+.shell-trophies li {
+  background: var(--gold-bg);
+}
+.shell-trophy-icon,
+.shell-ach-icon {
+  color: var(--gold);
+  margin-top: 1px;
+}
+.shell-trophies strong,
+.shell-achs strong {
+  display: block;
+  font-size: var(--fs-14);
+}
+.shell-trophies strong {
+  color: var(--gold-2);
+}
+.shell-trophies small,
+.shell-achs small {
+  display: block;
+  font-size: var(--fs-12);
+  color: var(--text-2);
+  line-height: 1.4;
+}
+.shell-trophies small::first-letter {
+  text-transform: uppercase;
+}
+.shell-achs.is-locked li {
+  background: transparent;
+  border: 1px dashed var(--line);
+}
+.shell-subhead {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: baseline;
+  margin: var(--sp-6) 0 var(--sp-3);
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.shell-locked {
+  margin-top: var(--sp-3);
+}
+.shell-locked summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text-2);
+  font-size: var(--fs-14);
+  font-weight: 600;
+  cursor: pointer;
+}
+.shell-locked summary:hover {
+  color: var(--text);
+}
+.shell-club-actions {
+  display: flex;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+.shell-table-wrap {
+  overflow-x: auto;
+}
+
+/* ---------- Settings ---------- */
+.shell-settings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-6);
+  align-items: start;
+  max-width: 1040px;
+}
+.shell-field {
+  display: grid;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.shell-field label {
+  font-weight: 600;
+  font-size: var(--fs-14);
+}
+.shell-field-hint {
+  display: block;
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--fs-14);
+}
+.shell-card-lede {
+  margin-bottom: var(--sp-4);
+}
+.shell-field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+.shell-switch {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  cursor: pointer;
+}
+.shell-switch strong {
+  display: block;
+  font-size: var(--fs-14);
+  margin-bottom: var(--sp-1);
+}
+.shell-switch input {
+  flex: none;
+  width: 44px;
+  height: 26px;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+/* ---------- Guide page ---------- */
+.guide-page {
+  max-width: 920px;
+}
+.guide-page .guide-lede {
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  border: 0;
+  font-size: var(--fs-16);
+  color: var(--text-2);
+}
+.guide-page .guide-chips {
+  position: sticky;
+  top: var(--topbar);
+  z-index: 5;
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3) 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+.guide-page .guide-section {
+  scroll-margin-top: calc(var(--topbar) + 72px);
+  margin: 0;
+}
+.guide-page .guide-section > h2 {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: var(--fs-24);
+  letter-spacing: 0.03em;
+}
+
+/* ---------- Footer inside the shell ---------- */
+.shell .site-footer {
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: var(--sp-6) var(--sp-8) var(--sp-8);
+}
+
+/* ---------- Mobile (< 900px): topbar + bottom tabbar ---------- */
+@media (max-width: 900px) {
+  :root {
+    --topbar: 56px;
+    --tabbar: 64px;
+  }
+  .shell--game {
+    display: block;
+  }
+  .shell-rail {
+    display: none;
+  }
+  .desk-only {
+    display: none !important;
+  }
+  .mob-only {
+    display: inline-flex !important;
+  }
+  .shell-topbar {
+    padding: 0 var(--sp-2) 0 var(--sp-4);
+    gap: var(--sp-3);
+  }
+  .shell--mode .shell-topbar,
+  .shell--bare .shell-topbar {
+    padding: 0 var(--sp-4);
+  }
+  .shell-content {
+    padding: var(--sp-4);
+  }
+  .shell--game .shell-main {
+    padding-bottom: calc(var(--tabbar) + env(safe-area-inset-bottom));
+  }
+  .shell .site-footer {
+    padding: var(--sp-4) var(--sp-4) var(--sp-6);
+  }
+  .shell-tabbar {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgba(11, 15, 21, 0.96);
+    border-top: 1px solid var(--line);
+  }
+  .shell-tabbar .shell-nav-item {
+    position: relative;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: var(--tabbar);
+    padding: 6px 2px;
+    border-radius: 0;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+  }
+  .shell-tabbar .shell-nav-item:hover {
+    background: transparent;
+  }
+  .shell-tabbar .shell-nav-item[aria-current="page"] {
+    color: var(--text);
+  }
+  .shell-tabbar .shell-nav-item[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 28px;
+    height: 3px;
+    margin-left: -14px;
+    border-radius: 0 0 3px 3px;
+    background: var(--team);
+  }
+  .shell-tabbar .shell-nav-item:focus-visible {
+    outline-offset: -3px;
+  }
+  .shell-ctx b {
+    font-size: var(--fs-18);
+  }
+  .shell-modebar-title {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .shell-modebar-title strong {
+    font-size: var(--fs-20);
+  }
+  .shell-modebar-title span {
+    font-size: var(--fs-12);
+    max-width: 100%;
+  }
+  .shell--mode .shell-content {
+    padding-top: var(--sp-3);
+  }
+  .shell-page-head {
+    margin-bottom: var(--sp-4);
+  }
+  .shell-page-title h1 {
+    font-size: var(--fs-32);
+  }
+  .shell-page-tools {
+    width: 100%;
+  }
+  .shell-page-tools .seg {
+    width: 100%;
+  }
+  .shell-page-tools .seg button {
+    padding: 0 var(--sp-2);
+  }
+  .shell-club-grid,
+  .shell-settings,
+  .shell-field-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-4);
+  }
+  .shell-club-goal strong {
+    font-size: var(--fs-24);
+  }
+  .guide-page .guide-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: calc(var(--sp-4) * -1);
+    padding-inline: var(--sp-4);
+  }
+  .guide-page .guide-chips .chip {
+    flex: none;
+  }
+  /* Walkthrough cards and toasts keep clear of the tabbar. */
+  .shell--game ~ .ach-toasts,
+  .shell--game .ach-toasts {
+    bottom: calc(var(--tabbar) + env(safe-area-inset-bottom) + 12px);
+  }
+}
+
+/* ---------- Motion: browser preference (Guide › Settings) ---------- */
+html.motion-reduce *,
+html.motion-reduce *::before,
+html.motion-reduce *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+  scroll-behavior: auto !important;
+}
+html.motion-reduce {
+  scroll-behavior: auto;
+}
+
+/* ---------- Switch (Settings) ---------- */
+.shell-switch input {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  border-radius: var(--r-pill);
+  background: var(--s3);
+  border: 1px solid var(--line-strong);
+  cursor: pointer;
+  transition: background var(--d-fast) var(--ease-out);
+}
+.shell-switch input::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text-2);
+  transition: transform var(--d-fast) var(--ease-out);
+}
+.shell-switch input:checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.shell-switch input:checked::after {
+  background: var(--on-primary);
+  transform: translateX(18px);
+}
+.shell-switch input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.shell-switch input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Locked achievements disclosure */
+.shell-locked summary {
+  list-style: none;
+  gap: var(--sp-2);
+}
+.shell-locked summary::-webkit-details-marker {
+  display: none;
+}
+.shell-locked summary::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--d-fast) var(--ease-out);
+}
+.shell-locked[open] summary::before {
+  transform: rotate(45deg);
+}

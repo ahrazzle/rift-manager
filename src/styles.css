@@ -31,32 +31,10 @@ h1, h2, h3, h4, h5, h6,
   font-family: var(--font-display);
 }
 
-/* Fixed arena ambience: deep base + red/blue arena glows + vignette. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(900px 480px at 12% -6%, rgba(226, 1, 45, 0.16), transparent 60%),
-    radial-gradient(820px 460px at 88% -4%, rgba(59, 130, 246, 0.10), transparent 60%),
-    radial-gradient(1200px 800px at 50% 110%, rgba(226, 1, 45, 0.05), transparent 60%),
-    linear-gradient(180deg, var(--s1), var(--bg) 55%);
-}
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.5) 100%);
-}
-
 ::selection { background: rgba(226, 1, 45, 0.45); }
 
 code { background: #0b0e13; padding: 1px 5px; border-radius: 4px; color: #c9d1d9; }
 
-.app { max-width: 1020px; margin: 0 auto; padding: 0 16px 72px; }
 
 /* Eyebrow label: uppercase broadcast kicker. */
 .eyebrow {
@@ -68,55 +46,6 @@ code { background: #0b0e13; padding: 1px 5px; border-radius: 4px; color: #c9d1d9
 }
 .eyebrow .hot { color: var(--warn); }
 
-/* ---------------- Top bar ---------------- */
-.topbar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 14px;
-  /* Full-bleed: background spans the viewport while content stays aligned
-     with the centered 1020px app column. */
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
-  padding: 14px max(16px, calc(50vw - 494px)) 10px;
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: linear-gradient(180deg, rgba(6, 8, 12, 0.96), rgba(6, 8, 12, 0.82));
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--line);
-}
-.topbar .year-select { width: auto; flex-shrink: 0; max-width: 150px; }
-.topbar .ghost { flex-shrink: 0; white-space: nowrap; }
-.brand { font-weight: 900; font-size: 18px; letter-spacing: 0.4px; display: flex; align-items: center; gap: 8px; }
-.logo {
-  background: var(--primary);
-  color: var(--on-primary);
-  padding: 3px 9px;
-  border-radius: 7px;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-}
-.who { flex: 1; color: var(--text-2); font-size: 13.5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.who strong { color: var(--text); }
-
-/* Slim season-progress rail under the topbar. */
-.top-progress { height: 3px; background: #141a24; border-radius: 2px; overflow: hidden; margin: 0 0 2px; }
-.manager-strip {
-  display: flex; gap: 18px; align-items: center; justify-content: center;
-  font-size: 13px; color: var(--text-2); padding: 6px 12px;
-  background: var(--s1); border-bottom: 1px solid var(--line);
-}
-.manager-strip strong { color: var(--text); }
-.manager-strip .board-trust { color: var(--text); }
-.manager-strip .board-trust-warn { color: var(--warn); }
-.manager-strip .bad { color: var(--loss); font-weight: 700; }
-.top-progress span {
-  display: block; height: 100%;
-  background: linear-gradient(90deg, var(--s3), var(--text-2), var(--text));
-  border-radius: 2px;
-  transition: width 0.6s ease;
-}
 .streak-pill {
   display: inline-flex; align-items: center; gap: 5px;
   font-size: 12.5px; font-weight: 800;
@@ -870,15 +799,9 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
 .guide-body.markdown a { color: var(--text); }
 .guide-body.markdown code { background: #0b0e13; padding: 1px 5px; border-radius: 4px; color: #c9d1d9; }
 
-/* Main content column */
-.content {
-  width: min(1200px, 100% - 32px); margin: 0 auto;
-  padding: 26px 0 64px;
-}
 
 /* ---------------- Responsive ---------------- */
 @media (max-width: 640px) {
-  .app { padding: 0 12px 60px; }
   .card { padding: 16px; }
   .hero h1 { font-size: 32px; }
   .matchup { gap: 14px; }
@@ -889,10 +812,6 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
   .md-ptable { display: none; }
   .md-pstack { display: block; }
   .md .tabs { overflow-x: auto; }
-  .who { display: none; }
-  .topbar { gap: 10px; }
-  .topbar .ghost { padding: 8px 12px; font-size: 13px; }
-  .topbar .year-select { font-size: 12px; padding: 6px 8px; max-width: 118px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -909,75 +828,11 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
   }
 }
 
-/* Broadcast shell and the shared identity system are independent of match playback. */
-.broadcast-shell { max-width: 1220px; }
-.broadcast-shell .content { width: 100%; max-width: 1168px; padding-top: 20px; }
-.broadcast-shell .topbar {
-  min-height: 58px; padding: 9px max(18px, calc((100vw - 1168px) / 2));
-  background: rgb(9 16 26 / 96%); border-color: #243445;
-}
-.broadcast-brand { display: inline-flex; align-items: center; flex-shrink: 0; }
-.broadcast-brand img { display: block; width: 140px; height: 50px; object-fit: contain; }
-.broadcast-brand-compact img { width: 40px; height: 40px; }
-.topbar-spacer { flex: 1; }
-.broadcast-shell .who { font-size: 12px; }
+/* Inner tab rows (Dashboard phase tabs, Draft, MatchDetail games) keep their look inside the shell. */
 .match-icon, .team-crest { flex-shrink: 0; vertical-align: middle; }
 .broadcast-shell .tab { display: inline-flex; align-items: center; gap: .45em; }
 .broadcast-shell .tab.active { border-color: #5daeba; background: #12313d; color: #bcfbff; }
-.broadcast-shell .manager-strip > span, .broadcast-shell .streak-pill { display: inline-flex; align-items: center; gap: 5px; }
-.arena-shell .content { padding-top: 12px; }
-.broadcast-shell.arena-shell:has(.stage-map, .stage-decision) .content {
-  max-width: none;
-  width: 100%;
-}
-.broadcast-shell.arena-shell:has(.stage-map, .stage-decision) .match-experience {
-  width: 100%;
-  min-width: 0;
-}
-@media (min-width: 1200px) {
-  .app.broadcast-shell.arena-shell:has(.stage-map, .stage-decision) {
-    max-width: none;
-    width: 100%;
-    margin-inline: 0;
-    padding-inline: clamp(12px, 1.6vw, 28px);
-    padding-bottom: 0;
-  }
-  .app.broadcast-shell.arena-shell:has(.stage-map, .stage-decision) .content {
-    max-width: none;
-    width: 100%;
-    padding-top: 8px;
-  }
-  .app.broadcast-shell.arena-shell:has(.stage-map, .stage-decision) .topbar {
-    margin-left: 0;
-    margin-right: 0;
-    width: 100%;
-    max-width: none;
-    padding-inline: clamp(12px, 1.6vw, 28px);
-  }
-  .broadcast-shell.arena-shell:has(.stage-map, .stage-decision) {
-    max-width: none;
-  }
-  .broadcast-shell.arena-shell:has(.stage-map, .stage-decision) .match-experience {
-    gap: 8px;
-    max-width: none;
-  }
-  .app.broadcast-shell.arena-shell:has(.stage-map, .stage-decision) .site-footer {
-    display: none;
-  }
-}
-@media (max-width: 640px) {
-  .broadcast-shell { padding-inline: 10px; }
-  .broadcast-shell .topbar { gap: 7px; min-height: 48px; padding: 8px 10px; }
-  .broadcast-brand { margin-right: auto; }
-  .broadcast-brand img { width: 112px; height: 40px; }
-  .broadcast-brand-compact img { width: 36px; height: 36px; }
-  .broadcast-shell .topbar .streak-pill { display: none; }
-  .broadcast-shell .topbar .ghost { font-size: 12px; padding: 6px 8px; }
-  .broadcast-shell .topbar .year-select { max-width: 77px; }
-  .broadcast-shell .content { padding-top: 12px; }
-}
-/* The observer controls live beside the map, so the shell can scroll out of play. */
-.arena-shell .topbar { position: static; }
+.broadcast-shell .streak-pill { display: inline-flex; align-items: center; gap: 5px; }
 
 /* About / Community — reuses guide modal shell; no main-nav tab */
 .about-backdrop { z-index: 40; }
@@ -1022,8 +877,3 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
 .tutorial-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 14px; }
 .tutorial-actions .primary { margin-left: auto; }
 
-/* Hub tour tab steps: keep nav targets clear of the sticky topbar when scrolled into view. */
-.broadcast-shell .tabs .tab[data-tour] {
-  scroll-margin-top: 92px;
-  scroll-margin-bottom: 20px;
-}

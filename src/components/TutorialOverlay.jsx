@@ -13,9 +13,17 @@ function prefersReducedMotion() {
 
 const hasDomAnchors = () => typeof globalThis.document?.querySelector === 'function'
 
+// The shell renders some anchors twice (desktop rail and mobile tabbar, one of
+// them display:none), so prefer the first one that is actually laid out.
 function findAnchor(anchor) {
   if (!anchor || !hasDomAnchors()) return null
-  return globalThis.document.querySelector(`[data-tour="${anchor}"]`)
+  const doc = globalThis.document
+  const selector = `[data-tour="${anchor}"]`
+  if (typeof doc.querySelectorAll === 'function') {
+    const visible = Array.from(doc.querySelectorAll(selector)).find((el) => el.getClientRects?.().length > 0)
+    if (visible) return visible
+  }
+  return doc.querySelector(selector)
 }
 
 function rectsOverlap(a, b) {
@@ -194,7 +202,7 @@ export default function TutorialOverlay({
         aria-describedby={`${liveId}-body`}
         style={{ top: cardPos.top, left: cardPos.left }}
       >
-        <p className="eyebrow" aria-live="polite">
+        <p className="eyebrow" id={`${liveId}-title`} aria-live="polite">
           {eyebrowLabel} · {stepLabel}
         </p>
         <p id={`${liveId}-body`}>{copy ?? step?.copy}</p>
