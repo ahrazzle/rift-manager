@@ -200,6 +200,9 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
             options={options}
             spectator={!c.userSide}
             onChange={(key, value) => dispatch({ type: 'SET_MATCH_OPTION', key, value })}
+            seriesFearless={!!state.seriesOptions?.fearless}
+            onSeriesFearlessChange={c.userSide ? (value) => dispatch({ type: 'SET_SERIES_OPTION', key: 'fearless', value }) : null}
+            draftEnabled={!!options.draft}
           />
           <div className="match-starting-five">
             {[

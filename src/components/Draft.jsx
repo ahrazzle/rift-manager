@@ -331,8 +331,8 @@ export default function Draft({
     if (swapSource) setPickTargetRole(null)
   }, [swapSource])
 
-  const phase = !step
-    ? 'Complete'
+  const phase = draft.done
+    ? (draftReadyToPlay(draft) ? 'Complete' : 'Post-draft')
     : draft.step < 6 ? 'Ban Phase 1'
       : draft.step < 12 ? 'Pick Phase 1'
         : draft.step < 16 ? 'Ban Phase 2'
@@ -412,8 +412,8 @@ export default function Draft({
     }
   }
 
-  const debrief = draft.done ? getDraftDebrief(draft) : []
-  const comps = draft.done
+  const debrief = draft.done && draftReadyToPlay(draft) ? getDraftDebrief(draft) : []
+  const comps = draft.done && draftReadyToPlay(draft)
     ? ['BLUE', 'RED'].map((sd) => ({ side: sd, ...scoreComp(draft.picks[sd]) }))
     : []
 
@@ -429,7 +429,11 @@ export default function Draft({
         {fearSubtitle && <p className="hint" style={{ marginTop: 4 }}>{fearSubtitle}</p>}
         <p className="hint" style={{ marginTop: 4 }}>
           {!step
-            ? 'Both comps are locked in.'
+            ? draftReadyToPlay(draft)
+              ? 'Both comps are locked in.'
+              : draft.done
+                ? 'Official picks and bans are finished. Assign flex picks and rearrange roles until every slot is filled.'
+                : ''
             : step.side === userSide
               ? step.type === 'ban'
                 ? 'Your ban: remove a champion from the pool.'
@@ -505,7 +509,7 @@ export default function Draft({
         </p>
       )}
 
-      {draft.done && (
+      {draft.done && draftReadyToPlay(draft) && (
         <div className="card" style={{ margin: 0 }}>
           <span className="eyebrow">Draft complete</span>
           <h3 style={{ marginTop: 4 }}>Comps are locked</h3>
@@ -525,7 +529,7 @@ export default function Draft({
         </div>
       )}
 
-      {draft.done && debrief.length > 0 && (
+      {draft.done && draftReadyToPlay(draft) && debrief.length > 0 && (
         <div className="card" style={{ margin: 0 }}>
           <span className="eyebrow">Post-draft debrief</span>
           <h3 style={{ marginTop: 4 }}>What the challenger would have picked</h3>

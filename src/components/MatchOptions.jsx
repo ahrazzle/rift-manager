@@ -1,7 +1,10 @@
 import { useId } from 'react'
 import MatchIcon from './MatchIcon.jsx'
 
-export default function MatchOptions({ options, onChange, spectator = false }) {
+export default function MatchOptions({
+  options, onChange, spectator = false,
+  seriesFearless, onSeriesFearlessChange, draftEnabled,
+}) {
   const id = useId()
   const rows = [
     ['draft', 'Draft', 'Pick and ban against the opposing coach before every game.'],
@@ -19,6 +22,31 @@ export default function MatchOptions({ options, onChange, spectator = false }) {
           aria-describedby={`${id}-${key}`} onChange={(e) => onChange(key, e.target.checked)} /><span className="switch-track" aria-hidden="true" /></span>
         <span id={`${id}-${key}`} className="hint">{forced ? 'Included while IGL is on — your calls happen on the map.' : spectator && key !== 'showSimulation' ? 'Available when you manage one of these teams.' : description}</span>
       </label>
-    })}</div>
+    })}
+      {onSeriesFearlessChange != null && (
+        <label className={`match-option ${draftEnabled && seriesFearless ? 'enabled' : ''}`}>
+          <span className="option-top">
+            <MatchIcon name="eye" size={22} />
+            <strong>Fearless draft</strong>
+            <input
+              type="checkbox"
+              role="switch"
+              checked={!!seriesFearless}
+              disabled={!draftEnabled || spectator}
+              aria-describedby={`${id}-fearless`}
+              onChange={(e) => onSeriesFearlessChange(e.target.checked)}
+            />
+            <span className="switch-track" aria-hidden="true" />
+          </span>
+          <span id={`${id}-fearless`} className="hint">
+            {!draftEnabled
+              ? 'Turn on Draft to use Fearless.'
+              : spectator
+                ? 'Available when you manage one of these teams.'
+                : 'In a series, champions locked in during earlier games cannot be picked again. Bans reset each game.'}
+          </span>
+        </label>
+      )}
+    </div>
   </fieldset>
 }

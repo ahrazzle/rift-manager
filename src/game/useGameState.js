@@ -593,6 +593,7 @@ function baseReducer(state, action) {
       base.lineup = defaultLineup(base.teams[base.teamId])
       const mode = action.mode ?? 'season'
       base.mode = ['season', 'draft', 'igl', 'gauntlet'].includes(mode) ? mode : 'season'
+      if (typeof action.seriesFearless === 'boolean') base.seriesOptions = { ...(base.seriesOptions ?? {}), fearless: action.seriesFearless }
       initManagerState(base)
       return base
     }
@@ -611,6 +612,7 @@ function baseReducer(state, action) {
       base.lineup = defaultLineup(base.teams[base.teamId])
       base.mode = 'career'
       base.career = freshCareer(base.teamId, base.managerName, ids, careerYear)
+      if (typeof action.seriesFearless === 'boolean') base.seriesOptions = { ...(base.seriesOptions ?? {}), fearless: action.seriesFearless }
       initManagerState(base)
       // P1 item 7: stamp 2 managed-roster starters with one random
       // series-trigger trait each (revealed: false) so the user meets the
@@ -666,9 +668,10 @@ function baseReducer(state, action) {
       if (action.key !== 'fearless' || typeof action.value !== 'boolean') return state
       const seriesOptions = { ...(state.seriesOptions ?? { fearless: false }), fearless: action.value }
       const ms = state.matchSession
-      const syncMs = ms && ms.stage === 'setup' && ms.options?.draft
-        ? { ...ms, fearlessActive: action.value, context: { ...ms.context, fearlessDraft: action.value } }
-        : ms
+      let syncMs = ms
+      if (ms?.stage === 'setup' && ms.options?.draft) {
+        syncMs = { ...ms, fearlessActive: seriesOptions.fearless }
+      }
       return { ...state, seriesOptions, matchSession: syncMs }
     }
 
@@ -1774,6 +1777,7 @@ function campaignReducer(state, action) {
         base.teamId = null
         base.mode = 'campaign'
         base.campaign = freshCampaign(campaign.id)
+        if (typeof action.seriesFearless === 'boolean') base.seriesOptions = { ...(base.seriesOptions ?? {}), fearless: action.seriesFearless }
         return base
       }
       const base = freshState()
@@ -1792,6 +1796,7 @@ function campaignReducer(state, action) {
       base.lineup = defaultLineup(base.teams[campaign.playerTeamId])
       base.mode = 'campaign'
       base.campaign = freshCampaign(campaign.id)
+      if (typeof action.seriesFearless === 'boolean') base.seriesOptions = { ...(base.seriesOptions ?? {}), fearless: action.seriesFearless }
       return base
     }
 
@@ -2044,8 +2049,16 @@ function reducer(state, action) {
   if (action.type === 'SET_MATCH_OPTION') {
     if (!Object.hasOwn(MATCH_OPTIONS, action.key) || (s && s.stage !== 'setup') || (s && !s.context.userSide && action.key !== 'showSimulation')) return state
     const options = { ...matchOptions(s?.options ?? state.matchOptions), [action.key]: action.value === true }
+    let matchSession = s ? { ...s, options } : null
+    if (matchSession?.stage === 'setup') {
+      const fa = !!(options.draft && state.seriesOptions?.fearless)
+      matchSession = { ...matchSession, fearlessActive: fa }
+    }
     return { ...state, matchOptions: { ...matchOptions(state.matchOptions), [action.key]: options[action.key] },
-      matchSession: s ? { ...s, options } : null }
+      matchSession }
+  }
+  if (action.type === 'SET_SERIES_OPTION') {
+    return baseReducer(state, action)
   }
   if (s) {
     switch (action.type) {

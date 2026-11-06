@@ -8,7 +8,7 @@ import BoardCard from './BoardCard.jsx'
 import Gauntlet from './Gauntlet.jsx'
 import MatchDetail from './MatchDetail.jsx'
 import MatchReview from './MatchReview.jsx'
-import { currentStep, aiDraftMove, DRAFT_PERSONALITIES } from '../game/draft.js'
+import { currentStep, aiDraftMove, DRAFT_PERSONALITIES, draftReadyToPlay } from '../game/draft.js'
 import { SIM_SPEEDS } from '../game/useGameState.js'
 
 // Auto-plays AI draft turns with a "thinking" beat; player turns are manual.
@@ -37,8 +37,8 @@ function DraftContainer({ state, dispatch }) {
   const oppName = state.teamMeta?.[ds.userIsHome ? ds.awayId : ds.homeId]?.name ?? 'Opponent'
   const personality = DRAFT_PERSONALITIES[ds.aiPersonality] ?? DRAFT_PERSONALITIES.meta
 
-  // Draft complete → show debrief, then resolve the game.
-  if (draft.done && !resolving) {
+  // Steps finished and comp ready → sim card; until then keep interactive Draft for flex assign / rearrange.
+  if (draft.done && draftReadyToPlay(draft) && !resolving) {
     const myWins = ds.userIsHome ? ds.aWins : ds.bWins
     const opWins = ds.userIsHome ? ds.bWins : ds.aWins
     return (
@@ -50,6 +50,7 @@ function DraftContainer({ state, dispatch }) {
           userSide={draft.userSide}
           onBan={() => {}}
           onPick={() => {}}
+          onPickFlex={() => {}}
           onAssignFlex={() => {}}
           onRearrange={() => {}}
           disabled

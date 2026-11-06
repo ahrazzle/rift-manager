@@ -9,6 +9,7 @@ import { GITHUB_CONTRIBUTING, GITHUB_REPO } from '../siteLinks.js'
 
 export default function NewGame({ state, dispatch, onOpenAbout }) {
   const [options, setOptions] = useState(() => matchOptions(state?.matchOptions))
+  const [seriesFearless, setSeriesFearless] = useState(() => !!state?.seriesOptions?.fearless)
   const [mode, setMode] = useState('career')
   const [league, setLeague] = useState('LCK')
   const [seasonYear, setSeasonYear] = useState(PRESENT_BY_LEAGUE.LCK)
@@ -135,7 +136,13 @@ export default function NewGame({ state, dispatch, onOpenAbout }) {
           </div>
         </div>
 
-        <MatchOptions options={options} onChange={(key, value) => setOptions((o) => ({ ...o, [key]: value }))} />
+        <MatchOptions
+          options={options}
+          onChange={(key, value) => setOptions((o) => ({ ...o, [key]: value }))}
+          seriesFearless={seriesFearless}
+          onSeriesFearlessChange={setSeriesFearless}
+          draftEnabled={!!options.draft}
+        />
 
         {(mode === 'career' || isSeasonLike) && (
           <div className="field">
@@ -201,7 +208,7 @@ export default function NewGame({ state, dispatch, onOpenAbout }) {
 
             <button
               className="primary big"
-              onClick={() => dispatch({ type: 'NEW_GAME', teamId, managerName, seasonYear, mode, matchOptions: options })}
+              onClick={() => dispatch({ type: 'NEW_GAME', teamId, managerName, seasonYear, mode, matchOptions: options, seriesFearless })}
             >
               {MODE_START_LABEL[mode] ?? 'Start Season →'}
             </button>
@@ -252,7 +259,7 @@ export default function NewGame({ state, dispatch, onOpenAbout }) {
 
             <button
               className="primary big"
-              onClick={() => dispatch({ type: 'START_CAREER', teamId, managerName, seasonYear: careerYear, matchOptions: options })}
+              onClick={() => dispatch({ type: 'START_CAREER', teamId, managerName, seasonYear: careerYear, matchOptions: options, seriesFearless })}
             >
               Start Career →
             </button>
@@ -285,7 +292,7 @@ export default function NewGame({ state, dispatch, onOpenAbout }) {
 
             <button
               className="primary big"
-              onClick={() => dispatch({ type: 'START_CAMPAIGN', campaignId, managerName, matchOptions: options })}
+              onClick={() => dispatch({ type: 'START_CAMPAIGN', campaignId, managerName, matchOptions: options, seriesFearless })}
             >
               Start Scenario →
             </button>

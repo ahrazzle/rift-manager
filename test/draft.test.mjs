@@ -1,10 +1,13 @@
 // Active Coach draft tests. Run: node test/draft.test.mjs
 import {
-  DRAFT_STEPS, createDraft, currentStep, applyBan, applyPick,
+  DRAFT_STEPS, createDraft, currentStep, applyBan, applyPick, applyFlex, assignFlex,
+  flexMatchingPossible, flexIntoFilledRole,
   legalBans, legalPicks, aiDraftMove, scoreComp, getDraftDebrief, champMeta, champPortrait,
-  swapPicks, movePick, canSwapPicks,
+  swapPicks, movePick, canSwapPicks, draftReadyToPlay,
 } from '../src/game/draft.js'
 import { CHAMPIONS } from '../src/data/champions.js'
+import { createMatchSession, mergeFearlessAfterDraft, nextSessionGame, draftChampIdsForFearless } from '../src/game/matchSession.js'
+import { reducer } from '../src/game/useGameState.js'
 
 let failures = 0
 const assert = (c, m) => { if (!c) { console.error('FAIL:', m); failures++ } else console.log('ok  :', m) }
@@ -156,6 +159,172 @@ assert(CHAMPIONS.every((c) => c.ddragon && c.ddragon.endsWith('.png')), 'every c
   let dr = createDraft('BLUE')
   dr = { ...dr, picks: { ...dr.picks, BLUE: { TOP: 'camille', SUP: 'nami' } } }
   assert(!canSwapPicks(dr, 'BLUE', 'TOP', 'SUP'), 'Camille/Nami illegal swap blocked')
+}
+
+// ---------- flex apply / assign (no extra step on assign) ----------
+{
+  let dr = createDraft('BLUE')
+  while (currentStep(dr)?.type !== 'pick' || currentStep(dr)?.side !== 'BLUE') {
+    dr = applyBan(dr, legalBans(dr)[0])
+  }
+  const beforeStep = dr.step
+  dr = applyFlex(dr, 'yasuo')
+  assert((dr.flex?.BLUE ?? []).some((e) => e.champId === 'yasuo'), 'Yasuo flex goes to flex list')
+  assert(!dr.picks.BLUE.MID && !dr.picks.BLUE.TOP, 'flex does not commit a role slot yet')
+  assert(dr.step === beforeStep + 1, 'flex pick advances draft one step')
+  dr = assignFlex(dr, 'BLUE', 'yasuo', 'MID')
+  assert(!(dr.flex?.BLUE ?? []).some((e) => e.champId === 'yasuo'), 'assign removes Yasuo from flex')
+  assert(dr.picks.BLUE.MID === 'yasuo', 'Yasuo committed to MID')
+  assert(dr.step === beforeStep + 1, 'assign flex does not advance draft step')
+}
+
+// ---------- matching blocks illegal committed pick ----------
+{
+  let dr = createDraft('BLUE')
+  for (let i = 0; i < 6; i++) dr = applyBan(dr, legalBans(dr)[0])
+  assert(currentStep(dr)?.type === 'pick' && currentStep(dr)?.side === 'BLUE', 'at BLUE pick after bans')
+  dr = {
+    ...dr,
+    picks: { ...dr.picks, BLUE: { TOP: 'darius' } },
+    flex: { ...dr.flex, BLUE: [
+      { champId: 'kayle', reservedRole: null },
+      { champId: 'irelia', reservedRole: null },
+    ] },
+  }
+  assert(!flexMatchingPossible(dr, 'BLUE'), 'two TOP/MID flexes + TOP taken breaks matching')
+  throws(() => applyPick(dr, 'lux', 'MID'), 'illegal MID pick blocked by flex matching')
+}
+
+// ---------- flexIntoFilledRole: displaced unique home (commit to SUP) ----------
+{
+  let dr = createDraft('BLUE')
+  dr = {
+    ...dr,
+    picks: {
+      BLUE: { MID: 'lux', TOP: 'darius', JNG: 'jarvan', BOT: 'jinx' },
+      RED: {},
+    },
+    flex: { ...dr.flex, BLUE: [{ champId: 'jayce', reservedRole: null }] },
+  }
+  dr = flexIntoFilledRole(dr, 'BLUE', 'jayce', 'MID')
+  assert(dr.picks.BLUE.MID === 'jayce', 'Jayce flex takes MID')
+  assert(dr.picks.BLUE.SUP === 'lux', 'Lux displaced to her only open legal role (SUP)')
+  assert(!(dr.flex?.BLUE ?? []).some((e) => e.champId === 'lux'), 'Lux not left in flex (unique home)')
+}
+
+// ---------- flexIntoFilledRole: displaced with no legal open role throws ----------
+{
+  let dr = createDraft('BLUE')
+  dr = {
+    ...dr,
+    picks: {
+      BLUE: { MID: 'rumble', TOP: 'darius' },
+      RED: {},
+    },
+    flex: { ...dr.flex, BLUE: [{ champId: 'jayce', reservedRole: null }] },
+  }
+  throws(() => flexIntoFilledRole(dr, 'BLUE', 'jayce', 'MID'), 'displaced rumble has no empty legal slot')
+}
+
+// ---------- Fearless: lockout removes id from bans and picks ----------
+{
+  const dr = createDraft('BLUE', { fearlessIds: ['yasuo'] })
+  assert(!legalBans(dr).includes('yasuo'), 'Yasuo not legal to ban under Fearless')
+  const lp = legalPicks(dr, 'BLUE')
+  const yEntry = lp.find((p) => p.champId === 'yasuo')
+  assert(yEntry === undefined, 'Yasuo not in legal picks when Fearless-locked')
+  assert(legalBans(dr).includes('jinx'), 'non-listed champ still legal to ban')
+}
+
+// ---------- game 1: Fearless series on vs off — same empty lockout on new draft ----------
+{
+  const ctx = (fearlessDraft) => ({
+    seed: 1, needWins: 1, fearlessDraft, homeId: 'A', awayId: 'B', homeName: 'A', awayName: 'B',
+    homeLineup: {}, awayLineup: {}, homeTactic: {}, awayTactic: {}, userSide: 'home', kind: 'exhibition', extra: {},
+  })
+  const sOn = createMatchSession(ctx(true), { draft: true })
+  const sOff = createMatchSession(ctx(false), { draft: true })
+  assert(JSON.stringify(sOn.draft?.fearless ?? []) === JSON.stringify(sOff.draft?.fearless ?? []),
+    'game 1 fresh session: same draft.fearless regardless of context.fearlessDraft')
+  assert((sOn.fearlessUsed?.length ?? 0) === 0 && (sOff.fearlessUsed?.length ?? 0) === 0, 'game 1: no fearlessUsed yet')
+}
+
+// ---------- Fearless session: game 1 merge; game 2 locks prior picks; bans reset ----------
+{
+  const ctx = (fearlessDraft) => ({
+    seed: 1, needWins: 2, fearlessDraft, homeId: 'A', awayId: 'B', homeName: 'A', awayName: 'B',
+    homeLineup: {}, awayLineup: {}, homeTactic: {}, awayTactic: {}, userSide: 'home', kind: 'exhibition', extra: {},
+  })
+  const fill5 = { TOP: 'darius', JNG: 'jarvan', MID: 'zed', BOT: 'jinx', SUP: 'leona' }
+  const fill5r = { TOP: 'camille', JNG: 'vi', MID: 'ahri', BOT: 'caitlyn', SUP: 'thresh' }
+  let session = createMatchSession(ctx(true), { draft: true })
+  session = { ...session, fearlessActive: true }
+  const draft1 = {
+    ...createDraft('BLUE', { fearlessIds: [] }),
+    done: true,
+    picks: { BLUE: { ...fill5 }, RED: { ...fill5r } },
+    bans: { BLUE: ['yasuo'], RED: ['garen'] },
+    flex: { BLUE: [], RED: [] },
+  }
+  assert(draftReadyToPlay(draft1), 'game 1 fixture ready')
+  session = mergeFearlessAfterDraft(session, draft1)
+  const pickIds = [...new Set([...Object.values(fill5), ...Object.values(fill5r)])]
+  assert(pickIds.every((id) => session.fearlessUsed.includes(id)), 'merge unions all pick ids')
+
+  session = { ...session, stage: 'between', draft: null, current: null, aWins: 0, bWins: 0, games: [] }
+  session = nextSessionGame(session)
+  const d2 = session.draft
+  assert(d2.fearless.includes('darius'), 'game 2 draft gets prior pick lockout')
+  assert(!legalBans(d2).includes('darius'), 'game 2: prior pick not in ban pool')
+  assert(legalBans(d2).includes('yasuo') && legalBans(d2).includes('garen'), 'game 2: game-1 bans back in pool')
+}
+
+// ---------- draftChampIdsForFearless includes unassigned flex ids (same union as merge) ----------
+{
+  const d = {
+    ...createDraft('BLUE'),
+    picks: { BLUE: { MID: 'zed' }, RED: {} },
+    flex: { BLUE: [{ champId: 'kayle', reservedRole: null }], RED: [] },
+  }
+  const ids = draftChampIdsForFearless(d)
+  assert(ids.includes('zed') && ids.includes('kayle'), 'Fearless union counts flex list + picks')
+}
+
+// ---------- reducer: Strategy fearless + Draft on at setup; session unchanged after MATCH_START ----------
+{
+  let st = reducer(undefined, { type: 'NEW_GAME', teamId: 'T1' })
+  st = reducer(st, { type: 'SET_SERIES_OPTION', key: 'fearless', value: true })
+  st = reducer(st, { type: 'PREVIEW_MATCH', action: { type: 'PLAY_ROUND' } })
+  assert(st.matchSession.fearlessActive === false, 'draft off → fearlessActive false despite series flag')
+  st = reducer(st, { type: 'SET_MATCH_OPTION', key: 'draft', value: true })
+  assert(st.matchSession.fearlessActive === true, 'draft on at setup + series fearless → fearlessActive true')
+  st = reducer(st, { type: 'MATCH_START' })
+  const snap = JSON.stringify({
+    fa: st.matchSession.fearlessActive,
+    fu: st.matchSession.fearlessUsed,
+    fd: st.matchSession.context.fearlessDraft,
+  })
+  st = reducer(st, { type: 'SET_SERIES_OPTION', key: 'fearless', value: false })
+  assert(JSON.stringify({
+    fa: st.matchSession.fearlessActive,
+    fu: st.matchSession.fearlessUsed,
+    fd: st.matchSession.context.fearlessDraft,
+  }) === snap, 'SET_SERIES_OPTION after MATCH_START does not rewrite session snapshot')
+  assert(st.seriesOptions.fearless === false, 'series flag still updates in global state')
+}
+
+// ---------- NEW_GAME seriesFearless seeds seriesOptions ----------
+{
+  const st = reducer(undefined, { type: 'NEW_GAME', teamId: 'T1', seriesFearless: true })
+  assert(st.seriesOptions.fearless === true, 'NEW_GAME carries seriesFearless into seriesOptions')
+}
+
+// ---------- createMatchSession: draft off → fearlessActive false ----------
+{
+  const ctx = { seed: 1, needWins: 1, fearlessDraft: true, homeId: 'A', awayId: 'B', homeName: 'A', awayName: 'B',
+    homeLineup: {}, awayLineup: {}, homeTactic: {}, awayTactic: {}, userSide: 'home', kind: 'exhibition', extra: {} }
+  const s = createMatchSession(ctx, { draft: false })
+  assert(s.fearlessActive === false, 'draft off: fearlessActive false even if context.fearlessDraft')
 }
 
 console.log(failures === 0 ? '\nDRAFT: ALL PASSED' : `\nDRAFT: ${failures} FAILURE(S)`)
