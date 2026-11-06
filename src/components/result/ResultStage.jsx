@@ -28,12 +28,11 @@ import TeamCrest from '../TeamCrest.jsx'
 import MatchDetail from '../MatchDetail.jsx'
 import MatchReview from '../MatchReview.jsx'
 import { TutorialReviewTip } from '../TutorialHost.jsx'
-import { Button, Card, Chip, Delta, Icon } from '../ui/index.js'
+import { Button, Card, Chip, Delta, Icon, TrophyMark } from '../ui/index.js'
 import { teamName } from '../../game/hype.js'
 import { PREPARATION_FOCI } from '../../game/preparation.js'
 import { gameRows, lookAtNote, mvpLine, seriesChanges, seriesMvp, seriesOutcome, upNext } from '../../game/seriesSnapshot.js'
 import { setPrepIntent, takeNewAchievements } from '../hub/hubMemory.js'
-import TrophyMark from './TrophyMark.jsx'
 
 export function ChangedStrip({ tiles }) {
   if (!tiles?.length) return null

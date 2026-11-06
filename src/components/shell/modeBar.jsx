@@ -11,6 +11,9 @@ import { createPortal } from 'react-dom'
 //
 //   <ModeBarActions>…</ModeBarActions>
 //     Portals controls (pause, speed, skip) into the right side of the bar.
+//
+//   useHasModeBar()
+//     True inside the shell's mode bar provider; use it to fall back to inline controls.
 
 const ModeBarContext = createContext(null)
 
@@ -28,6 +31,15 @@ export function ModeBarProvider({ children }) {
 /** Shell-internal: read the current override + actions slot. */
 export function useModeBarState() {
   return useContext(ModeBarContext)
+}
+
+/**
+ * Public: true when a mode bar is mounted (the screen runs inside the shell's
+ * match mode), so controls can portal into it via <ModeBarActions>; false in
+ * tests and standalone renders, where a screen keeps its controls inline.
+ */
+export function useHasModeBar() {
+  return useContext(ModeBarContext) != null
 }
 
 export function useModeBar({ title, subtitle, backLabel, onBack, backHidden } = {}) {

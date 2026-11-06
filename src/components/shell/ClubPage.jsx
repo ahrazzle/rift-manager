@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Button, Card, Chip, Icon, Meter } from '../ui/index.js'
+import { Button, Card, Chip, Icon, Meter, TrophyMark } from '../ui/index.js'
 import { achievements } from '../../game/hype.js'
 import { fmtMoneyExact } from '../../game/economy.js'
 import { recomputeGames } from '../MatchDetail.jsx'
@@ -106,7 +106,7 @@ export default function ClubPage({ state, onNewGame }) {
             <ul className="shell-trophies">
               {trophies.map((t) => (
                 <li key={t.id}>
-                  <Icon name="club" size={20} className="shell-trophy-icon" />
+                  <TrophyMark className="shell-trophy-icon" />
                   <span>
                     <strong>{t.name}</strong>
                     <small>{t.when}</small>

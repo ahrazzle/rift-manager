@@ -1,45 +1,8 @@
 import { useId } from 'react'
 import TeamCrest from '../TeamCrest.jsx'
-import { Button, Card, Chip, Icon, Meter } from '../ui/index.js'
+import { Button, Card, Chip, Icon, OddsBar } from '../ui/index.js'
 import { teamName } from '../../game/hype.js'
-import { oddsWord, readiness, recordLine, REGIONAL_BEST_OF } from './hubData.js'
-
-/**
- * Two-sided win chance with a plain word and a "Why N%" disclosure.
- * `why` is explainWinProb() output; factors are percentage points.
- */
-export function OddsBar({ pct, leftLabel, rightLabel, why }) {
-  return (
-    <div className="hub-odds">
-      <Meter variant="split" value={pct} leftLabel={leftLabel} rightLabel={rightLabel} label={oddsWord(pct)} />
-      <p className="sr-only">{`Estimated win chance: ${leftLabel} ${pct} percent, ${rightLabel} ${100 - pct} percent. ${oddsWord(pct)}.`}</p>
-      {why && (
-        <details className="hub-why">
-          <summary>Why {pct}%? Top factors</summary>
-          <ul className="hub-factors">
-            {why.factors.map((f) => (
-              <li key={f.label}>
-                <span>{f.label}</span>
-                {f.dash || !f.contribution ? (
-                  <span className="faint num">±0</span>
-                ) : (
-                  <span className={`num ${f.contribution > 0 ? 'is-up' : 'is-down'}`}>
-                    {f.contribution > 0 ? '+' : '−'}
-                    {Math.abs(f.contribution).toFixed(1)} pts
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-          {why.preparation > 0 && (
-            <p className="hub-why-note">Coach’s office adds {why.preparation.toFixed(2)} team strength to this forecast and to the series.</p>
-          )}
-          <p className="hub-why-note">A forecast, not a promise: the series is simulated when you play it.</p>
-        </details>
-      )}
-    </div>
-  )
-}
+import { readiness, recordLine, REGIONAL_BEST_OF } from './hubData.js'
 
 /** One readiness check. Links to the screen that fixes it; never blocks Play. */
 function ReadinessItem({ item, onOpen }) {

@@ -2,7 +2,7 @@ import { Button } from '../ui/index.js'
 import { cx } from '../ui/cx.js'
 import { openEligibleRoles } from '../../game/draft.js'
 import { CHAMP_BY_ID } from '../../data/champions.js'
-import { ChampArt } from './ChampGlyph.jsx'
+import { ChampArt } from '../ui/index.js'
 import { champName } from './copy.js'
 
 function flexRolesLabel(draft, side, entry) {

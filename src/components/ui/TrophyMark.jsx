@@ -5,7 +5,7 @@ import { useId } from 'react'
  * inlined so it inherits the gold tokens. Decorative: the heading says who won.
  * The wrapper carries the one rim sweep (result.css, `.reward-sweep`).
  */
-export default function TrophyMark({ className = '' }) {
+export function TrophyMark({ className = '' }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const fill = `url(#${id})`
   return (

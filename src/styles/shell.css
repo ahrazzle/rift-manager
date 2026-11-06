@@ -487,6 +487,11 @@
   color: var(--gold);
   margin-top: 1px;
 }
+.shell-trophy-icon {
+  width: 28px;
+  height: 28px;
+  flex: none;
+}
 .shell-trophies strong,
 .shell-achs strong {
   display: block;

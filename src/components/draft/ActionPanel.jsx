@@ -1,7 +1,7 @@
 import { BottomSheet, Button, RoleIcon } from '../ui/index.js'
 import { cx } from '../ui/cx.js'
 import { DRAFT_ROLES } from '../../game/draft.js'
-import { ChampArt } from './ChampGlyph.jsx'
+import { ChampArt } from '../ui/index.js'
 import { CHAMP_BY_ID } from '../../data/champions.js'
 import { champName } from './copy.js'
 

@@ -24,11 +24,11 @@ const BANS = { BLUE: ['aatrox', 'darius', 'fiora'], RED: ['gnar', 'garen', 'gwen
 
 try {
   await build({
-    entryPoints: ['src/components/draft/DraftBoard.jsx', 'src/components/draft/ChampGlyph.jsx'],
+    entryPoints: ['src/components/draft/DraftBoard.jsx', 'src/components/ui/ChampArt.jsx'],
     outdir: temp, bundle: true, format: 'esm', platform: 'node', packages: 'external', jsx: 'automatic',
   })
-  const { default: DraftBoard } = await import(`${temp}/DraftBoard.js`)
-  const { ChampArt, ChampGlyph, glyphHue, glyphMonogram } = await import(`${temp}/ChampGlyph.js`)
+  const { default: DraftBoard } = await import(`${temp}/draft/DraftBoard.js`)
+  const { ChampArt, ChampGlyph, glyphHue, glyphMonogram } = await import(`${temp}/ui/ChampArt.js`)
 
   const calls = []
   const handlers = {
