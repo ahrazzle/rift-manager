@@ -65,8 +65,16 @@ function monogramFor(id, name) {
   return words ? words.map((w) => w[0]).join('').slice(0, 3).toUpperCase() : '?'
 }
 
+// Size-aware monogram: <=28px shows at most 2 characters, 29-40px 3, larger up to 4.
+// Shortening keeps the leading characters (GEN -> GE, NORD -> NO, 5P1T -> 5P); never empty.
+export const monogramLimit = (size) => { const n = Number(size); return !(n > 28) ? 2 : n <= 40 ? 3 : 4 }
+export function fitMonogram(mono, size) {
+  const m = String(mono ?? '').replace(/\s+/g, '')
+  return (m.slice(0, monogramLimit(size)) || m.slice(0, 1) || '?').toUpperCase()
+}
+
 // crestSpec(teamId, { name, short, color }): never throws; unknown ids get the fallback.
-export function crestSpec(teamId, { name, short, color } = {}) {
+export function crestSpec(teamId, { name, short, color, size = 48 } = {}) {
   const id = String(teamId ?? name ?? '')
   const key = id.toUpperCase()
   const meta = META.get(id) ?? {}
@@ -75,7 +83,7 @@ export function crestSpec(teamId, { name, short, color } = {}) {
   const mono = curated ?? String(short ?? meta.short ?? monogramFor(id, name ?? meta.name)).replace(/\s+/g, '').slice(0, 4).toUpperCase()
   const { fill, rim } = shieldColors(baseColor)
   return {
-    id, curated: !!curated, monogram: mono || '?', fill, rim,
-    motif: curated ? null : MOTIFS[hash(key) % MOTIFS.length],
+    id, curated: !!curated, monogram: fitMonogram(mono || '?', size), fill, rim,
+    motif: curated || !(Number(size) > 28) ? null : MOTIFS[hash(key) % MOTIFS.length],
   }
 }

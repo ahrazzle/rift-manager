@@ -5,7 +5,7 @@ import { build } from 'esbuild'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { fileURLToPath } from 'node:url'
-import { crestSpec, shieldColors, contrast, KNOWN_CREST_IDS, LCK_TEN_IDS, MOTIFS } from '../src/components/teamCrestModel.js'
+import { fitMonogram, monogramLimit, crestSpec, shieldColors, contrast, KNOWN_CREST_IDS, LCK_TEN_IDS, MOTIFS } from '../src/components/teamCrestModel.js'
 
 let failures = 0
 const check = (c, m) => { if (!c) { console.error('FAIL:', m); failures++ } else console.log('ok  :', m) }
@@ -33,6 +33,11 @@ try {
   check(LCK_TEN_IDS.every((id) => crestSpec(id).curated && crestSpec(id).motif === null), 'LCK ten are curated, no motif')
   check(crestSpec('LPL:BLG').monogram === 'BLG' && crestSpec('LR_NORD').monogram === 'NORD', 'monogram from short / id')
   check(new Set(KNOWN_CREST_IDS.map((i) => crestSpec(i).motif)).size >= 4, 'motifs are spread across clubs')
+  check(['GEN', 'NORD', '5P1T', 'BRO', 'KDF', 'DK', 'T1'].map((m) => fitMonogram(m, 24)).join() === 'GE,NO,5P,BR,KD,DK,T1', 'monogram <=28px is at most 2 chars')
+  check(fitMonogram('NORD', 36) === 'NOR' && fitMonogram('NORD', 48) === 'NORD' && monogramLimit(28) === 2 && monogramLimit(29) === 3 && monogramLimit(40) === 3 && monogramLimit(41) === 4, 'size tiers 28/40/48')
+  check([undefined, null, '', '  ', 42, {}].every((v) => { try { return fitMonogram(v, 24).length >= 1 && fitMonogram(v, NaN).length >= 1 } catch { return false } }), 'fitMonogram never empty or throwing')
+  check(crestSpec('LPL:JDG', { size: 24 }).motif === null && crestSpec('LPL:JDG', { size: 28 }).motif === null && crestSpec('LPL:JDG', { size: 48 }).motif !== null, 'no motif at <=28px')
+  check(crestSpec('LR_NORD', { size: 24 }).monogram === 'NO' && html({ teamId: 'LR_NORD', size: 24 }).includes('>NO<'), 'small render uses the short monogram')
   for (const bogus of [undefined, null, '', 'ZZZ-FUTURE', 'x:y_z', 42, {}]) {
     let ok = true
     try { html({ teamId: bogus, size: 24 }); html({ name: bogus }) } catch { ok = false }
