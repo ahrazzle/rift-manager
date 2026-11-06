@@ -30,8 +30,10 @@ try {
   const dialog = renderToString(React.createElement(ConfirmDialog, {
     title: 'Start a new game?', confirmLabel: 'Start new game', onConfirm() {}, onCancel() {},
   }, 'Your progress will be lost.'))
-  assert.match(dialog, /<dialog[^>]*aria-labelledby="[^"]+"[^>]*aria-describedby="[^"]+"/)
-  assert.match(dialog, /autofocus=""[^>]*>Keep playing<\/button>/)
+  // The shared Dialog primitive replaced the native <dialog>: same name/description wiring,
+  // plus aria-modal; focus (Keep playing first) and Esc are exercised in the Dialog's own effect.
+  assert.match(dialog, /role="dialog"[^>]*aria-modal="true"[^>]*aria-labelledby="[^"]+"[^>]*aria-describedby="[^"]+"/)
+  assert.match(dialog, />Keep playing<\/button>/)
   assert.match(dialog, />Start new game<\/button>/)
   globalThis.localStorage = { getItem: () => '{broken' }
   const recovery = renderToString(React.createElement(App))

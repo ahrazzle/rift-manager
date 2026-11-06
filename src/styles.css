@@ -161,9 +161,6 @@ button { font-family: inherit; }
 .aska-signature span { font-weight: 400; color: var(--text-3); }
 .site-footer .aska-signature:hover { color: var(--text); }
 .footer-credit { display: block; margin-top: 4px; font-size: 12px; color: var(--text-2); }
-
-/* ---------------- New game ---------------- */
-.newgame { max-width: 780px; margin: 28px auto; }
 .hero {
   text-align: center;
   background:
@@ -195,36 +192,12 @@ button { font-family: inherit; }
   font-size: 15px;
 }
 .field input:focus { outline: none; border-color: var(--line-strong); box-shadow: 0 0 0 2px var(--focus); }
-.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 10px; }
 .year-select {
   width: 100%; padding: 10px 12px; border-radius: 10px;
   background: var(--s2); color: var(--text);
   border: 1px solid var(--line); font-size: 14.5px;
 }
-.team-pick {
-  display: flex; align-items: center; gap: 9px;
-  background: var(--s2);
-  border: 2px solid var(--line);
-  border-radius: 11px;
-  padding: 11px 12px;
-  cursor: pointer;
-  color: var(--text);
-  transition: all 0.13s ease;
-}
-.team-pick:hover { border-color: #3a4560; transform: translateY(-1px); }
-.team-pick.active {
-  border-color: var(--team);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--team) 12%, var(--s2)), var(--s2));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--team) 35%, transparent);
-}
-.team-pick.active .tp-name { color: var(--text); }
-.tp-selected { margin-left: auto; color: var(--team); font-size: 17px; font-weight: 900; line-height: 1; }
 .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; box-shadow: 0 0 8px rgba(0,0,0,0.5); }
-.tp-name { font-weight: 700; flex: 1; font-size: 14px; }
-.tp-tier { color: var(--text); font-size: 14px; }
-.mode-card .tp-name { font-size: 15px; }
-.mode-card { flex-direction: column; align-items: flex-start; gap: 2px; padding: 14px; }
-.mode-card .tp-tier { line-height: 1.4; }
 
 /* ---------------- Dashboard: matchup hero ---------------- */
 .matchup-card { position: relative; overflow: hidden; }
@@ -262,8 +235,6 @@ button { font-family: inherit; }
 .prob-sub { display: block; font-size: 11px; color: var(--text-2); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
 .prob.longshot { color: var(--text-2); }
 .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-
-/* Tale of the tape strip */
 .tale { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 4px; position: relative; }
 .tale-chip {
   font-size: 12.5px; font-weight: 600; color: var(--text-2);
@@ -275,12 +246,6 @@ button { font-family: inherit; }
 .tale-chip.hot { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); background: color-mix(in srgb, var(--warn) 12%, var(--s2)); }
 .tale-chip.edge { color: #7dffab; border-color: rgba(34,197,94,0.4); background: var(--win-bg); }
 .tale-chip.risk { color: #ff8f9f; border-color: rgba(239,68,68,0.4); background: var(--loss-bg); }
-.outlook-chip { text-transform: capitalize; font-size: 11.5px; }
-.outlook-rise { color: #7dffab; border-color: rgba(34,197,94,0.35); }
-.outlook-steady { color: var(--text-2); }
-.outlook-decline { color: #ffb4bc; border-color: rgba(239,68,68,0.35); }
-.outlook-ceiling { color: #c4b5fd; border-color: rgba(167,139,250,0.35); }
-.pl-age { font-size: 11.5px; }
 
 .fixtures { list-style: none; padding: 0; margin: 0; }
 .fixtures li { display: flex; gap: 12px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); color: var(--text-2); font-size: 14px; }
@@ -347,77 +312,10 @@ button { font-family: inherit; }
 .log { margin: 8px 0 0; padding-left: 18px; color: var(--text-2); font-size: 13px; }
 .log li { margin: 2px 0; }
 details summary { cursor: pointer; color: var(--text); font-size: 13px; font-weight: 600; }
-
-/* ---------------- Lineup ---------------- */
-.role-block { margin-bottom: 16px; }
-.role-head { border-left: 3px solid var(--team); padding-left: 10px; margin-bottom: 8px; }
-.role-label { font-weight: 800; letter-spacing: 0.1em; font-size: 12.5px; color: var(--text-2); text-transform: uppercase; }
-.plrows { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; min-width: 0; }
-@media (max-width: 640px) { .plrows { grid-template-columns: 1fr; } }
-.plrow {
-  display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start;
-  gap: 8px 10px;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  background: var(--s2);
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  padding: 10px 13px;
-  cursor: pointer;
-  color: var(--text);
-  text-align: left;
-  transition: all 0.13s ease;
-}
-.plrow:hover { border-color: #3a4560; transform: translateY(-1px); }
-.plrow.starter { border-color: var(--team); background: linear-gradient(180deg, rgba(226,1,45,0.10), var(--s2)); box-shadow: 0 0 0 1px rgba(226,1,45,0.3); }
-.pl-name {
-  font-weight: 700;
-  flex: 1 1 5.5rem;
-  min-width: 0;
-  font-size: 14.5px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.pl-ovr {
-  flex-shrink: 0;
-  background: #0b0e13; border: 1px solid var(--line); border-radius: 7px;
-  padding: 3px 9px; font-weight: 800; font-size: 13px; font-variant-numeric: tabular-nums;
-}
-.plrow > .pl-age,
-.plrow > .outlook-chip { flex-shrink: 0; max-width: 100%; }
-.plrow > .bars {
-  flex: 1 1 10rem;
-  min-width: 0;
-  flex-wrap: wrap;
-  row-gap: 4px;
-}
-.plrow > .tale {
-  flex: 1 1 11rem;
-  min-width: 0;
-  flex-wrap: wrap !important;
-  row-gap: 4px;
-}
-.plrow > .badge { flex-shrink: 0; margin-left: auto; }
+@media (max-width: 640px) { }
 @media (max-width: 480px) {
-  .plrow > .bars,
-  .plrow > .tale {
-    flex-basis: 100%;
-    width: 100%;
-    margin-left: 0;
-  }
-  .plrow > .badge { margin-left: 0; }
 }
-.bars { display: flex; gap: 7px; flex-wrap: wrap; }
-.mini { display: flex; align-items: center; gap: 4px; }
-.mini-l { color: var(--text-3); font-size: 10px; font-weight: 700; }
-.mini-bar { width: 36px; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
-.mini-bar span { display: block; height: 100%; border-radius: 3px; }
 .badge { background: linear-gradient(135deg, #ff2b4d, var(--team)); color: #fff; font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 800; letter-spacing: 0.06em; }
-
-/* ---------------- Tactics ---------------- */
-.tac-section { margin: 16px 0; }
 .tac-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 10px; }
 .tac {
   background: var(--s2);
@@ -434,7 +332,6 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
 .tac-name { display: block; font-weight: 800; margin-bottom: 4px; font-size: 14.5px; }
 .tac-blurb { display: block; color: var(--text-2); font-size: 12.5px; margin-bottom: 6px; line-height: 1.4; }
 .tac-mult { color: var(--win); font-size: 12.5px; font-weight: 700; }
-.tac-current { margin-top: 12px; color: var(--text-2); font-size: 13.5px; }
 
 /* ---------------- Tables ---------------- */
 .table { width: 100%; border-collapse: collapse; }
@@ -448,27 +345,11 @@ details summary { cursor: pointer; color: var(--text); font-size: 13px; font-wei
 .table tbody tr.me:hover td { background: rgba(255,255,255,0.025); }
 .table tbody tr.me:hover td:first-child { box-shadow: inset 3px 0 0 var(--team); }
 
-/* ---------------- Market ---------------- */
-.market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
-.fa-card {
-  background: var(--s2); border: 1px solid var(--line);
-  border-radius: 12px; padding: 14px;
-  transition: all 0.13s ease;
-}
-.fa-card:hover { border-color: #3a4560; transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,0.35); }
-.fa-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.fa-name { font-weight: 800; font-size: 15px; }
-.fa-role { color: var(--text-2); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; }
-.fa-stats { display: flex; gap: 7px; flex-wrap: wrap; color: var(--text-2); font-size: 12px; margin-bottom: 12px; }
-.fa-stats span { background: #0b0e13; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
-
 /* ---------------- P1: win-prob panel + traits ---------------- */
 .why { margin-top: 12px; background: rgba(11,14,19,0.65); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
 .why summary { cursor: pointer; font-weight: 800; color: var(--text); font-size: 13.5px; }
 .why ul { margin: 8px 0 0; padding-left: 18px; }
 .why li { color: var(--text-2); font-size: 13px; margin: 4px 0; }
-.trait-chips { list-style: none; padding: 0; margin: 8px 0 0; }
-.trait-chips li { margin: 6px 0; font-size: 14px; }
 .trait-badge { background: #2a2410; color: #ffd24a; border: 1px solid #5a4a12; border-radius: 6px; padding: 2px 7px; font-weight: 700; font-size: 12px; }
 .md-reveals { margin: 8px 0; display: flex; flex-wrap: wrap; gap: 6px; }
 
