@@ -141,5 +141,6 @@ test('old saves and invalid tenure do not invent veterans; mode boundaries', () 
   const unknown = { ...s }
   assert.equal(applyOfficeMorale(s, unknown, { type: 'PLAY_ROUND' }).state, unknown)
   const retired = { ...s, career: { ...s.career, status: 'retired' } }
+  assert.equal(applyTenureMorale(retired, { completedSeasonIndex: 8, lineup: s.lineup }).state, retired)
   assert.equal(office(retired, { type: 'SIGN', playerId: s.faPool[0].id }).state, retired)
 })

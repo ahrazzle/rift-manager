@@ -82,7 +82,7 @@ export function applyOfficeMorale(before, after, action = {}) {
 
 /** After placement morale; explicitly pass the completed index and OLD lineup. */
 export function applyTenureMorale(state, { completedSeasonIndex, lineup } = {}) {
-  if (state?.mode !== 'career') return success(state)
+  if (state?.mode !== 'career' || state.career?.status !== 'active') return success(state)
   if (!Number.isInteger(completedSeasonIndex) || completedSeasonIndex < 1 || !lineup || typeof lineup !== 'object' || Array.isArray(lineup)) return refuse(state, 'Completed season index and pre-reset lineup are required.')
   const starters = new Set(Object.values(lineup))
   const changes = new Map()
