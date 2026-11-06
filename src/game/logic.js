@@ -183,7 +183,7 @@ export function explainWinProb(state, oppId, opts = {}) {
   const preparation = preparationBonus(state, oppId)
   const prob = estimateSeriesWinProb(
     myLineup, myTactic, oppLineup, oppTactic, n, rng, bonus + preparation,
-    { aStrat: state.strategy ?? null, fearless: state.seriesOptions?.fearless ?? false },
+    { aStrat: state.strategy ?? null },
   )
   const rating = clampPP((avgOvr(myLineup) - avgOvr(oppLineup)) * 1.1, -25, 25)
   const form = clampPP((avgForm(myLineup) - avgForm(oppLineup)) * 0.35, -10, 10)

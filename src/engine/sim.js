@@ -683,8 +683,8 @@ function simulateGame(lineupA, lineupB, winner, gameIndex, note, strDiff, tactic
 // P1 item 7: extra.bigMatch (default false) arms big_game_player; trait
 //   deltas fold in at the strategyDelta site. Trait-free lineups consume zero
 //   extra rng and produce byte-identical output (with and without bigMatch).
-// P1 item 10: extra.fearless (default false); FEARLESS_PENALTY strength points
-//   off the game-N winner's next game (biased only). Base sA/sB untouched.
+// extra.fearless — reserved; real Fearless is draft champion lockout (match
+// session), not a strength modifier. Ignored here for backward compatibility.
 // returns { winner, aWins, bWins, games:[GameResult...], log:[...], sA, sB }
 // (+ `lineups: { A, B }` snapshots ONLY when a trait carrier exists, so the
 // reducer can persist revealed flags; trait-free series keep the exact P0 shape).
@@ -693,11 +693,9 @@ function simulateGame(lineupA, lineupB, winner, gameIndex, note, strDiff, tactic
 // extra.traitSeed: reserved (P1 item 7); when null, trait rng draws use the
 //   series rng. Currently informational only.
 // sA/sB are computed + returned in all modes (display-only under random/manual).
-export const FEARLESS_PENALTY = 1.0
 export function simulateSeries(lineupA, tacticA, lineupB, tacticB, rng = Math.random, labelA = 'Team A', labelB = 'Team B', extra = {}) {
-  const { aBonus = 0, bBonus = 0, aStrat = null, bStrat = null, simMode: simModeRaw, forcedWinner: forcedWinnerRaw, bigMatch: bigMatchRaw, fearless: fearlessRaw } = extra ?? {}
+  const { aBonus = 0, bBonus = 0, aStrat = null, bStrat = null, simMode: simModeRaw, forcedWinner: forcedWinnerRaw, bigMatch: bigMatchRaw } = extra ?? {}
   const bigMatch = bigMatchRaw ?? false
-  const fearless = fearlessRaw ?? false
   let simMode = simModeRaw ?? 'biased'
   if (simMode !== 'biased' && simMode !== 'random' && simMode !== 'manual') simMode = 'biased'
   let forcedWinner = forcedWinnerRaw ?? null
@@ -735,10 +733,8 @@ export function simulateSeries(lineupA, tacticA, lineupB, tacticB, rng = Math.ra
   const need = 2
   log.push(`${labelA} strength ${sA.toFixed(1)} vs ${labelB} ${sB.toFixed(1)}`)
   if (manualFallback) log.push('Manual resolver missing forcedWinner — falling back to biased.')
-  if (fearless && simMode !== 'biased') log.push(`Fearless on — no effect under ${simMode}.`)
 
   let g = 1
-  let prevWinner = null // 'A' | 'B' | null (P1 item 10)
   while (g <= maxGames && aWins < need && bWins < need) {
     // P1 item 7: game g is a decider when it is the last possible game and
     // the series is tied (BO3: g === 3 && 1–1). Clutch fires additively here.
@@ -750,14 +746,8 @@ export function simulateSeries(lineupA, tacticA, lineupB, tacticB, rng = Math.ra
       clutchBonus(snapA, log)
       clutchBonus(snapB, log)
     }
-    // P1 item 10: the game-N winner plays off comfort in game N+1 (biased only).
     let effA = sA + clutchA
     let effB = sB + clutchB
-    if (fearless && simMode === 'biased' && prevWinner) {
-      if (prevWinner === 'A') effA -= FEARLESS_PENALTY
-      else effB -= FEARLESS_PENALTY
-      log.push(`Fearless: ${prevWinner === 'A' ? labelA : labelB} off comfort (−1.0).`)
-    }
     let aWon
     if (simMode === 'random') {
       // Ratings ignored; per-game winner from a single rng draw. Same
@@ -774,7 +764,6 @@ export function simulateSeries(lineupA, tacticA, lineupB, tacticB, rng = Math.ra
     games.push(detail)
     if (aWon) aWins++;
     else bWins++
-    prevWinner = aWon ? 'A' : 'B' // P1 item 10: next game penalizes this side
     log.push(`Game ${g}: ${aWon ? labelA : labelB} takes it via ${note}.`)
     log.push(`Game ${g}: ${detail.durationMin} min, ${detail.killsA}-${detail.killsB} kills.`)
     g++
@@ -794,7 +783,7 @@ export function simulateSeries(lineupA, tacticA, lineupB, tacticB, rng = Math.ra
 // same drawGame, same simulateGame cosmetics. Returns { aWon, game, sA, sB }.
 export function simulateSingleGame(lineupA, tacticA, lineupB, tacticB, rng = Math.random, labelA = 'Team A', labelB = 'Team B', extra = {}) {
   const { aBonus = 0, bBonus = 0, aStrat = null, bStrat = null, gameIndex = 1,
-    bigMatch = false, deciding = false, fearless = false, previousWinner = null, forcedWinner = null } = extra ?? {}
+    bigMatch = false, deciding = false, forcedWinner = null } = extra ?? {}
   const simMode = extra?.simMode === 'random' ? 'random'
     : extra?.simMode === 'manual' && ['A', 'B'].includes(forcedWinner) ? 'manual' : 'biased'
   const dA = strategyDelta(aStrat, tacticA)
@@ -815,8 +804,8 @@ export function simulateSingleGame(lineupA, tacticA, lineupB, tacticB, rng = Mat
   const strDiff = sA - sB
   const clutchA = deciding ? clutchBonus(snapA, log) : 0
   const clutchB = deciding ? clutchBonus(snapB, log) : 0
-  const effA = sA + clutchA - (fearless && previousWinner === 'A' ? FEARLESS_PENALTY : 0)
-  const effB = sB + clutchB - (fearless && previousWinner === 'B' ? FEARLESS_PENALTY : 0)
+  const effA = sA + clutchA
+  const effB = sB + clutchB
   const aWon = simMode === 'manual' ? forcedWinner === 'A'
     : simMode === 'random' ? rng() < 0.5 : drawGame(effA, effB, tacticA, tacticB, rng)
   const note = aWon ? pick(FLAVOR_WIN, rng) : pick(FLAVOR_LOSS, rng)

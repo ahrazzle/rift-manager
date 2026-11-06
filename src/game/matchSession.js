@@ -1,5 +1,10 @@
 import { simulateSeries, simulateSingleGame } from '../engine/sim.js'
-import { createDraft, applyBan, applyPick, currentStep, aiDraftMove, scoreComp, PERSONALITY_IDS } from './draft.js'
+import {
+  createDraft, applyBan, applyPick, applyFlex, applyFlexReserved, assignFlex,
+  swapPicks, movePick, flexIntoFilledRole,
+  currentStep, aiDraftMove, scoreComp, PERSONALITY_IDS, draftReadyToPlay,
+  repairEnemyFlexMatching,
+} from './draft.js'
 import { buildIglPrompt, evaluateIglCall, iglCallById } from './igl.js'
 import { comfortChamps } from './comfort.js'
 import { mulberry32 } from './random.js'
@@ -9,10 +14,30 @@ export function matchOptions(value = {}) {
   return Object.fromEntries(Object.keys(MATCH_OPTIONS).map((key) => [key, value?.[key] === true]))
 }
 
+/** All champion ids locked in this draft (committed + flex), for Fearless */
+export function draftChampIdsForFearless(draft) {
+  const ids = []
+  for (const side of ['BLUE', 'RED']) {
+    for (const cid of Object.values(draft.picks[side] ?? {})) ids.push(cid)
+    for (const e of draft.flex?.[side] ?? []) ids.push(e.champId)
+  }
+  return [...new Set(ids)]
+}
+
+export function mergeFearlessAfterDraft(session, draft) {
+  if (!session.fearlessActive || !draft?.done || !draftReadyToPlay(draft)) return session
+  const add = draftChampIdsForFearless(draft)
+  return { ...session, fearlessUsed: [...new Set([...(session.fearlessUsed ?? []), ...add])] }
+}
+
 export function createMatchSession(context, options) {
-  return { version: 1, stage: 'setup', context, options: matchOptions(options),
+  const opts = matchOptions(options)
+  return { version: 1, stage: 'setup', context, options: opts,
     aWins: 0, bWins: 0, games: [], logs: [], current: null, draft: null,
-    aiPersonality: PERSONALITY_IDS[context.seed % PERSONALITY_IDS.length] }
+    aiPersonality: PERSONALITY_IDS[context.seed % PERSONALITY_IDS.length],
+    fearlessUsed: [],
+    fearlessActive: !!(opts.draft && context.fearlessDraft),
+  }
 }
 
 export function gameExtra(session) {
@@ -20,7 +45,7 @@ export function gameExtra(session) {
   const extra = { ...c.extra, gameIndex: session.games.length + 1,
     deciding: session.aWins === 1 && session.bWins === 1,
     previousWinner: session.games.at(-1)?.winner }
-  if (draft?.done) {
+  if (draft?.done && draftReadyToPlay(draft)) {
     const homeBlue = session.games.length % 2 === 0
     const aPicks = draft.picks[homeBlue ? 'BLUE' : 'RED']
     const bPicks = draft.picks[homeBlue ? 'RED' : 'BLUE']
@@ -51,11 +76,14 @@ function mergeReveals(previous, incoming) {
 }
 
 export function startSessionGame(session) {
-  if (session.options.draft && !session.draft?.done) {
+  const draftIncomplete = session.options.draft && (!session.draft?.done || !draftReadyToPlay(session.draft))
+  if (draftIncomplete) {
     const homeBlue = session.games.length % 2 === 0
     const userHome = session.context.userSide !== 'away'
+    const userSide = homeBlue === userHome ? 'BLUE' : 'RED'
+    const fearlessIds = session.fearlessActive ? (session.fearlessUsed ?? []) : []
     return { ...session, stage: 'draft', current: null,
-      draft: session.draft ?? createDraft(homeBlue === userHome ? 'BLUE' : 'RED') }
+      draft: session.draft ?? createDraft(userSide, { fearlessIds }) }
   }
   const seed = (session.context.seed + session.games.length * 2654435761) >>> 0
   const extra = gameExtra(session)
@@ -90,18 +118,58 @@ export function startMatchSession(session) {
 }
 
 export function changeSessionDraft(session, action) {
-  if (session.stage !== 'draft' || !session.draft || session.draft.done) return session
-  const step = currentStep(session.draft)
-  const isUser = step.side === session.draft.userSide
+  if (session.stage !== 'draft' || !session.draft) return session
+  const dr = session.draft
+
+  if (action.type === 'MATCH_DRAFT_ASSIGN_FLEX') {
+    try {
+      const draft = assignFlex(dr, dr.userSide, action.champId, action.role)
+      return mergeFearlessAfterDraft({ ...session, draft }, draft)
+    } catch { return session }
+  }
+
+  if (action.type === 'MATCH_DRAFT_REARRANGE') {
+    if (dr.userSide !== action.side) return session
+    try {
+      let draft = dr
+      if (action.op === 'swap') draft = swapPicks(dr, action.side, action.roleA, action.roleB)
+      else if (action.op === 'move') draft = movePick(dr, action.side, action.fromRole, action.toRole)
+      else if (action.op === 'flexIntoFilled') draft = flexIntoFilledRole(dr, action.side, action.flexChampId, action.targetRole)
+      else return session
+      draft = repairEnemyFlexMatching(draft, mulberry32(session.context.seed + 77))
+      return mergeFearlessAfterDraft({ ...session, draft }, draft)
+    } catch { return session }
+  }
+
+  if (dr.done) return session
+
+  const step = currentStep(dr)
+  if (!step) return session
+  const isUser = step.side === dr.userSide
   let move = action
   if (action.type === 'MATCH_DRAFT_AI') {
     if (isUser) return session
-    move = aiDraftMove(session.draft, mulberry32(session.context.seed + session.draft.step + session.games.length * 101), session.aiPersonality)
+    move = aiDraftMove(dr, mulberry32(session.context.seed + dr.step + session.games.length * 101), session.aiPersonality)
   } else if (!isUser) return session
   try {
     const isBan = action.type === 'MATCH_DRAFT_AI' ? move.type === 'ban' : action.type === 'MATCH_DRAFT_BAN'
-    const draft = isBan ? applyBan(session.draft, move.champId) : applyPick(session.draft, move.champId, move.role)
-    return { ...session, draft }
+    if (isBan) {
+      const draft = applyBan(dr, move.champId)
+      return mergeFearlessAfterDraft({ ...session, draft }, draft)
+    }
+    if (action.type === 'MATCH_DRAFT_AI' && move.flex) {
+      const draft = applyFlexReserved(dr, move.champId, move.role)
+      return mergeFearlessAfterDraft({ ...session, draft }, draft)
+    }
+    if (action.type === 'MATCH_DRAFT_FLEX') {
+      const draft = applyFlex(dr, move.champId)
+      return mergeFearlessAfterDraft({ ...session, draft }, draft)
+    }
+    const draft = repairEnemyFlexMatching(
+      applyPick(dr, move.champId, move.role),
+      mulberry32(session.context.seed + 77),
+    )
+    return mergeFearlessAfterDraft({ ...session, draft }, draft)
   } catch { return session }
 }
 

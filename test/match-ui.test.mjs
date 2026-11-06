@@ -25,7 +25,7 @@ try {
   await act(async () => { tree = create(React.createElement(NewGame, { state: {}, dispatch: a => entries.push(a) })) })
   assert.equal(tree.root.findAll(n => n.props.className?.includes('mode-card') && text(n).includes('Live pick/ban')).length, 0)
   const switches = () => tree.root.findAllByProps({ role: 'switch' })
-  assert.equal(switches().length, 3)
+  assert.equal(switches().length, 4, 'Draft, IGL, Show simulation, Fearless draft')
   await act(async () => switches()[0].props.onChange({ target: { checked: true } }))
   await act(async () => switches()[1].props.onChange({ target: { checked: true } }))
   assert.equal(switches()[2].props.checked, true)
