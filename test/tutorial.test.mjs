@@ -17,6 +17,7 @@ import {
   contextualTipDef,
   markSeen,
 } from '../src/game/tutorial.js'
+import { tutorialScrollBehavior, TUTORIAL_MOBILE_MAX_WIDTH } from '../src/game/tutorialScroll.js'
 
 const values = new Map()
 globalThis.localStorage = {
@@ -89,13 +90,33 @@ try {
   writeTutorial(skipped)
   assert.equal(readTutorial().status, 'skipped')
 
+  assert.equal(readTutorial().status, 'skipped')
+
+  assert.equal(tutorialScrollBehavior({ reducedMotion: true, viewportWidth: 1280 }), 'auto')
+  assert.equal(tutorialScrollBehavior({ reducedMotion: false, viewportWidth: 390 }), 'auto')
+  assert.equal(tutorialScrollBehavior({ reducedMotion: false, viewportWidth: TUTORIAL_MOBILE_MAX_WIDTH }), 'auto')
+  assert.equal(tutorialScrollBehavior({ reducedMotion: false, viewportWidth: TUTORIAL_MOBILE_MAX_WIDTH + 1 }), 'smooth')
+
   const temp = await mkdtemp(new URL('./.tutorial-ui-', import.meta.url).pathname)
+  let scrollIntoViewCalls = 0
+  const mockRect = { top: 120, left: 16, width: 180, height: 36, right: 196, bottom: 156 }
+  const mockEl = {
+    getBoundingClientRect: () => mockRect,
+    scrollIntoView: () => {
+      scrollIntoViewCalls++
+    },
+  }
+  let scrollListener
   globalThis.document = {
-    querySelector: () => null,
-    addEventListener: () => {},
+    querySelector: (sel) => (String(sel).includes('tour-scroll-test') ? mockEl : null),
+    addEventListener: (type, fn, capture) => {
+      if (type === 'scroll' && capture) scrollListener = fn
+    },
     removeEventListener: () => {},
   }
-  globalThis.addEventListener = () => {}
+  globalThis.addEventListener = (type, fn, capture) => {
+    if (type === 'scroll' && capture) scrollListener = fn
+  }
   globalThis.removeEventListener = () => {}
   globalThis.innerWidth = 1280
   globalThis.innerHeight = 800
@@ -109,6 +130,25 @@ try {
     jsx: 'automatic',
   })
   const { default: TutorialOverlay } = await import(`${temp}/TutorialOverlay.js`)
+
+  scrollIntoViewCalls = 0
+  await act(async () => {
+    create(
+      React.createElement(TutorialOverlay, {
+        open: true,
+        steps: [{ anchor: 'tour-scroll-test', copy: 'Anchored step' }],
+        stepIndex: 0,
+        totalSteps: 2,
+        onNext: () => {},
+        onSkip: () => {},
+      }),
+    )
+  })
+  assert.equal(scrollIntoViewCalls, 1, 'scrollIntoView runs once when step anchor mounts')
+  assert.equal(typeof scrollListener, 'function', 'capture-phase scroll listener is registered')
+  scrollIntoViewCalls = 0
+  scrollListener(new Event('scroll'))
+  assert.equal(scrollIntoViewCalls, 0, 'scroll listener remeasures only; no scrollIntoView')
 
   let advanced = 0
   let skippedWalk = 0

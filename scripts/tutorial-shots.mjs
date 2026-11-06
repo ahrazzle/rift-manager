@@ -128,5 +128,31 @@ const browser = await chromium.launch()
   await context.close()
 }
 
+{
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    recordVideo: { dir: outDir, size: { width: 390, height: 844 } },
+  })
+  const page = await context.newPage()
+  await startCareer(page)
+  await page.locator('.tutorial-card').waitFor({ timeout: 15000 })
+  const next = page.getByRole('button', { name: /^Next$/i })
+  await next.click()
+  await next.click()
+  await page.locator('[data-tour="tour-prep"]').waitFor({ timeout: 10000 })
+  await page.screenshot({ path: `${outDir}/mobile-prep-step-before-next.png`, fullPage: false })
+  await next.click()
+  await page.locator('[data-tour="tour-lineup-tab"]').waitFor({ timeout: 10000 })
+  await page.waitForTimeout(200)
+  await page.screenshot({ path: `${outDir}/mobile-lineup-step-after-next.png`, fullPage: false })
+  await page.waitForTimeout(400)
+  await context.close()
+  const video = page.video()
+  if (video) {
+    await video.saveAs(`${outDir}/mobile-prep-to-lineup-next.webm`)
+  }
+}
+
 await browser.close()
 console.log(`Tutorial screenshots written to ${outDir}`)

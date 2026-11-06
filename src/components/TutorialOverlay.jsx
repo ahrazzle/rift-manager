@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { tutorialScrollBehavior } from '../game/tutorialScroll.js'
 
 const PAD = 10
 
@@ -48,81 +49,106 @@ export default function TutorialOverlay({
   const step = steps?.[stepIndex]
   const anchor = isEndCard ? null : step?.anchor
 
-  const measure = useCallback(() => {
+  const applyLayoutFromElement = useCallback(
+    (el) => {
+      if (isEndCard || !el) {
+        setHole(null)
+        const vw = globalThis.innerWidth || 800
+        setCardPos({
+          top: Math.max(24, (globalThis.innerHeight || 600) * 0.2),
+          left: clamp(vw / 2 - 180, 12, vw - 372),
+        })
+        return
+      }
+      const rect = el.getBoundingClientRect()
+      const top = rect.top - PAD
+      const left = rect.left - PAD
+      const width = rect.width + PAD * 2
+      const height = rect.height + PAD * 2
+      setHole({ top, left, width, height })
+
+      const cardW = 360
+      const cardH = cardRef.current?.offsetHeight || 220
+      const vw = globalThis.innerWidth || 800
+      const vh = globalThis.innerHeight || 600
+      let cardTop = top + height + 12
+      let cardLeft = clamp(left, 12, vw - cardW - 12)
+
+      if (placement === 'igl-safe') {
+        const grid = globalThis.document.querySelector('.igl-call-grid')
+        const coaching = globalThis.document.querySelector('.rift-sidebar.rift-coaching')
+        const mapWrap = globalThis.document.querySelector('.rift-map-wrap')
+        const mapRect = mapWrap?.getBoundingClientRect()
+        if (mapRect) {
+          cardTop = mapRect.bottom - cardH - 16
+          cardLeft = clamp(mapRect.left + (mapRect.width - cardW) / 2, 12, vw - cardW - 12)
+        } else {
+          cardTop = vh - cardH - 24
+          cardLeft = clamp(vw / 2 - cardW / 2, 12, vw - cardW - 12)
+        }
+        let cardRect = { top: cardTop, left: cardLeft, right: cardLeft + cardW, bottom: cardTop + cardH }
+        if (grid) {
+          const gr = grid.getBoundingClientRect()
+          if (rectsOverlap(cardRect, gr)) cardTop = Math.min(gr.top - cardH - 12, vh - cardH - 12)
+        }
+        cardRect = { top: cardTop, left: cardLeft, right: cardLeft + cardW, bottom: cardTop + cardH }
+        if (coaching) {
+          const cr = coaching.getBoundingClientRect()
+          if (rectsOverlap(cardRect, cr)) {
+            cardLeft = clamp(cr.left - cardW - 16, 12, vw - cardW - 12)
+            cardRect = { top: cardTop, left: cardLeft, right: cardLeft + cardW, bottom: cardTop + cardH }
+            if (rectsOverlap(cardRect, cr)) cardTop = Math.min(cr.top - cardH - 12, vh - cardH - 12)
+          }
+        }
+      } else if (cardTop + cardH > vh - 8) {
+        cardTop = Math.max(12, top - cardH - 12)
+      }
+      setCardPos({ top: cardTop, left: cardLeft })
+    },
+    [isEndCard, placement],
+  )
+
+  /** Reposition cutout/card only — never scrolls the document. */
+  const remeasure = useCallback(() => {
     if (!open) return
-    const el = anchor ? findAnchor(anchor) : null
-    if (!isEndCard && anchor && !el) {
+    if (isEndCard) {
+      applyLayoutFromElement(null)
+      return
+    }
+    if (!anchor) return
+    const el = findAnchor(anchor)
+    if (el) applyLayoutFromElement(el)
+  }, [open, anchor, isEndCard, applyLayoutFromElement])
+
+  useLayoutEffect(() => {
+    if (!open) return
+    if (isEndCard) {
+      applyLayoutFromElement(null)
+      return
+    }
+    if (!anchor) return
+    const el = findAnchor(anchor)
+    if (!el) {
       if (import.meta.env?.DEV) console.info('[tutorial] missing anchor', anchor)
       onNext?.({ missingAnchor: true })
       return
     }
-    if (isEndCard || !el) {
-      setHole(null)
-      const vw = globalThis.innerWidth || 800
-      setCardPos({ top: Math.max(24, (globalThis.innerHeight || 600) * 0.2), left: clamp(vw / 2 - 180, 12, vw - 372) })
-      return
-    }
-    el.scrollIntoView({ block: 'nearest', behavior: reducedMotion ? 'auto' : 'smooth' })
-    const rect = el.getBoundingClientRect()
-    const top = rect.top - PAD
-    const left = rect.left - PAD
-    const width = rect.width + PAD * 2
-    const height = rect.height + PAD * 2
-    setHole({ top, left, width, height })
-
-    const cardW = 360
-    const cardH = cardRef.current?.offsetHeight || 220
-    const vw = globalThis.innerWidth || 800
-    const vh = globalThis.innerHeight || 600
-    let cardTop = top + height + 12
-    let cardLeft = clamp(left, 12, vw - cardW - 12)
-
-    if (placement === 'igl-safe') {
-      const grid = globalThis.document.querySelector('.igl-call-grid')
-      const coaching = globalThis.document.querySelector('.rift-sidebar.rift-coaching')
-      const mapWrap = globalThis.document.querySelector('.rift-map-wrap')
-      const mapRect = mapWrap?.getBoundingClientRect()
-      if (mapRect) {
-        cardTop = mapRect.bottom - cardH - 16
-        cardLeft = clamp(mapRect.left + (mapRect.width - cardW) / 2, 12, vw - cardW - 12)
-      } else {
-        cardTop = vh - cardH - 24
-        cardLeft = clamp(vw / 2 - cardW / 2, 12, vw - cardW - 12)
-      }
-      let cardRect = { top: cardTop, left: cardLeft, right: cardLeft + cardW, bottom: cardTop + cardH }
-      if (grid) {
-        const gr = grid.getBoundingClientRect()
-        if (rectsOverlap(cardRect, gr)) cardTop = Math.min(gr.top - cardH - 12, vh - cardH - 12)
-      }
-      cardRect = { top: cardTop, left: cardLeft, right: cardLeft + cardW, bottom: cardTop + cardH }
-      if (coaching) {
-        const cr = coaching.getBoundingClientRect()
-        if (rectsOverlap(cardRect, cr)) {
-          cardLeft = clamp(cr.left - cardW - 16, 12, vw - cardW - 12)
-          cardRect = { top: cardTop, left: cardLeft, right: cardLeft + cardW, bottom: cardTop + cardH }
-          if (rectsOverlap(cardRect, cr)) cardTop = Math.min(cr.top - cardH - 12, vh - cardH - 12)
-        }
-      }
-    } else if (cardTop + cardH > vh - 8) {
-      cardTop = Math.max(12, top - cardH - 12)
-    }
-    setCardPos({ top: cardTop, left: cardLeft })
-  }, [open, anchor, isEndCard, onNext, placement, reducedMotion])
-
-  useLayoutEffect(() => {
-    measure()
-  }, [measure, stepIndex, open])
+    el.scrollIntoView({
+      block: 'nearest',
+      behavior: tutorialScrollBehavior({ reducedMotion }),
+    })
+    applyLayoutFromElement(el)
+  }, [open, stepIndex, anchor, isEndCard, reducedMotion, applyLayoutFromElement, onNext])
 
   useEffect(() => {
     if (!open) return undefined
-    const onResize = () => measure()
-    globalThis.addEventListener('resize', onResize)
-    globalThis.addEventListener('scroll', onResize, true)
+    globalThis.addEventListener('resize', remeasure)
+    globalThis.addEventListener('scroll', remeasure, true)
     return () => {
-      globalThis.removeEventListener('resize', onResize)
-      globalThis.removeEventListener('scroll', onResize, true)
+      globalThis.removeEventListener('resize', remeasure)
+      globalThis.removeEventListener('scroll', remeasure, true)
     }
-  }, [open, measure])
+  }, [open, remeasure])
 
   useEffect(() => {
     if (!open) return undefined
