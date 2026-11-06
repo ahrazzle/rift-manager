@@ -11,9 +11,7 @@ export function Pips({ results = [], label = 'Form', className }) {
   const summary = results.map((r) => WORD[r] ?? 'upcoming').join(', ')
   return (
     <span className={cx('pips', className)}>
-      <span className="sr-only">
-        {label}: {summary || 'no games yet'}
-      </span>
+      <span className="sr-only">{`${label}: ${summary || 'no games yet'}`}</span>
       {results.map((r, i) => (
         <span key={i} className={cx('pip', r === 'W' ? 'w' : r === 'L' ? 'l' : 'n')} aria-hidden="true">
           {r === 'W' || r === 'L' ? r : ''}

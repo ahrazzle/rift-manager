@@ -166,7 +166,7 @@ export function gauntletTrack(state) {
 
 export function gauntletContext(state) {
   const g = state?.gauntlet
-  if (!g) return { primary: 'Gauntlet', secondary: '', detail: '', spoken: 'Gauntlet' }
+  if (!g) return { primary: 'Gauntlet', secondary: '', detail: 'Knockout ladder · run not started', spoken: 'Gauntlet, run not started' }
   const target = g.target ?? g.opponents?.length ?? 5
   if (g.status === 'won') return { primary: 'Gauntlet', secondary: 'cleared', detail: `${g.wins} of ${target} wins`, spoken: 'Gauntlet cleared' }
   if (g.status === 'lost') return { primary: 'Gauntlet', secondary: 'over', detail: `${g.wins} of ${target} wins`, spoken: `Gauntlet over after ${g.wins} wins` }

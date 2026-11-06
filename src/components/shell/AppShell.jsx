@@ -88,6 +88,8 @@ function topbarModel(state, totalRounds) {
 }
 
 function StatusChips({ state, tour }) {
+  // Board and budget are Season/Career chrome; Gauntlet and Scenario don't show them.
+  if (!['season', 'career'].includes(shellKind(state))) return null
   if (!state.board && !state.finance && !state.sacked) return null
   const board = state.board
   const low = board && board.confidence < 40
@@ -324,7 +326,7 @@ export default function AppShell({
 
       {moreOpen && (
         <BottomSheet title="More" onClose={() => setMoreOpen(false)}>
-          {(state.board || state.finance) && (
+          {['season', 'career'].includes(shellKind(state)) && (state.board || state.finance) && (
             <div className="shell-more-status">
               <StatusChips state={state} />
             </div>

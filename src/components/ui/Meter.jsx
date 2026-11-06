@@ -27,11 +27,11 @@ export function Meter({
         {!hideText && (
           <div className="ui-meter-row">
             <span>
-              <strong className="num">{left}%</strong> {leftLabel}
+              <strong className="num">{`${left}%`}</strong> {leftLabel}
             </span>
             {label && <span className="ui-meter-mid">{label}</span>}
             <span>
-              {rightLabel} <strong className="num">{100 - left}%</strong>
+              {rightLabel} <strong className="num">{`${100 - left}%`}</strong>
             </span>
           </div>
         )}

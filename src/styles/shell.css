@@ -844,3 +844,10 @@ html.motion-reduce {
 .shell-locked[open] summary::before {
   transform: rotate(45deg);
 }
+
+/* Walkthrough anchors and in-page jumps land below the sticky topbar and above the tabbar. */
+.shell-content [data-tour],
+.shell-content [id] {
+  scroll-margin-top: calc(var(--topbar) + var(--sp-4));
+  scroll-margin-bottom: calc(var(--tabbar, 0px) + var(--sp-4));
+}
