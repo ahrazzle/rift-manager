@@ -11,6 +11,8 @@ import { useState } from 'react'
 import { CAMPAIGN_SLOTS, campaignById } from '../game/useGameState.js'
 import { getSeason } from '../data/seasons.js'
 import MatchDetail, { recomputeGames } from './MatchDetail.jsx'
+import { Button, Card, Chip } from './ui/index.js'
+import TeamCrest from './TeamCrest.jsx'
 
 const REPLAY_ROLES = ['TOP', 'JNG', 'MID', 'BOT', 'SUP']
 
@@ -30,99 +32,119 @@ function SeasonReplay({ campaign, state, dispatch }) {
 
   if (!prog) {
     return (
-      <div className="card">
-        <h2>{campaign.title}</h2>
-        <button type="button" onClick={() => dispatch({ type: 'QUIT_CAMPAIGN' })}>
-          ← Back to menu
-        </button>
-      </div>
+      <Card title={campaign.title}>
+        <div className="cmp-actions">
+          <Button onClick={() => dispatch({ type: 'QUIT_CAMPAIGN' })}>← Back to menu</Button>
+        </div>
+      </Card>
     )
   }
 
   if (prog.status === 'cleared') {
     return (
-      <div className="stack">
-        <div className="card">
-          <p>{campaign.title}, replayed. History kept its order.</p>
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <button type="button" onClick={() => dispatch({ type: 'RESTART_CAMPAIGN' })}>
-              Replay again →
-            </button>
-            <button type="button" onClick={() => dispatch({ type: 'QUIT_CAMPAIGN' })}>
-              Back to menu
-            </button>
-          </div>
+      <Card title="Replay complete">
+        <p className="cmp-lede">{campaign.title}, replayed. History kept its order.</p>
+        <div className="cmp-actions">
+          <Button variant="primary" onClick={() => dispatch({ type: 'RESTART_CAMPAIGN' })}>Replay again →</Button>
+          <Button variant="quiet" onClick={() => dispatch({ type: 'QUIT_CAMPAIGN' })}>Back to menu</Button>
         </div>
-      </div>
+      </Card>
     )
   }
 
   return (
-    <div className="stack">
-      <div className="card">
-        <h2>{campaign.title}</h2>
-        <p style={{ opacity: 0.8 }}>{season.label}</p>
-        <p>{campaign.description}</p>
-        <p>🏆 {champ ? champ.name : campaign.championId}, champions</p>
-      </div>
-      <div className="card">
-        <h3>Final standings (locked — history decided)</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Team</th>
-              <th>W</th>
-              <th>L</th>
-              <th>Pts</th>
-            </tr>
-          </thead>
-          <tbody>
-            {campaign.standings.map((row, i) => (
-              <tr key={row.teamId}>
-                <td>{i + 1}</td>
-                <td>{byId[row.teamId] ? byId[row.teamId].name : row.teamId}</td>
-                <td>{dash(row.wins)}</td>
-                <td>{dash(row.losses)}</td>
-                <td>{dash(row.pts)}</td>
+    <div className="cmp-stack">
+      <Card eyebrow={season.label} title={campaign.title}>
+        <p className="cmp-lede">{campaign.description}</p>
+        {champ && (
+          <p className="cmp-champ">
+            <Chip tone="gold" icon="star">Champions</Chip>
+            <span className="cmp-team">
+              <TeamCrest teamId={champ.id} name={champ.name} size={24} />
+              <span className="cmp-team-name">{champ.name}</span>
+            </span>
+          </p>
+        )}
+      </Card>
+      <Card title="Final standings" action={<Chip>Locked: history decided</Chip>}>
+        <div className="cmp-table-wrap">
+          <table className="cmp-table cmp-table--plain">
+            <caption className="sr-only">Final standings of the replayed season</caption>
+            <thead>
+              <tr>
+                <th scope="col" className="c-pos">#</th>
+                <th scope="col" className="c-team">Team</th>
+                <th scope="col" className="c-wl">W</th>
+                <th scope="col" className="c-wl">L</th>
+                <th scope="col" className="c-wl">Pts</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="card">
-        <h3>Play an exhibition</h3>
-        <p className="hint">Take a historical roster onto the Rift with Draft, IGL or a map simulation. Practice results leave the recorded standings unchanged.</p>
-        <div className="match-starting-five"><label className="field">Your team<select value={teamId} onChange={(e) => setTeamId(e.target.value)}>{season.teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label>
-        <label className="field">Opponent<select value={opponentId} onChange={(e) => setOpponentId(e.target.value)}>{season.teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label></div>
-        <button type="button" className="primary" disabled={teamId === opponentId} onClick={() => dispatch({ type: 'PREVIEW_MATCH', action: { type: 'PLAY_REPLAY_EXHIBITION', teamId, opponentId } })}>Enter exhibition →</button>
-      </div>
-      <div className="card">
-        <h3>Rosters</h3>
-        {season.teams.map((t) => (
-          <div key={t.id} style={{ marginBottom: 8 }}>
-            <button type="button" onClick={() => setOpen((o) => ({ ...o, [t.id]: !o[t.id] }))} aria-expanded={!!open[t.id]}>
-              {t.name} {open[t.id] ? '▴' : '▾'}
-            </button>
-            {open[t.id] && (
-              <ul>
-                {startersOf(t).map((p) => (
-                  <li key={p.id}>
-                    {p.role}: {p.name}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button type="button" onClick={() => dispatch({ type: 'COMPLETE_SEASON_REPLAY' })}>
-          Complete replay →
-        </button>
-        <button type="button" onClick={() => dispatch({ type: 'QUIT_CAMPAIGN' })}>
-          ← Back to menu
-        </button>
+            </thead>
+            <tbody>
+              {campaign.standings.map((row, i) => {
+                const name = byId[row.teamId] ? byId[row.teamId].name : row.teamId
+                return (
+                  <tr key={row.teamId} className="cmp-row">
+                    <td className="c-pos">{i + 1}</td>
+                    <th scope="row" className="c-team">
+                      <span className="cmp-team">
+                        <TeamCrest teamId={row.teamId} name={name} size={28} />
+                        <span className="cmp-team-name">{name}</span>
+                      </span>
+                    </th>
+                    <td className="c-wl">{dash(row.wins)}</td>
+                    <td className="c-wl">{dash(row.losses)}</td>
+                    <td className="c-wl">{dash(row.pts)}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+      <Card title="Play an exhibition">
+        <p className="cmp-note">Take a historical roster onto the Rift with Draft, IGL or a map simulation. Practice results leave the recorded standings unchanged.</p>
+        <div className="cmp-exhibition">
+          <label className="cmp-pick">
+            <TeamCrest teamId={teamId} name={byId[teamId]?.name} size={32} />
+            <span className="cmp-pick-text">
+              <span className="label">Your team</span>
+              <select className="year-select" value={teamId} onChange={(e) => setTeamId(e.target.value)}>{season.teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
+            </span>
+          </label>
+          <label className="cmp-pick">
+            <TeamCrest teamId={opponentId} name={byId[opponentId]?.name} size={32} />
+            <span className="cmp-pick-text">
+              <span className="label">Opponent</span>
+              <select className="year-select" value={opponentId} onChange={(e) => setOpponentId(e.target.value)}>{season.teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
+            </span>
+          </label>
+        </div>
+        <div className="cmp-actions">
+          <Button variant="primary" disabled={teamId === opponentId} onClick={() => dispatch({ type: 'PREVIEW_MATCH', action: { type: 'PLAY_REPLAY_EXHIBITION', teamId, opponentId } })}>Enter exhibition →</Button>
+        </div>
+      </Card>
+      <Card title="Rosters">
+        <ul className="cmp-roster-list">
+          {season.teams.map((t) => (
+            <li key={t.id}>
+              <Button variant="quiet" aria-expanded={!!open[t.id]} onClick={() => setOpen((o) => ({ ...o, [t.id]: !o[t.id] }))}>
+                <TeamCrest teamId={t.id} name={t.name} size={24} />
+                {t.name} {open[t.id] ? '▴' : '▾'}
+              </Button>
+              {open[t.id] && (
+                <ul className="cmp-roster">
+                  {startersOf(t).map((p) => (
+                    <li key={p.id}><span className="label">{p.role}</span> {p.name}</li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      </Card>
+      <div className="cmp-actions">
+        <Button variant="secondary" onClick={() => dispatch({ type: 'COMPLETE_SEASON_REPLAY' })}>Complete replay →</Button>
+        <Button variant="quiet" onClick={() => dispatch({ type: 'QUIT_CAMPAIGN' })}>← Back to menu</Button>
       </div>
     </div>
   )
@@ -138,22 +160,23 @@ function SlotDetail({ entry, node, campaign, roundLabel }) {
   const [open, setOpen] = useState(false)
   if (entry.historicalLoss && !entry.games) {
     return (
-      <div className="hint" style={{ margin: '4px 0' }}>
-        🎞 Game {entry.slot}: historical loss (auto) — {campaign.playerLabel} fell to {node.opponentLabel}.
-      </div>
+      <li className="cmp-slot">
+        <Chip>Historical</Chip>
+        <span>Game {entry.slot}: historical loss (auto). {campaign.playerLabel} fell to {node.opponentLabel}.</span>
+      </li>
     )
   }
   const adapted = entry
   return (
-    <div style={{ margin: '4px 0' }}>
-      <button type="button" className="ghost" onClick={() => setOpen(!open)} aria-expanded={open}>
-        {entry.playerWon ? '✅' : '❌'} Game {entry.slot}: {entry.playerWon ? 'WIN' : 'LOSS'}{' '}
-        ({entry.aWins}–{entry.bWins}) {open ? '▴' : '▾'}
-      </button>
+    <li className="cmp-slot cmp-slot--played">
+      <Button variant="quiet" onClick={() => setOpen(!open)} aria-expanded={open}>
+        <Chip tone={entry.playerWon ? 'win' : 'loss'}>{entry.playerWon ? 'Win' : 'Loss'}</Chip>
+        Game {entry.slot} ({entry.aWins}–{entry.bWins}) {open ? '▴' : '▾'}
+      </Button>
       {open && (
-        <div style={{ marginTop: 8 }}>
-          <p className="hint">
-            Game {entry.slot} detail — {campaign.playerLabel} (You) vs {node.opponentLabel}
+        <div className="cmp-slot-detail">
+          <p className="cmp-note">
+            Game {entry.slot} detail: {campaign.playerLabel} (You) vs {node.opponentLabel}
           </p>
           <MatchDetail
             round={roundLabel}
@@ -167,7 +190,7 @@ function SlotDetail({ entry, node, campaign, roundLabel }) {
           />
         </div>
       )}
-    </div>
+    </li>
   )
 }
 
@@ -181,53 +204,54 @@ function NodeCard({ campaign, prog, node, index, dispatch }) {
   const nextIsHard = hardLosses.includes(nextSlot)
 
   let badge
-  if (isCleared) badge = <span className="outcome win">✔ CLEARED</span>
-  else if (isFailedHere) badge = <span className="outcome loss">❌ FAILED HERE</span>
-  else if (isCurrent) badge = <span className="outcome win">📍 NEXT</span>
-  else badge = <span className="hint">⏳ UPCOMING</span>
+  if (isCleared) badge = <Chip tone="win" icon="check">Cleared</Chip>
+  else if (isFailedHere) badge = <Chip tone="loss" icon="alert">Failed here</Chip>
+  else if (isCurrent) badge = <Chip tone="win" icon="play">Next</Chip>
+  else badge = <Chip>Upcoming</Chip>
 
   return (
-    <div className="card">
-      <div className="result-head">
-        <span className="rw">
-          {node.round} · {campaign.playerLabel} vs {node.opponentLabel}
+    <Card
+      className={['cmp-node', isCurrent ? 'is-current' : ''].filter(Boolean).join(' ')}
+      title={node.round}
+      action={badge}
+      aria-current={isCurrent ? 'step' : undefined}
+    >
+      <p className="cmp-node-vs">
+        <span className="cmp-team">
+          <TeamCrest teamId={campaign.playerTeamId} name={campaign.playerLabel} size={28} />
+          <span className="cmp-team-name">{campaign.playerLabel}</span>
         </span>
-        {badge}
-      </div>
-      {node.blurb && <p className="hint">{node.blurb}</p>}
-      <div>
+        <span className="cmp-vs-small">vs</span>
+        <span className="cmp-team">
+          <TeamCrest teamId={node.opponentId} name={node.opponentLabel} size={28} />
+          <span className="cmp-team-name">{node.opponentLabel}</span>
+        </span>
+      </p>
+      {node.blurb && <p className="cmp-note">{node.blurb}</p>}
+      <ul className="cmp-slots">
         {Array.from({ length: CAMPAIGN_SLOTS }, (_, i) => i + 1).map((slot) => {
           const entry = played[slot]
           if (entry) {
-            return (
-              <SlotDetail
-                key={slot}
-                entry={entry}
-                node={node}
-                campaign={campaign}
-                roundLabel={index + 1}
-              />
-            )
+            return <SlotDetail key={slot} entry={entry} node={node} campaign={campaign} roundLabel={index + 1} />
           }
           const isHard = hardLosses.includes(slot)
           const isNext = isCurrent && slot === nextSlot
           return (
-            <div key={slot} className="hint" style={{ margin: '4px 0' }}>
-              Game {slot}: {isHard ? '🎞 historical loss (auto)' : isNext ? '📍 to play' : '· to play'}
-            </div>
+            <li key={slot} className="cmp-slot cmp-slot--todo">
+              {isHard ? <Chip>Historical</Chip> : isNext ? <Chip icon="play">To play</Chip> : <Chip>Later</Chip>}
+              <span>Game {slot}{isHard ? ': historical loss (auto)' : ''}</span>
+            </li>
           )
         })}
-      </div>
+      </ul>
       {isCurrent && nextSlot <= CAMPAIGN_SLOTS && (
-        <button
-          className="primary"
-          style={{ marginTop: 8 }}
-          onClick={() => dispatch({ type: 'PREVIEW_MATCH', action: { type: 'PLAY_CAMPAIGN_NODE' } })}
-        >
-          {nextIsHard ? 'Enter historical game →' : `Play Game ${nextSlot} →`}
-        </button>
+        <div className="cmp-actions">
+          <Button variant="primary" onClick={() => dispatch({ type: 'PREVIEW_MATCH', action: { type: 'PLAY_CAMPAIGN_NODE' } })}>
+            {nextIsHard ? 'Enter historical game →' : `Play Game ${nextSlot} →`}
+          </Button>
+        </div>
       )}
-    </div>
+    </Card>
   )
 }
 
@@ -237,39 +261,36 @@ export default function Campaign({ state, dispatch }) {
 
   if (!prog || !campaign) {
     return (
-      <div className="card">
-        <h2>Campaign</h2>
-        <p className="hint">No campaign in progress.</p>
-        <button className="ghost" onClick={() => dispatch({ type: 'QUIT_CAMPAIGN' })}>
-          ← Back to menu
-        </button>
-      </div>
+      <Card title="Scenario">
+        <p className="cmp-lede">No scenario in progress.</p>
+        <div className="cmp-actions">
+          <Button onClick={() => dispatch({ type: 'QUIT_CAMPAIGN' })}>← Back to menu</Button>
+        </div>
+      </Card>
     )
   }
 
   if (campaign && campaign.kind === 'season') return <SeasonReplay campaign={campaign} state={state} dispatch={dispatch} />
 
+  const nodes = campaign.nodes.map((node, i) => (
+    <NodeCard key={node.id} campaign={campaign} prog={prog} node={node} index={i} dispatch={dispatch} />
+  ))
+
   if (prog.status === 'cleared') {
     return (
-      <div className="stack">
-        <div className="card">
-          <h2>🏆 CAMPAIGN CLEARED</h2>
-          <p>
-            {campaign.playerLabel} walk the real path — {campaign.title}. Every winnable game won;
+      <div className="cmp-stack">
+        <Card variant="hero" eyebrow="Scenario" title="Campaign cleared">
+          <p className="cmp-lede">
+            <Chip tone="gold" icon="star">Cleared</Chip>{' '}
+            {campaign.playerLabel} walk the real path: {campaign.title}. Every winnable game won;
             history kept its losses.
           </p>
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <button className="primary" onClick={() => dispatch({ type: 'RESTART_CAMPAIGN' })}>
-              Play again →
-            </button>
-            <button className="ghost" onClick={() => dispatch({ type: 'QUIT_CAMPAIGN' })}>
-              Back to menu
-            </button>
+          <div className="cmp-actions">
+            <Button variant="primary" onClick={() => dispatch({ type: 'RESTART_CAMPAIGN' })}>Play again →</Button>
+            <Button variant="quiet" onClick={() => dispatch({ type: 'QUIT_CAMPAIGN' })}>Back to menu</Button>
           </div>
-        </div>
-        {campaign.nodes.map((node, i) => (
-          <NodeCard key={node.id} campaign={campaign} prog={prog} node={node} index={i} dispatch={dispatch} />
-        ))}
+        </Card>
+        {nodes}
       </div>
     )
   }
@@ -277,42 +298,32 @@ export default function Campaign({ state, dispatch }) {
   if (prog.status === 'failed') {
     const node = campaign.nodes.find((n) => n.id === prog.failedNodeId)
     return (
-      <div className="stack">
-        <div className="card">
-          <h2>CAMPAIGN FAILED</h2>
-          <p>
-            {campaign.playerLabel} fell in {node ? `${node.round} Game ${prog.failedSlot} vs ${node.opponentLabel}` : 'this run'} —
+      <div className="cmp-stack">
+        <Card variant="hero" eyebrow="Scenario" title="Campaign failed">
+          <p className="cmp-lede">
+            {campaign.playerLabel} fell in {node ? `${node.round} Game ${prog.failedSlot} vs ${node.opponentLabel}` : 'this run'}:
             a winnable game was lost. Campaign over.
           </p>
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <button className="primary" onClick={() => dispatch({ type: 'RETRY_CAMPAIGN_NODE' })}>
-              Retry Game {prog.failedSlot} →
-            </button>
-            <button className="ghost" onClick={() => dispatch({ type: 'QUIT_CAMPAIGN' })}>
-              Back to menu
-            </button>
+          <div className="cmp-actions">
+            <Button variant="primary" onClick={() => dispatch({ type: 'RETRY_CAMPAIGN_NODE' })}>Retry Game {prog.failedSlot} →</Button>
+            <Button variant="quiet" onClick={() => dispatch({ type: 'QUIT_CAMPAIGN' })}>Back to menu</Button>
           </div>
-        </div>
-        {campaign.nodes.map((n, i) => (
-          <NodeCard key={n.id} campaign={campaign} prog={prog} node={n} index={i} dispatch={dispatch} />
-        ))}
+        </Card>
+        {nodes}
       </div>
     )
   }
 
   return (
-    <div className="stack">
-      <div className="card">
-        <h2>{campaign.title}</h2>
-        <p className="tag">{campaign.description}</p>
-        <p className="hint">
-          You are {campaign.playerLabel}. 🎞 games are historical losses (automatic). Win every
-          other game — one winnable loss ends the run. Tune Lineup/Tactics between games.
+    <div className="cmp-stack">
+      <Card eyebrow="Scenario" title={campaign.title}>
+        <p className="cmp-lede">{campaign.description}</p>
+        <p className="cmp-note">
+          You are {campaign.playerLabel}. Historical games are losses that play automatically. Win every
+          other game: one winnable loss ends the run. Tune Lineup and Tactics between games.
         </p>
-      </div>
-      {campaign.nodes.map((node, i) => (
-        <NodeCard key={node.id} campaign={campaign} prog={prog} node={node} index={i} dispatch={dispatch} />
-      ))}
+      </Card>
+      {nodes}
     </div>
   )
 }
