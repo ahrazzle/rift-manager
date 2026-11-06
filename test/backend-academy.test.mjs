@@ -88,3 +88,10 @@ const report = resolveAcademy({ ...hit, offseasonReport: { seasonIndexCompleted:
 assert.equal(report.academyPromotions[0].cutName, bench.name)
 assert.equal(report.academyPromotions[0].playerName, kid.name)
 console.log('backend-academy: all passed')
+
+const contractual = { ...hit, academyByTeam: { [team.id]: hit.academyByTeam[team.id].map((p) => p.id === kid.id ? { ...p, contract: 4 } : p) } }
+assert.equal(resolveAcademy(contractual, action).state.teams[team.id].find((p) => p.id === kid.id).contract, 4)
+refused({ ...hit, sacked: true }, action, 'CAREER_INACTIVE')
+refused({ ...hit, career: { ...hit.career, status: 'retired' } }, action, 'CAREER_INACTIVE')
+const uniqueBenchRole = { ...hit, teams: { [team.id]: team.players.filter((p) => p.role !== bench.role || p.id === bench.id) } }
+if (kid.role !== bench.role) refused(uniqueBenchRole, action, 'LAST_OF_ROLE')
