@@ -24,6 +24,10 @@ try {
   const entries = []
   await act(async () => { tree = create(React.createElement(NewGame, { state: {}, dispatch: a => entries.push(a) })) })
   assert.equal(tree.root.findAll(n => n.props.className?.includes('mode-card') && text(n).includes('Live pick/ban')).length, 0)
+  // The match options live on the wizard's last step (Mode, Team, Options).
+  assert.equal(tree.root.findAllByProps({ role: 'switch' }).length, 0, 'no switches before the Options step')
+  await click('Next: Team →')
+  await click('Next: Options →')
   const switches = () => tree.root.findAllByProps({ role: 'switch' })
   assert.equal(switches().length, 4, 'Draft, IGL, Show simulation, Fearless draft')
   await act(async () => switches()[0].props.onChange({ target: { checked: true } }))

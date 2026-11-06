@@ -7,6 +7,8 @@ import { reducer } from '../src/game/useGameState.js'
 import { signingFee, playerWage, fmtMoney, fmtMoneyExact } from '../src/game/economy.js'
 
 const temp = await mkdtemp(new URL('./.market-ui-', import.meta.url).pathname)
+// The Market now also renders role-filter buttons, so the sign action is found by its label.
+const signButton = () => tree.root.findAllByType('button').find((b) => /^(Sign|Insufficient budget)$/.test(textOf(b)))
 const textOf = (node) => typeof node === 'string' ? node : (node.children || []).map(textOf).join('')
 let tree
 try {
@@ -27,8 +29,8 @@ try {
   assert.notEqual(fmtMoney(fee - 1), fmtMoneyExact(fee), 'test data really collides when rounded')
   state = { ...state, finance: { budget: fee - 1 }, faPool: [player] }
   await render()
-  assert.equal(tree.root.findByType('button').props.disabled, true)
-  assert.match(textOf(tree.root), /Insufficient budget/)
+  assert.equal(signButton().props.disabled, true)
+  assert.match(textOf(tree.root), /Insufficient budget/, 'the card says why the sign button is disabled')
   assert.ok(textOf(tree.root).includes(`Transfer budget: ${fmtMoney(fee - 1)}`))
   assert.ok(textOf(tree.root).includes(`Signing fee: ${fmtMoneyExact(fee)}`))
   assert.ok(textOf(tree.root).includes(`Annual wage: ${fmtMoneyExact(playerWage(player))}`))
@@ -39,8 +41,8 @@ try {
   // Exact affordability is allowed; the real reducer spends the budget and removes the card.
   state = { ...state, finance: { budget: fee } }
   await render()
-  assert.equal(tree.root.findByType('button').props.disabled, false)
-  await act(async () => tree.root.findByType('button').props.onClick())
+  assert.equal(signButton().props.disabled, false)
+  await act(async () => signButton().props.onClick())
   assert.equal(state.finance.budget, 0)
   assert.equal(state.lineup[player.role], player.id)
   await render()
@@ -49,14 +51,14 @@ try {
   // Zero budget reads "$0", never "$0K", and the shortfall is exact.
   state = { ...blocked, finance: { budget: 0 } }
   await render()
-  assert.equal(tree.root.findByType('button').props.disabled, true)
+  assert.equal(signButton().props.disabled, true)
   assert.ok(textOf(tree.root).includes('Transfer budget: $0'))
   assert.ok(!textOf(tree.root).includes('$0K'))
   assert.ok(textOf(tree.root).includes(`Short by ${fmtMoneyExact(fee)}`))
 
   state = { ...blocked, finance: null }
   await render()
-  assert.equal(tree.root.findByType('button').props.disabled, false, 'legacy saves without budgets retain signing access')
+  assert.equal(signButton().props.disabled, false, 'legacy saves without budgets retain signing access')
   console.log('Transfer market affordability and signing checks passed')
 } finally {
   if (tree) await act(async () => tree.unmount())

@@ -50,16 +50,21 @@ try {
   await act(async () => clubNav.props.onClick())
   await click('New Game')
   assert.equal(JSON.parse(storage.get(STAGING_SAVE_KEY)).teamId, 'T1', 'opening confirmation preserves the save')
-  assert.equal(tree.root.findAllByType('dialog').length, 1)
+  // ConfirmDialog is the shared Dialog primitive (role=dialog), not a native <dialog>.
+  const dialogs = () => tree.root.findAll((n) => n.props.role === 'dialog' && String(n.props.className).includes('ui-dialog'))
+  assert.equal(dialogs().length, 1)
   await click('Keep playing')
-  assert.equal(tree.root.findAllByType('dialog').length, 0)
+  assert.equal(dialogs().length, 0)
   await click('New Game')
   await click('Start new game')
   assert.equal(JSON.parse(storage.get(STAGING_SAVE_KEY)).teamId, null)
 
-  // Start a real historical career through the actual year selector controls.
-  const year = tree.root.findAllByType('select').find((s) => s.props.className === 'year-select')
+  // Start a real historical career through the New Game wizard: Mode, Team (year selector), Options.
+  await click('Next: Team →')
+  const year = tree.root.findAllByType('select').find((s) => s.props.id === 'career-year-select')
+  assert.ok(year, 'the Team step has a labelled starting-year select')
   await act(async () => year.props.onChange({ target: { value: '2013-lck' } }))
+  await click('Next: Options →')
   rejectWrites = true
   await click('Start Career →')
   assert.match(textOf(tree.root.findByProps({ role: 'alert' })), /could not be saved/)
