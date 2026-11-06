@@ -1171,34 +1171,6 @@
   font-size: var(--fs-12);
   color: var(--text-2);
 }
-/* Result stage (to be replaced by ResultStage): token colours only. */
-.broadcast-intermission {
-  display: grid;
-  justify-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-8) var(--sp-6);
-  text-align: center;
-}
-.broadcast-intermission h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-40);
-  text-transform: uppercase;
-}
-.broadcast-victory .eyebrow,
-.winner-seal {
-  color: var(--gold);
-}
-.winner-seal {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-}
-.result-perspective {
-  margin: 0;
-  color: var(--text-2);
-}
-
 /* ---------------- Desktop: fit the live stage in the viewport ---------------- */
 @media (min-width: 900px) {
   .stage-map .rift-side,
@@ -1402,9 +1374,109 @@
   }
 }
 
-/* Match detail header crests (component rules otherwise in styles.css md-*) */
+/* Match detail header crests */
 .md-club {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+/* ---------------- Match detail (MatchDetail.jsx, md-*) ---------------- */
+.md { margin: 8px 0 12px; }
+.md .ghost:focus-visible, .md-chip:focus-visible, .md .tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.md-series { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 10px 0 6px; font-size: 16px; font-weight: 800; flex-wrap: wrap; }
+.md-gamesline { color: var(--text-2); font-size: 13px; margin-bottom: 6px; }
+.md-gchip { white-space: nowrap; }
+.md-game { background: var(--s2); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: 12px 0; }
+.md-gamehead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.md-gametitle { font-size: 16px; font-weight: 800; }
+.md-wtag { font-weight: 800; padding: 3px 11px; border-radius: 7px; background: var(--s3); color: var(--text); font-size: 13px; }
+.md-dur { color: var(--text-2); font-size: 13px; font-variant-numeric: tabular-nums; }
+.md-avg { color: var(--text-2); font-size: 13px; margin-left: auto; }
+.md-block { background: var(--s1); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: 16px 0; }
+.md-block-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-2); margin-bottom: 10px; font-weight: 800; }
+.md-gold { width: 100%; height: 220px; display: block; }
+.md-axis { fill: var(--text-2); font-size: 11px; }
+.md-cap { color: var(--text-2); font-size: 12px; margin-top: 4px; }
+.md-legend { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 8px; font-size: 12px; color: var(--text-2); }
+.md-lg { display: inline-flex; align-items: center; gap: 4px; }
+.md-swatch { display: inline-block; width: 16px; height: 3px; border-radius: 2px; }
+.md-swatch.good { background: var(--win); }
+.md-swatch.bad { background: var(--loss); }
+.md-swatch.even { background: transparent; border-top: 1px dashed var(--line-strong); height: 0; width: 16px; }
+.md-chip { background: var(--s2); border: 1px solid var(--line); border-radius: 7px; color: var(--text); font-size: 12px; padding: 4px 9px; cursor: pointer; font-weight: 600; }
+.md-chip.off { opacity: 0.45; }
+.md-marker { cursor: pointer; }
+.md-role { color: var(--text-2); font-weight: 700; }
+.md-youhead { background: var(--s3); }
+.md-youcell { background: var(--s2); }
+.md-youcell .md-pname, .md-pstack .md-pname { color: var(--text); }
+.md-pname { font-weight: 700; }
+.md-mvp { color: var(--gold); }
+.md-mvp .badge { background: var(--gold-bg); color: var(--gold); font-size: 10px; padding: 2px 7px; border-radius: var(--r-sm); font-weight: 700; letter-spacing: 0.06em; }
+.md-p { font-size: 13px; }
+.md-pnums { font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.md-rate { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.md-rbar { display: inline-block; width: 64px; min-width: 48px; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.md-rbar span { display: block; height: 100%; border-radius: 3px; }
+.md-rnum { font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.md-missing { color: var(--text-2); }
+.md-pstack { display: none; }
+.md-pstack h4 { margin: 10px 0 6px; font-size: 13px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.06em; }
+.md-evicon { font-variant-numeric: tabular-nums; }
+.md-coach { border-left: 3px solid var(--team); }
+.md-coach p { margin: 0; font-size: 14px; }
+.md .tabs { display: flex; gap: 6px; padding: 12px 0; flex-wrap: wrap; }
+.md .tab {
+  display: inline-flex; align-items: center; gap: .45em;
+  background: var(--s2); border: 1px solid var(--line); color: var(--text-2);
+  padding: 6px 12px; border-radius: var(--r-md); font-size: var(--fs-14); font-weight: 600;
+}
+.md .tab:hover { color: var(--text); border-color: var(--line-strong); }
+.md-reveals { margin: 8px 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.trait-badge { background: var(--s2); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 2px 7px; font-weight: 600; font-size: 12px; }
+.rw { color: var(--text-2); font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.outcome { font-weight: 800; padding: 4px 12px; border-radius: var(--r-sm); font-size: 13px; letter-spacing: 0.06em; }
+.outcome.win { background: var(--win-bg); color: var(--win); }
+.outcome.loss { background: var(--loss-bg); color: var(--loss); }
+.tac-mult { color: var(--text); font-weight: 700; }
+.log { margin: 8px 0 0; padding-left: 18px; color: var(--text-2); font-size: 13px; }
+.log li { margin: 2px 0; }
+@media (max-width: 640px) {
+  .md-gold { height: 180px; }
+  .md-ptable { display: none; }
+  .md-pstack { display: block; }
+  .md .tabs { overflow-x: auto; }
+}
+
+/* ---------------- Review room (MatchReview.jsx) ---------------- */
+.match-review h2 { margin: 0 0 8px; font-size: clamp(20px, 3vw, 27px); letter-spacing: -.035em; line-height: 1.2; }
+.prep-footer { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-top: 18px; }
+.prep-footer .hint { margin: 0; max-width: 550px; line-height: 1.6; }
+.prep-footer button { flex-shrink: 0; }
+.review-objectives { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; margin-top: 24px; }
+.review-stat { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.review-stat strong { font-size: 23px; font-variant-numeric: tabular-nums; }
+.review-stat strong:first-child { color: var(--win); }
+.review-stat strong:last-child { color: var(--loss); }
+.review-stat span { color: var(--text-2); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }
+.review-bar { height: 5px; border-radius: 4px; overflow: hidden; background: var(--loss-bg); }
+.review-bar span { display: block; height: 100%; background: var(--win); }
+.review-caption { color: var(--text-2); font-size: 11px; margin: 12px 0 22px; }
+.review-notes { display: grid; gap: 12px; }
+.review-note { display: flex; gap: 13px; border-radius: 10px; padding: 14px; background: var(--s2); border: 1px solid var(--line); }
+.review-note > span { color: var(--text-2); font-size: 20px; }
+.review-note.good > span { color: var(--win); }
+.review-note h3 { margin: 0 0 5px; color: var(--text); font-size: 14px; }
+.review-note p { margin: 0; color: var(--text-2); font-size: 13px; line-height: 1.65; }
+.review-footnote { font-size: 11px; line-height: 1.6; padding-top: 10px; color: var(--text-2); }
+@media (max-width: 760px) {
+  .prep-footer { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .prep-footer button { width: 100%; }
+  .review-objectives { gap: 14px; }
+}
+@media (max-width: 400px) {
+  .review-stat { gap: 4px; }
+  .review-stat strong { font-size: 19px; }
+  .review-stat span { font-size: 9px; }
 }

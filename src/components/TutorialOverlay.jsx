@@ -205,7 +205,7 @@ export default function TutorialOverlay({
     <div className="tutorial-root" aria-hidden={false}>
       {hole ? (
         <div
-          className={`tutorial-hole${reducedMotion ? ' tutorial-hole--static' : ''}`}
+          className="tutorial-hole"
           style={{
             top: hole.top,
             left: hole.left,

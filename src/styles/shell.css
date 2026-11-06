@@ -765,11 +765,6 @@
   .guide-page .guide-chips .chip {
     flex: none;
   }
-  /* Walkthrough cards and toasts keep clear of the tabbar. */
-  .shell--game ~ .ach-toasts,
-  .shell--game .ach-toasts {
-    bottom: calc(var(--tabbar) + env(safe-area-inset-bottom) + 12px);
-  }
 }
 
 /* ---------- Motion: browser preference (Guide › Settings) ---------- */
@@ -851,3 +846,146 @@ html.motion-reduce {
   scroll-margin-top: calc(var(--topbar) + var(--sp-4));
   scroll-margin-bottom: calc(var(--tabbar, 0px) + var(--sp-4));
 }
+
+/* ---------- Site footer (SiteFooter.jsx) ---------- */
+.site-footer {
+  margin-top: 28px;
+  padding: 16px 0 4px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.footer-contribute { max-width: 520px; margin: 0 auto 12px; }
+.footer-contribute .label { margin: 0 0 6px; }
+.footer-contribute-copy { margin: 0; font-size: var(--fs-14); line-height: 1.55; }
+.footer-contribute-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0 0;
+}
+.footer-contribute-links .btn { min-height: 40px; font-size: var(--fs-13); }
+.footer-disclaimer {
+  max-width: 520px;
+  margin: 0 auto 14px;
+  font-size: var(--fs-12);
+  line-height: 1.5;
+}
+.site-footer a { color: var(--text); text-decoration: underline; font-weight: 600; }
+.site-footer a:hover { color: var(--text-2); }
+.site-footer .footer-contribute-links a.btn {
+  text-decoration: none;
+  font-weight: 600;
+}
+.site-footer .footer-contribute-links a.btn:hover { color: var(--text); }
+.site-footer .aska-signature {
+  display: inline-block;
+  padding: 6px 10px;
+  color: var(--text-2);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+.aska-signature span { font-weight: 400; color: var(--text-3); }
+.site-footer .aska-signature:hover { color: var(--text); }
+.footer-credit { display: block; margin-top: 4px; font-size: 12px; color: var(--text-2); }
+/* About / Community — reuses guide modal shell; no main-nav tab */
+.about-backdrop { z-index: 40; }
+.about-modal .about-sections { padding-top: 8px; }
+.about-list { margin: 0; padding-left: 1.15em; color: var(--text-2); font-size: var(--fs-14); line-height: 1.55; }
+.about-list li + li { margin-top: 0.45em; }
+.about-links { margin-top: 12px; flex-wrap: wrap; gap: 8px; display: flex; }
+.site-footer .footer-contribute-links button.btn {
+  text-decoration: none;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+.site-footer .footer-contribute-links button.btn:hover { color: var(--text-2); }
+
+/* ---------- Guide and About modals (Guide.jsx, AboutCommunity.jsx) ---------- */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgb(6 10 18 / 72%);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 5vh 16px; z-index: 100; overflow-y: auto;
+  animation: md-in 0.25s ease both;
+}
+.modal {
+  background: var(--s1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  width: min(780px, 100%);
+  max-height: 90vh;
+  display: flex; flex-direction: column;
+  box-shadow: var(--e3);
+  animation: md-in var(--d-base) var(--ease-out) both;
+}
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px; border-bottom: 1px solid var(--line);
+}
+.modal-head h2 { margin: 0; font-size: 20px; font-weight: 800; }
+.guide-modal .guide-body { padding: 20px 24px 28px; overflow-y: auto; }
+.guide-backdrop { align-items: center; padding: 16px; }
+.broadcast-guide { width: min(920px, 100%); max-height: min(92vh, 920px); }
+.guide-modal-head { align-items: flex-start; gap: 12px; }
+.guide-modal-head h2 { margin: 4px 0 0; font-family: var(--font-display); letter-spacing: 0.02em; }
+.guide-lede {
+  margin: 0; padding: 12px 22px 0; color: var(--text-2); font-size: var(--fs-16); line-height: 1.5;
+  border-bottom: 1px solid var(--line);
+}
+.guide-chips {
+  display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 22px; position: sticky; top: 0; z-index: 2;
+  background: var(--s1);
+  border-bottom: 1px solid var(--line);
+}
+.guide-chips .chip {
+  border: 1px solid var(--line); background: var(--s2); color: var(--text-2);
+  border-radius: var(--r-pill); padding: 6px 12px; font-size: var(--fs-12); font-weight: 700;
+  cursor: pointer; transition: border-color var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out);
+}
+.guide-chips .chip.active, .guide-chips .chip:hover {
+  border-color: var(--line-strong); color: var(--text); background: var(--s3);
+}
+.guide-sections { display: flex; flex-direction: column; gap: 14px; }
+.guide-section { scroll-margin-top: 12px; padding: 16px 18px; }
+.guide-section h3 {
+  margin: 0 0 10px; font-family: var(--font-display); font-size: var(--fs-20); letter-spacing: 0.03em;
+}
+.guide-section[class*="accent-"] { border-left: 3px solid var(--line-strong); }
+.guide-section .markdown h3 { font-size: 15px; margin-top: 12px; }
+.guide-footer p { margin: 0; color: var(--text-2); font-size: var(--fs-14); }
+
+.guide-body.markdown h1 { font-size: 26px; margin: 0 0 12px; font-weight: 900; }
+.guide-body.markdown h2 { font-size: 19px; margin: 22px 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 4px; font-weight: 800; }
+.guide-body.markdown h3 { font-size: 16px; margin: 16px 0 6px; color: var(--text-2); }
+.guide-body.markdown p { color: var(--text); }
+.guide-body.markdown ul, .guide-body.markdown ol { padding-left: 22px; }
+.guide-body.markdown li { margin: 4px 0; }
+.guide-body.markdown strong { color: var(--text); }
+.guide-body.markdown a { color: var(--text); }
+
+/* ---------- First-run walkthrough (TutorialOverlay.jsx) ---------- */
+.tutorial-root { position: fixed; inset: 0; z-index: 12000; pointer-events: none; }
+.tutorial-scrim-full { position: absolute; inset: 0; background: rgb(6 10 18 / 72%); pointer-events: auto; }
+.tutorial-hole {
+  position: fixed;
+  border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgb(6 10 18 / 72%);
+  pointer-events: none;
+}
+.tutorial-card {
+  position: fixed;
+  width: min(360px, calc(100vw - 24px));
+  pointer-events: auto;
+  z-index: 1;
+  padding: 16px 18px;
+  border-color: var(--line-strong);
+  box-shadow: var(--e3);
+}
+.tutorial-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+.tutorial-actions .primary { margin-left: auto; }
