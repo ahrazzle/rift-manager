@@ -75,3 +75,5 @@ Append-only per the project-files SOP. One line per change:
 2026-11-06T00:45:00Z | mithrax | src/styles.css, src/match.css, src/styles/rift-arena.css, scripts/match-layout-shots.mjs, CHANGELOG.md | Desktop match (≥1200px): full viewport width (no app/shell max-width); height-sized map hero (--rift-map-side); compact scoreboard strip; controls under map column; IGL panel 420–520px with internal scroll. Mobile unchanged.
 
 2026-11-06T01:05:00Z | mithrax | src/styles.css, src/styles/rift-arena.css, CHANGELOG.md | Desktop arena fills frame: map column + 1fr IGL sidebar (no right gutter); tighter stage-chrome / short-viewport tuning; grid row lock + zero app bottom pad so map/score/controls fit without scroll.
+
+2026-11-06T01:15:00Z | mithrax | src/styles/rift-arena.css, scripts/igl-scroll-verify.mjs, CHANGELOG.md | Desktop IGL pause: bounded flex scroll on .igl-call-grid (flex 1 1 0, min-height 0, overflow-y auto); header/intro fixed above list; verify script scrolls to last call and clicks through.

@@ -306,7 +306,7 @@
   max-height: calc(100cqw - var(--rift-sidebar-width));
   overflow: hidden;
 }
-@media (min-width: 701px) {
+@media (min-width: 701px) and (max-width: 1199px) {
   .rift-arena .rift-sidebar.rift-coaching .igl-decision {
     height: 100%;
     overflow: hidden;
@@ -846,6 +846,7 @@
     width: 100%;
     max-width: none;
     column-gap: 0;
+    min-height: 0;
   }
   .rift-arena .rift-arena-grid .rift-caption {
     display: none;
@@ -878,14 +879,36 @@
     overflow: hidden;
   }
   .rift-arena .rift-sidebar.rift-coaching {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
     max-height: none;
     height: 100%;
     overflow: hidden;
   }
   .rift-arena .rift-sidebar.rift-coaching .igl-decision {
-    height: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
     max-height: 100%;
     overflow: hidden;
+  }
+  .rift-arena .rift-sidebar.rift-coaching .igl-call-grid {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    padding-right: 4px;
+    scrollbar-gutter: stable;
+  }
+  .rift-arena .rift-sidebar.rift-coaching .igl-decision > .hint {
+    flex-shrink: 0;
   }
   .rift-arena .rift-scoreboard {
     grid-template-columns: minmax(0, 1fr) 88px minmax(0, 1fr);
