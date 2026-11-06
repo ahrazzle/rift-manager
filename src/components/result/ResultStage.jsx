@@ -1,7 +1,7 @@
 // ============================================================================
 // ResultStage: the reward moment after a series (SPEC §3.6).
 //
-// Mount point (MatchExperience.jsx, stage `result`, owned by the match lane):
+// Mount point (MatchExperience.jsx, stage `result`):
 //
 //   {stage === 'result' && (
 //     <ResultStage

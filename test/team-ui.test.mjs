@@ -1,4 +1,4 @@
-// Team lane render tests: wizard steps, player actions slot, Market/Squad table + morale,
+// Team screen render tests: wizard steps, player actions slot, Market/Squad table + morale,
 // option groups, career dialogs on the shared Dialog.
 import assert from 'node:assert/strict'
 import { mkdtemp, rm } from 'node:fs/promises'

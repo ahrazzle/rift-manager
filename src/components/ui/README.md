@@ -7,7 +7,7 @@ import { Button, Card, Chip, Seg, Pips, Delta, Meter, EmptyState, Dialog, Bottom
   ChampArt, ChampGlyph, OddsBar, OddsWhy, TrophyMark, useMedia, NARROW } from '../ui/index.js'
 ```
 
-Styles come from `src/styles/primitives.css` (`.btn .chip .seg .pip .meter`) and `src/styles/ui.css`. Both use the tokens in `tokens.css` only. Build on them; do not fork values. If you need something the kit lacks, build it in your lane folder and say so in your report so the loom can promote it.
+Styles come from `src/styles/primitives.css` (`.btn .chip .seg .pip .meter`) and `src/styles/ui.css`. Both use the tokens in `tokens.css` only. Build on them; do not fork values. If a screen needs something the kit lacks, build it next to that screen first and move it here once a second screen needs it.
 
 Color rule: one job per hue. Blue and red mean sides (draft and match only). Win and loss mean outcomes. Gold means trophies, MVP and achievements. Warn means "needs attention". Team color is for crests and thin "you" accents, never text.
 
@@ -91,7 +91,7 @@ Color rule: one job per hue. Blue and red mean sides (draft and match only). Win
 The shell (`src/components/shell/`) owns the chrome. Screens render inside it unchanged.
 
 - **Navigation.** Internal tab ids stay flat: `dashboard lineup tactics strategy market squad standings results tournament campaign club guide settings`. `setTab('lineup')` jumps straight to Team › Lineup; the shell maps ids to destinations in `shell/nav.js` (`navFor(state)`, `resolveRoute`). To add a segment, add its id to the destination's `tabs` in `navFor` and a label in `TAB_LABELS`; App renders the screen for that id.
-- **Page title and segments.** For Team, Compete, Club and Guide, App renders `<PageHeader>` above your screen: a display `<h1>` (the destination), a one-line context, and the destination's `Seg` tablist on the right. Your screen is inside `role="tabpanel"`. So screens do **not** render an `<h1>` or their own sub-page tabs; start with cards and `<h2>`. The Hub has no visible header (an sr-only `<h1>Hub</h1>`), matching the prototype. Page-level actions go in `PageHeader`'s `actions` slot (a one-line prop in App; the loom merges it) or in the first row of your screen.
+- **Page title and segments.** For Team, Compete, Club and Guide, App renders `<PageHeader>` above your screen: a display `<h1>` (the destination), a one-line context, and the destination's `Seg` tablist on the right. Your screen is inside `role="tabpanel"`. So screens do **not** render an `<h1>` or their own sub-page tabs; start with cards and `<h2>`. The Hub has no visible header (an sr-only `<h1>Hub</h1>`), matching the prototype. Page-level actions go in `PageHeader`'s `actions` slot (a one-line prop in App) or in the first row of your screen.
 - **Mode screens (Draft, Matchday).** While `state.matchSession` is set, the shell hides the nav and shows a mode bar: Back + title. Defaults come from the session: title `T1 vs GEN`, subtitle `LCK · Week 3 · Draft · Game 1`; Back exists in `setup` (cancels) and `result` (closes). Override from your screen:
   ```jsx
   import { useModeBar, ModeBarActions } from '../shell/index.js'
