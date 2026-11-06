@@ -146,6 +146,7 @@ export default function App() {
   const [resetPending, setResetPending] = useState(false)
   const [tutorial, setTutorial] = useState(() => readTutorial())
   const [hubTourRequest, setHubTourRequest] = useState(0)
+  const [newGameStep, setNewGameStep] = useState(0)
   const [uiPrefs, setUiPrefs] = useState(() => readUiPrefs())
   const persistTutorial = useCallback((next) => {
     const base = typeof next === 'function' ? next(readTutorial()) : next
@@ -230,7 +231,7 @@ export default function App() {
       <>
         <AppShell variant="bare" state={state} dispatch={dispatch} onOpenGuide={openGuide} footer={footer}>
           <SaveError error={storageError} retrySave={retrySave} loadError={loadError} retryLoad={retryLoad} replaceSave={replaceSave} />
-          <NewGame state={state} dispatch={dispatch} onOpenAbout={openAbout} />
+          <NewGame state={state} dispatch={dispatch} onOpenAbout={openAbout} onStepChange={setNewGameStep} />
         </AppShell>
         {guideOpen && (
           <Guide
@@ -244,6 +245,7 @@ export default function App() {
           activeTab="dashboard"
           setTab={() => {}}
           onNewGameScreen
+          matchOptionsVisible={newGameStep === 2}
           tutorial={tutorial}
           persistTutorial={persistTutorial}
           skipTutorial={skipTutorial}
@@ -287,9 +289,6 @@ export default function App() {
               dispatch={dispatch}
               setTab={setTab}
               totalRounds={seasonRounds}
-              tutorial={tutorial}
-              persistTutorial={persistTutorial}
-              skipTutorial={skipTutorial}
             />
       )}
       {activeTab === 'lineup' && <Lineup state={state} dispatch={dispatch} />}
