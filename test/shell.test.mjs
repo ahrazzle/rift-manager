@@ -87,7 +87,7 @@ try {
   assert.match(html, /Week 2<span class="faint"> (<!-- -->)?of 9<\/span>/)
   assert.match(html, /<h1 class="sr-only">Hub<\/h1>/)
   assert.match(html, /<label class="label" for="sim-speed-select">Sim speed<\/label>/)
-  assert.doesNotMatch(html, /How to Play<\/button>/, 'How to Play left the header')
+  assert.doesNotMatch(html, /How to play<\/button>/i, 'How to play left the header')
 
   // Mode bar replaces the nav while a match session runs.
   const preview = reducer(after1, { type: 'PREVIEW_MATCH', action: { type: 'PLAY_ROUND' } })

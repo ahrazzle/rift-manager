@@ -59,8 +59,6 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
     stage === 'draft' && session.draft ? (session.draft.userSide === 'BLUE') === (c.userSide !== 'away') : null
   const gameNumber = session.games.length + (stage === 'between' ? 0 : 1)
   const userEngine = c.userSide === 'away' ? 'B' : 'A'
-  const userLineup = c.userSide === 'away' ? c.awayLineup : c.homeLineup
-  const iglName = userLineup?.SUP?.name ?? 'your support'
   const badges = [
     options.draft && 'Draft',
     session.fearlessActive && 'Fearless',
@@ -72,8 +70,9 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
     if (byIgl) setDelegated((d) => ({ ...d, [session.games.length]: true }))
     dispatch({ type: 'MATCH_CALL', callId })
   }
-  // "Let the IGL decide": the shotcaller picks one of the same calls, chosen
-  // from this game's seed. It is graded like any other call (fit or misread).
+  // "Let the team decide": the game has no in-game-leader player, so the team
+  // takes one of the same calls, chosen from this game's seed. It is graded like
+  // any other call (fit or misread).
   const delegateCall = () => {
     const calls = current?.prompt?.options ?? []
     if (!calls.length) return
@@ -92,7 +91,7 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
         <div className="match-callout is-warn">
           <Icon name="alert" size={20} />
           <p>
-            <b>Tactical pause.</b> {iglName} wants your call. The game waits while you decide.
+            <b>Tactical pause.</b> The team wants your call. The game waits while you decide.
           </p>
           <Button ref={makeCallRef} variant="primary" onClick={() => setDialogOpen(true)}>
             Make the call
@@ -109,7 +108,7 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
           <Icon name="check" size={20} />
           <p>
             <b>
-              {byIgl ? `${iglName}’s call` : 'Your call'}: {chosen.label}.
+              {byIgl ? 'The team’s call' : 'Your call'}: {chosen.label}.
             </b>{' '}
             {verdict}
             {current.prompt?.rationale && <span className="callout-note">{current.prompt.rationale}</span>}
@@ -122,7 +121,7 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
           key: `igl-${session.games.length}`,
           t: current.decisionAt,
           side: tone,
-          actor: byIgl ? `${iglName}’s call` : 'Your call',
+          actor: byIgl ? 'Team’s call' : 'Your call',
           text: `${chosen.label}. ${evaluation?.modifier > 0 ? 'Well read.' : 'A misread; small penalty.'}`,
           pin: true,
         },
@@ -319,7 +318,6 @@ export default function MatchExperience({ state, dispatch, tutorial, persistTuto
               prompt={current.prompt}
               clock={clockLabel(current.cursor)}
               gameNumber={gameNumber}
-              iglName={iglName}
               holdOpen={iglTipPending}
               withTip={iglTipPending}
               onChoose={(callId) => makeCall(callId)}

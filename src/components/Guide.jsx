@@ -21,7 +21,7 @@ function parseGuideSections(md) {
       const title = line.slice(3).trim()
       current = { id: slug(title), title, body: '' }
     } else if (line.startsWith('# ')) {
-      /* Document title — modal header already shows How to Play */
+      /* Document title — modal header already shows How to play */
     } else if (current) {
       current.body += `${line}\n`
     } else if (line.trim()) {
@@ -132,7 +132,7 @@ export default function Guide({ onClose, onReplayWalkthrough }) {
         <div className="modal-head guide-modal-head">
           <div>
             <span className="eyebrow"><MatchIcon name="book" size={16} /> Broadcast guide</span>
-            <h2>How to Play</h2>
+            <h2>How to play</h2>
           </div>
           <button type="button" className="ghost" onClick={onClose}>
             Close ✕

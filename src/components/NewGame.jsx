@@ -83,7 +83,7 @@ export default function NewGame({ state, dispatch, onOpenAbout, onStepChange }) 
     { id: 'team', label: teamStepLabel },
     { id: 'options', label: 'Options' },
   ]
-  const stepTitles = ['Choose your run', mode === 'campaign' ? 'Choose your scenario' : 'Choose your club', 'Match options']
+  const stepTitles = ['Choose your run', mode === 'campaign' ? 'Choose your scenario' : 'Choose your club', 'Coach and options']
 
   function start() {
     if (mode === 'career') dispatch({ type: 'START_CAREER', teamId, managerName, seasonYear: careerYear, matchOptions: options, seriesFearless })

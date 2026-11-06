@@ -26,7 +26,6 @@ export default function DecisionDialog({
   prompt,
   clock,
   gameNumber,
-  iglName,
   holdOpen = false,
   withTip = false,
   onChoose,
@@ -56,7 +55,7 @@ export default function DecisionDialog({
           </p>
           {onDelegate && (
             <Button variant="quiet" className="decision-delegate" onClick={onDelegate}>
-              Let {iglName} decide
+              Let the team decide
             </Button>
           )}
         </>

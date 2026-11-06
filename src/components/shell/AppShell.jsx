@@ -222,7 +222,7 @@ export default function AppShell({
             <Brand />
             <span className="spacer" />
             <Button variant="quiet" icon="guide" onClick={onOpenGuide}>
-              How to Play
+              How to play
             </Button>
           </header>
           <main id="main-content" className="content shell-content" tabIndex={-1}>
@@ -334,7 +334,7 @@ export default function AppShell({
           <div className="shell-more-list">
             <button type="button" className="shell-more-item" onClick={() => go('guide')}>
               <Icon name="guide" />
-              How to Play
+              How to play
             </button>
             <button type="button" className="shell-more-item" onClick={() => go('settings')}>
               <Icon name="settings" />
