@@ -3,15 +3,11 @@
 //
 // Pure display; every field degrades gracefully when absent so it can be
 // dropped into Lineup, Squad, or Market rows without the reducer backfilling
-// anything.
+// anything. Money is plain text colour (never a hue).
 // ============================================================================
 import { playerWage, fmtMoney } from '../game/economy.js'
-
-function moraleOf(morale) {
-  if (morale >= 80) return { icon: '🔥', label: 'Locked in', cls: 'edge' }
-  if (morale >= 55) return { icon: '😐', label: 'Steady', cls: '' }
-  return { icon: '🧊', label: 'Cold', cls: 'risk' }
-}
+import { Chip } from './ui/index.js'
+import { moraleOf } from './team/PlayerActions.jsx'
 
 export default function PlayerTags({ player }) {
   if (!player) return null
@@ -20,12 +16,19 @@ export default function PlayerTags({ player }) {
   const m = moraleOf(morale)
 
   return (
-    <span className="tale" style={{ margin: 0, display: 'inline-flex' }}>
-      <span className="tale-chip" title="Years left on contract">📝 {contract}y</span>
-      <span className={`tale-chip ${m.cls}`} title={`Morale ${morale}`}>
-        {m.icon} {m.label}
-      </span>
-      <span className="tale-chip" title="Annual wage">💰 {fmtMoney(playerWage(player))}/yr</span>
+    <span className="tags">
+      <Chip title="Years left on contract">
+        <span className="sr-only">Contract </span>
+        {contract}y
+      </Chip>
+      <Chip tone={m.tone === 'low' ? 'warn' : 'neutral'} icon={m.tone === 'low' ? 'alert' : undefined} title={`Morale ${morale}`}>
+        <span className="sr-only">Morale </span>
+        {m.label}
+      </Chip>
+      <Chip title="Annual wage">
+        <span className="sr-only">Wage </span>
+        {fmtMoney(playerWage(player))}/yr
+      </Chip>
     </span>
   )
 }

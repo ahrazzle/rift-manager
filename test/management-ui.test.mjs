@@ -22,10 +22,9 @@ const click = async (label) => {
   await act(async () => node.props.onClick())
 }
 try {
-  await build({ entryPoints: ['src/App.jsx', 'src/components/WatchLive.jsx'], outdir: temp,
+  await build({ entryPoints: ['src/App.jsx'], outdir: temp,
     bundle: true, format: 'esm', platform: 'node', packages: 'external', jsx: 'automatic', loader: { '.md': 'text', '.webp': 'file' } })
   const { default: App } = await import(`${temp}/App.js`)
-  const { default: WatchLive } = await import(`${temp}/components/WatchLive.js`)
   Math.random = mulberry32(1907)
   globalThis.window = { location: { hostname: 'lolsim.askaconsult.com', pathname: '/staging/' } }
   globalThis.document = { activeElement: { isConnected: true, focus() {} } }
@@ -45,18 +44,27 @@ try {
   assert.equal(tree.root.findAll((n) => n.props.role === 'status').some((n) => textOf(n).includes('Matchup scrims completed')), true)
   assert.equal(storage.get(SAVE_KEY), 'live save must remain untouched')
 
+  // New Game moved out of the header: it lives in Club (desktop) and the mobile overflow menu.
+  const clubNav = tree.root.findAllByType('button').find((b) => b.props.className === 'shell-nav-item' && textOf(b) === 'Club')
+  assert.ok(clubNav, 'Club destination is in the main nav')
+  await act(async () => clubNav.props.onClick())
   await click('New Game')
   assert.equal(JSON.parse(storage.get(STAGING_SAVE_KEY)).teamId, 'T1', 'opening confirmation preserves the save')
-  assert.equal(tree.root.findAllByType('dialog').length, 1)
+  // ConfirmDialog is the shared Dialog primitive (role=dialog), not a native <dialog>.
+  const dialogs = () => tree.root.findAll((n) => n.props.role === 'dialog' && String(n.props.className).includes('ui-dialog'))
+  assert.equal(dialogs().length, 1)
   await click('Keep playing')
-  assert.equal(tree.root.findAllByType('dialog').length, 0)
+  assert.equal(dialogs().length, 0)
   await click('New Game')
   await click('Start new game')
   assert.equal(JSON.parse(storage.get(STAGING_SAVE_KEY)).teamId, null)
 
-  // Start a real historical career through the actual year selector controls.
-  const year = tree.root.findAllByType('select').find((s) => s.props.className === 'year-select')
+  // Start a real historical career through the New Game wizard: Mode, Team (year selector), Options.
+  await click('Next: Team →')
+  const year = tree.root.findAllByType('select').find((s) => s.props.id === 'career-year-select')
+  assert.ok(year, 'the Team step has a labelled starting-year select')
   await act(async () => year.props.onChange({ target: { value: '2013-lck' } }))
+  await click('Next: Options →')
   rejectWrites = true
   await click('Start Career →')
   assert.match(textOf(tree.root.findByProps({ role: 'alert' })), /could not be saved/)
@@ -67,17 +75,7 @@ try {
   assert.equal(storage.get(SAVE_KEY), 'live save must remain untouched')
   await act(async () => tree.unmount())
 
-  // Refresh after an IGL call keeps its verdict and can finish an empty late feed.
-  let continued = 0
-  await act(async () => { tree = create(React.createElement(WatchLive, {
-    resolvedCallId: 'dragons', prompt: { optimalCallId: 'dragons' }, earlyEvents: [], lateEvents: [],
-    simSpeed: 'instant', userWon: true, onCall() { assert.fail('must not ask for a second call') }, onDone() { continued++ },
-  })) })
-  await click('Watch the rest →')
-  await act(async () => { await new Promise((resolve) => setTimeout(resolve, 5)) })
-  await click('Continue →')
-  assert.equal(continued, 1)
-  console.log('Management UI controls, save retry/reset, historical selector, and restored IGL checks passed')
+  console.log('Management UI controls, save retry/reset (via Club), and historical selector checks passed')
 } finally {
   if (tree) await act(async () => tree.unmount())
   Math.random = random

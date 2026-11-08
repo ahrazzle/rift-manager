@@ -121,7 +121,7 @@ try {
   const markup = renderToString(React.createElement(App))
   assert.match(markup, /About \/ Community/)
   assert.match(markup, /Help shape the game/)
-  assert.doesNotMatch(markup, /aria-label="Season navigation"[^>]*>[\s\S]*About \/ Community/)
+  assert.doesNotMatch(markup, /aria-label="Main"[^>]*>[\s\S]*About \/ Community[\s\S]*<\/nav>/)
   assert.doesNotMatch(markup, /open source/i)
 
   // In-season shell still has footer About, still no About tab.
@@ -129,8 +129,10 @@ try {
   globalThis.localStorage = { getItem: (key) => key === SAVE_KEY ? JSON.stringify(live) : null }
   const liveMarkup = renderToString(React.createElement(App))
   assert.match(liveMarkup, /About \/ Community/)
-  assert.match(liveMarkup, /aria-label="Season navigation"/)
-  assert.doesNotMatch(liveMarkup, />About \/ Community<\/button>\s*<\/nav>/)
+  assert.match(liveMarkup, /<nav class="shell-nav" aria-label="Main">/)
+  const navs = liveMarkup.match(/<nav class="shell-(nav|tabbar)"[\s\S]*?<\/nav>/g) ?? []
+  assert.equal(navs.length, 2)
+  for (const n of navs) assert.doesNotMatch(n, /About \/ Community/)
   assert.doesNotMatch(liveMarkup, /open source/i)
 
   console.log('About / Community footer + New Game surfaces and copy checks passed')

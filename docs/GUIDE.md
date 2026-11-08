@@ -10,7 +10,7 @@ Player ratings are fictional values tuned for the sim, not real player stats.
 
 **Career.** Ten seasons, one club. Start with the year and roster you chose, then build an alternate timeline. Rosters age and develop, contracts expire, and the board judges you every year. League and international formats are simplified; foreign tournament teams use the starting-year rosters and tier-based qualification.
 
-In **Career only**, players gain or lose OVR when you **Advance Season** (not during weekly play). **Age** and **potential (Pot)** on Squad and Market show how much runway remains — potential is a fixed rating cap in the data, not something you unlock with training, and it does not shrink with age. **Lineup** shows a short growth **outlook** (rising / steady / declining / at ceiling) so starter picks respect ceiling vs rising kids; exact Pot stays on deeper screens. After Advance, a dismissible **off-season report** on the Dashboard lists ±OVR, ages, lineup reshuffles, releases, and league churn. **Season mode** does not run that annual growth tick.
+In **Career only**, players gain or lose OVR when you **Advance Season** (not during weekly play). **Age** and **potential (Pot)** on Squad and Market show how much runway remains — potential is a fixed rating cap in the data, not something you unlock with training, and it does not shrink with age. **Lineup** shows a short growth **outlook** (rising / steady / declining / at ceiling) so starter picks respect ceiling vs rising kids; exact Pot stays on deeper screens. After Advance, a dismissible **off-season report** on the Hub lists ±OVR, ages, lineup reshuffles, contract releases, your transfers from the split, long-service morale, academy promotions, and league churn. **Season mode** does not run that annual growth tick.
 
 **Gauntlet.** Five escalating series against increasingly stronger opponents. One loss ends the run. Win all five to clear it. Check the scouting report before each round: tier and key players.
 
@@ -22,15 +22,15 @@ Draft and IGL are toggles within Season, Career, Scenario and Gauntlet. Set your
 
 **Draft.** Pick and ban against the opposing coach before every game. On your pick turns you choose which open role is drafting, then lock a champion that can play that role. If you pick without a role target, a multi-role champion can enter as a *flex* (champion shown, role hidden until you assign). You can swap or move already-committed champions between legal roles anytime before you lock the comp — it does not spend a pick step. Composition and role-specific comfort picks affect your team's strength. With **Fearless draft** on (Strategy / match options), champions played in earlier games of the same series stay out of the pool for later games; bans reset each game. Sides alternate between games; your map icons and champions follow that side selection.
 
-**IGL.** Lead from an animated map with moving player icons, towers, dragon and Baron pits. The game pauses at one key moment per game for a macro call: dragons, Herald dives, scaling, Baron, a support roam, split pushing or a grouped fight. The choice panel sits beside the map on larger screens. Calls are graded from the events already revealed; a good read gives a small strength bonus, while a poor fit gives a small penalty. Play then continues without rewriting the events you already watched.
+**IGL.** Lead from an animated map with moving player icons, towers, dragon and Baron pits. The game pauses at one key moment per game for a macro call: dragons, Herald dives, scaling, Baron, a support roam, split pushing or a grouped fight. The call opens as a dialog over the broadcast (a bottom sheet on phones) with each call's best moment. There is no timer; close it and the game stays paused until you choose, or press **Let the team decide** and the team picks one of the same calls (graded like any other). Calls are graded from the events already revealed; a good read gives a small strength bonus, while a poor fit gives a small penalty. Play then continues without rewriting the events you already watched.
 
-**Show simulation.** Watch any match unfold on the map, even with Draft and IGL off. Watching does not change the result. IGL always includes the map. Pause, change speed, move along the timeline, jump to the next event or finish the game; you cannot skip an unanswered IGL call. Reduced-motion browsers start paused.
+**Show simulation.** Watch any match unfold on the map, even with Draft and IGL off. Watching does not change the result. IGL always includes the map. The broadcast shows a scorebug (kills, clock, series, gold lead, towers), the map, objectives, your five players and the play-by-play. Pause, change speed and skip from the bar at the top of the match screen; move along the timeline or jump to the next event under the map. Skip stops at an unanswered IGL call. Reduced-motion browsers start paused.
 
 The map is a stylized illustration of generated match events. Positions and rotations are animated interpretations, not live League telemetry or a full movement/combat engine. The scoreboard reveals kills, deaths and objectives as events occur. The saved game is the one you see in the final detail and review.
 
-The large numbers beside the teams count kills in the current game. **Games won** tracks the series. The clock shows the current gold lead. During playback, an elimination or secured objective briefly highlights the team responsible.
+The large numbers beside the teams count kills in the current game; **Series** under each name tracks games won. The bar under the scorebug shows the gold lead, growing from the centre toward the team ahead, with the number beside it. During playback, an elimination or secured objective briefly highlights the team responsible.
 
-Open **Map display** in the playback controls to show player names, champion names, both, or no labels. Choose role icons, player initials, or champion portraits. Champion names and portraits use the actual draft picks; games without a draft retain player names and role icons. Player initials stand in for unavailable player photos. These display preferences survive refreshes and apply to later games. If a champion image cannot load, its role icon remains visible.
+Open **Guide → Settings → Map display** to show player names, champion names, both, or no labels. Choose role icons, player initials, or champion portraits. Champion names and portraits use the actual draft picks; games without a draft retain player names and role icons. Player initials stand in for unavailable player photos. These display preferences survive refreshes and apply from the next game you watch. If a champion image cannot load, its role icon remains visible.
 
 Laners hold their lanes while junglers patrol. Recorded skirmishes and objectives draw the relevant players into rotations; uninvolved lanes keep farming. Coaching calls guide the appropriate players, and marker spacing keeps grouped teams readable.
 
@@ -38,11 +38,13 @@ Fixed historical losses remain fixed, even with the add-ons enabled. Historical 
 
 ## Start a game
 
-1. Enter your coach name.
-2. Pick a story mode and optional Draft, IGL and Show simulation toggles.
-3. Pick a league (LCK, LPL, LEC, LCS) and a season year, 2013–2026. Rosters evoke that year's league.
-4. Pick one of the 10 teams. Stronger teams have higher tier ratings.
-5. Press Start.
+New Game is three short steps:
+
+1. **Mode.** Season, Career, Scenario or Gauntlet.
+2. **Club.** Pick a league (LCK, LPL, LEC, LCS) and a season year, 2013–2026, then one of the 10 teams. Rosters evoke that year's league. Stronger teams have higher tier ratings. (Scenario picks a story here instead.)
+3. **Coach and options.** Enter your coach name and choose the optional Draft, IGL and Show simulation toggles, then press Start.
+
+Already playing? **Club → Save and new game** starts over (it asks before replacing your save).
 
 The season is a single round-robin: 9 weeks, one series per week. You face each of the other 9 teams once. Every series is a best-of-3. A series win gives your team 1 point in the standings.
 
@@ -50,43 +52,47 @@ The season is a single round-robin: 9 weeks, one series per week. You face each 
 
 Each week follows the same loop:
 
-1. Open the Dashboard. It shows your next opponent and your estimated win chance.
-2. Check the Lineup tab. Confirm your 5 starters.
-3. Check the Tactics tab. Pick a style and a phase.
-4. In Season or Career, use the Coach’s office to choose one optional preparation session: matchup scrims, lane mechanics, objective setup, or recovery. Each shows its exact form gains and match-strength bonus. Form carries forward; matchup preparation expires after the upcoming series. Only participating starters keep its bonus.
-5. Press Play Week (Season/Career) or enter the next Scenario/Gauntlet match. Choose the match add-ons, then enter the draft or Rift.
+The app has five places, in the left rail on a computer and the bar along the bottom on a phone: **Hub**, **Team** (Lineup, Tactics, Strategy, Market or Squad), **Compete** (Standings, Results, Bracket), **Club** and **Guide** (How to play, Settings).
 
-After the series, read the review room: recorded dragons, towers, barons, slow starts and lost leads. Use Plan next week to carry its suggested training focus into preparation. These notes describe the generated match timeline, not the cause of a result.
+1. Open the **Hub**. It shows your next opponent, your estimated win chance (open **Why N%?** for the top factors) and three readiness checks.
+2. Check **Team → Lineup**. Confirm your 5 starters.
+3. Check **Team → Tactics**. Pick a style and a phase.
+4. In Season or Career, use the Coach’s office to choose one optional preparation session: matchup scrims, lane mechanics, objective setup, or recovery. Each shows its exact form gains and match-strength bonus. Form carries forward; matchup preparation expires after the upcoming series. Only participating starters keep its bonus.
+5. Press **Play week** on the Hub (Season/Career) or enter the next Scenario/Gauntlet match. Choose the match add-ons, then enter the draft or Rift. While a match runs, the bar at the top shows the matchup and its controls; the menu comes back when you press **Continue** on the result screen.
+
+After the series, the result screen shows what changed (standings, fan hype, form, the playoff line) and the series MVP. Press **Review the series** to open the review room: recorded dragons, towers, barons, slow starts and lost leads. Use Plan next week to carry its suggested training focus into preparation. These notes describe the generated match timeline, not the cause of a result.
 
 Form changes after every week. Starters on the winning side gain form. Starters on the losing side lose form.
 
 ## The board, the budget, and the press
 
-The header strip always shows what the board expects of you (from "Avoid last place" to "Win the title", set by your team's tier), board confidence out of 100, and your transfer budget.
+The top bar shows what the board expects of you (from "Avoid last place" to "Win the title", set by your team's tier), board confidence out of 100, and your transfer budget. On a phone they sit under the **⋯** menu. **Club** has the full picture: board, finances, trophies and achievements.
 
-**Press conferences** pop up after matches. Answer boldly, measuredly, or deflect. Your answers move player morale and board confidence. Talking big on a losing streak backfires in the locker room.
+**Press requests** arrive in the Hub's **Inbox**. They are optional: press **Answer** to see the three replies (bold, measured or deflect) and their exact effects, or **Skip**. Your answers move player morale and board confidence. Talking big on a losing streak backfires in the locker room.
 
 **Money.** Signing a free agent costs a fee from your budget. Every player also earns an annual wage, deducted each offseason. Star players cost more. If you can't afford a signing, the deal dies. Each offseason brings sponsorship (scaled to your tier) plus prize money for a title, a final, or a playoff finish, so a Career budget is topped up every year instead of only draining.
 
-**Contracts and morale.** Every player has a contract length and morale. Contracts tick down each season. Expired players must be re-signed (cheaper than a new signing) or they walk to free agency. Starters are never released. Morale rises with wins and titles, falls with losses and bench time, and feeds slightly into form.
+**Contracts and morale.** Every player has a contract length and morale. Contracts tick down each season. Expired players must be re-signed (cheaper than a new signing) or they walk to free agency. Morale rises with wins and titles, falls with losses and bench time, and feeds slightly into form. Your office moves move it too: a new signing arrives pleased (morale 74) while the starter they displace drops 6; benching a starter costs them 4 and gives the new starter 3; a player traded in gains 3. In **Career**, long service settles in after two completed seasons at the club: long-serving starters gain 2 morale each off-season, long-serving bench players lose 3. The roster screens and the off-season report always show the reason and the exact change.
 
 Miss the board's expectation and confidence drops. Beat it and confidence rises. Hit zero and **you're sacked**. In Career mode that ends the run.
 
-## Transfers, trades, coaches, and academy (Career)
+## Transfers, trades, coaches, and academy
 
-Career mode adds a front office. Season mode has the Market but no trades, coach moves, or academy offers.
+Career mode adds a front office. Season mode has the Market and roster releases, but no sales, trades, coach moves, or academy offers. Roster changes are closed while a match is open — finish and close the series first.
 
-**Free agents (Market).** Sign any free agent for a one-time fee of four times their annual wage. A signed player joins on a two-year deal and becomes the starter for their role. Each offseason, five new prospects — one per role, ages 17–19 — enter free agency, and the pool is capped at 20, so the Market keeps turning over instead of going stale. The offseason report on the Dashboard lists the new faces and the money in and out.
+**Free agents (Market).** Sign any free agent for a one-time fee of four times their annual wage. A signed player joins on a two-year deal and becomes the starter for their role. Each offseason, five new prospects — one per role, ages 17–19 — enter free agency, and the pool is capped at 20, so the Market keeps turning over instead of going stale. The off-season report on the Hub lists the new faces and the money in and out.
+
+**Selling and releasing (Squad in Career; Market in Season).** Every roster row carries its transfer controls. **Sell** (Career only) lists the player to free agency — no buyer club is invented — and the club receives half their signing fee (twice their annual wage). **Release** sends a bench player to free agency for no fee. Starters cannot be released; selling a starter needs a same-role bench replacement, and the confirmation names who takes over before you commit. You can never move the last player of a role. A departing player joins the free-agent pool at morale 60, where anyone — including you, later — can sign them. Disabled buttons always say why. Your sales and releases are listed in the off-season report for the record; sale income is already in your budget when it lands, never paid twice.
 
 **Player trades (Squad).** Swap one of your players for a player on another club, one for one. Both players must play the same role. The other club refuses a deal that loses it more than 3 OVR. If the player you trade away is a starter, the player you get takes their lineup spot.
 
 **Coaches (Squad).** Your head coach adds a flat bonus to match strength: (rating − 75) × 0.15, so a 90-rated coach is worth +2.25 and a 60-rated coach costs −2.25. Hire any coach from the free-agent pool for free; your old coach joins the pool. You can also trade coaches one for one with another club, but the other club refuses if your coach is 6 or more rating points below theirs.
 
-**Academy.** After Advance Season there is a roughly 30% chance an academy prospect is offered. Prospects are 17–19 with potential 8 above their OVR. Promoting one cuts your weakest bench player to make room; starters are never cut. Declining leaves the prospect in the academy for another split.
+**Academy (Career).** After Advance Season there is a roughly 30% chance an academy standout is found; a real find grows the shortlist to up to three named prospects, ages 17–19 with potential 8 above their OVR. Prospects persist: declining keeps the same players in the academy, offered again next off-season (a locker-room event is always settled first). To promote, you choose the prospect **and** the bench player who makes room — starters are never cut, and a cut cannot strand a role unless the prospect fills it. If your bench is empty, nobody is silently lost: the offer explains itself and the prospects wait. A promoted player arrives at morale 74 on their existing deal; the player released joins free agency at morale 60, no fee either way.
 
 ## The screens
 
-**Dashboard.** Season progress, your next matchup with an estimated win chance, this week's fixtures, and the Play Week button. When the season ends it shows your final record.
+**Hub.** Your next matchup with an estimated win chance and readiness checks, the Play week button, your starting five, the Coach’s office, this week's fixtures, a short table, your inbox and fan hype. When the regular season ends it shows the playoffs and, later, your final record.
 
 **Lineup.** One starter per role: Top, Jungle, Mid, Bot, Support. Each role has a starter and a sub. Click a player to start them. Each player shows OVR (overall), MEC (mechanics), MAC (macro), and CON (consistency), plus current form, contract, and morale. Career Lineup also shows **age** and a growth **outlook** (not exact Pot). Mid and Bot carry slightly more weight in the sim. Support carries slightly less.
 
@@ -110,13 +116,13 @@ Early beats Late and Late beats Early, so phase is a guessing game against the e
 
 **Results.** Every played series, newest first, with the score and a short match log. Your games carry a WIN or LOSS tag.
 
-**Market.** A pool of free agents across all roles. Each listing shows the exact signing fee and annual wage. Sign only when your transfer budget covers the fee — unaffordable deals stay disabled, and the card shows exactly how much you are short. Signed players join your roster as starters in their role. The pool only shrinks, so sign early if a role needs help.
+**Market.** A pool of free agents across all roles. Each listing shows the exact signing fee and annual wage. Sign only when your transfer budget covers the fee — unaffordable deals stay disabled, and the card shows exactly how much you are short. Signed players join your roster as starters in their role. Players you sell or release join this pool, and each Career off-season adds five new prospects, so check back when a role needs help. In Season mode your own roster sits under the market, with Release on every bench row.
 
 ## How a match simulates
 
 Each game starts from team strength: your five starters' ratings, weighted by role, plus macro, form, and your style bonus, plus the phase edge. The sim turns the strength gap into a win chance and draws the winner game by game, first to 2. Stronger teams win more often. They never win always. An Aggressive underdog can still take a series.
 
-Your Dashboard preview runs this sim 300 times with a stable seed and shows the result as a percent. Treat it as a forecast, not a promise.
+Your Hub preview runs this sim 300 times with a stable seed and shows the result as a percent. Treat it as a forecast, not a promise.
 
 AI opponents field their best lineup. Strong teams lean Aggressive or Balanced. Weak teams lean Defensive or Balanced. In the offseason, AI teams cut their weakest player and sign the best free-agent fit for that role. Rosters churn like the real thing.
 
@@ -133,7 +139,7 @@ Each game of the series gets its own card, most recent game first:
 
 ## Sim speed
 
-The sim itself is instant. The reveal pacing is theater, and you control it: Slow, Normal, Fast, or Instant. Change it from the top bar, the matchday screen, or the live ticker. Instant skips the theatrics entirely.
+The sim itself is instant. The reveal pacing is theater, and you control it: Slow, Normal, Fast, or Instant. Change it from the rail on a computer, the **⋯** menu on a phone, **Guide → Settings**, or the bar at the top of a live match. Instant skips the theatrics entirely.
 
 ## Strategy tips
 
@@ -149,6 +155,6 @@ The sim itself is instant. The reveal pacing is theater, and you control it: Slo
 
 ## Saving, contributing, and starting over
 
-Your browser saves automatically. Staging keeps a separate save from the live game. If storage is full or blocked, a warning offers Retry saving; keep the tab open until it succeeds. New Game asks before replacing your current session. Drafts, IGL decisions, map playback, gauntlets and teamless historical replays resume after refresh. Older standalone Draft/IGL saves become Season saves with the corresponding add-on enabled; unfinished matches are retained. The first-run coach walkthrough is skippable anytime and can be replayed from **How to Play → Replay walkthrough**.
+Your browser saves automatically. Staging keeps a separate save from the live game. If storage is full or blocked, a warning offers Retry saving; keep the tab open until it succeeds. New Game asks before replacing your current session. Drafts, IGL decisions, map playback, gauntlets and teamless historical replays resume after refresh. Older standalone Draft/IGL saves become Season saves with the corresponding add-on enabled; unfinished matches are retained. The first-run coach walkthrough is skippable anytime and can be replayed from **Guide → How to play → Replay walkthrough**.
 
-Developers and contributors: see **CONTRIBUTING.md** in the repository for local setup, `npm test`, and pull-request expectations. In the live game, open **About / Community** from the footer or New Game screen for the short project pitch and contribute links (public repo wording until a license file exists).
+Developers and contributors: see **CONTRIBUTING.md** in the repository for local setup, `npm test`, and pull-request expectations. In the live game, open **About / Community** from the footer or the New Game screen for the short project pitch and contribute links (public repo wording until a license file exists).

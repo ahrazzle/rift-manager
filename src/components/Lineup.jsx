@@ -1,13 +1,28 @@
 import { ROLES, ROLE_LABEL } from '../data/lck.js'
 import { growthOutlook } from '../data/development.js'
-import { styledPlayer } from '../game/logic.js'
 import PlayerTags from './PlayerTags.jsx'
+import TeamCrest from './TeamCrest.jsx'
+import { Card, Chip, RoleIcon, cx } from './ui/index.js'
 
-const OUTLOOK_CLS = {
-  rising: 'outlook-rise',
-  steady: 'outlook-steady',
-  declining: 'outlook-decline',
-  'at ceiling': 'outlook-ceiling',
+const OUTLOOK_TONE = {
+  rising: 'rise',
+  steady: 'steady',
+  declining: 'decline',
+  'at ceiling': 'ceiling',
+}
+
+function Stat({ label, name, v }) {
+  return (
+    <span className="lu-stat" title={`${name}: ${v}`}>
+      <span className="lu-stat-l">
+        <abbr title={name}>{label}</abbr>
+        <b className="num">{v}</b>
+      </span>
+      <span className="lu-stat-bar" aria-hidden="true">
+        <i style={{ width: `${Math.max(0, Math.min(100, v))}%` }} />
+      </span>
+    </span>
+  )
 }
 
 function PlayerRow({ player, isStarter, form, onSelect, showOutlook }) {
@@ -16,40 +31,38 @@ function PlayerRow({ player, isStarter, form, onSelect, showOutlook }) {
   const outlook = showOutlook ? growthOutlook(player) : null
   return (
     <button
-      className={isStarter ? 'plrow starter' : 'plrow'}
+      type="button"
+      className={cx('lu-row', isStarter && 'is-starter')}
+      aria-pressed={isStarter}
       onClick={() => onSelect(player)}
     >
-      <span className="pl-name">{player.name}</span>
-      <span className="pl-ovr" title="Overall">{player.ovr}</span>
-      <span className="tale-chip pl-age" title="Player age">Age {age}</span>
-      {outlook && (
-        <span
-          className={`tale-chip outlook-chip ${OUTLOOK_CLS[outlook] || ''}`}
-          title="Career growth outlook (Advance Season only — not a promise every week)"
-        >
-          {outlook}
+      <span className="lu-top">
+        <span className="lu-name">{player.name}</span>
+        {isStarter && <Chip icon="check">Starter</Chip>}
+        <span className="lu-ovr num" title="Overall">
+          <span className="sr-only">OVR </span>
+          {player.ovr}
         </span>
-      )}
-      <span className="bars">
-        <Mini label="M" v={player.mech} />
-        <Mini label="A" v={player.macro} />
-        <Mini label="C" v={player.consist} />
-        <Mini label="F" v={f} />
       </span>
-      <PlayerTags player={player} />
-      {isStarter && <span className="badge">START</span>}
+      <span className="lu-chips">
+        <Chip title="Player age">Age {age}</Chip>
+        {outlook && (
+          <Chip
+            className={`outlook-chip outlook-${OUTLOOK_TONE[outlook] || 'steady'}`}
+            title="Career growth outlook (Advance Season only — not a promise every week)"
+          >
+            {outlook}
+          </Chip>
+        )}
+        <PlayerTags player={player} />
+      </span>
+      <span className="lu-stats">
+        <Stat label="MEC" name="Mechanics" v={player.mech} />
+        <Stat label="MAC" name="Macro" v={player.macro} />
+        <Stat label="CON" name="Consistency" v={player.consist} />
+        <Stat label="FRM" name="Form" v={f} />
+      </span>
     </button>
-  )
-}
-
-function Mini({ label, v }) {
-  return (
-    <span className="mini" title={`${label}: ${v}`}>
-      <span className="mini-l">{label}</span>
-      <span className="mini-bar">
-        <span style={{ width: `${v}%`, background: v >= 80 ? '#22c55e' : v >= 65 ? '#eab308' : '#ef4444' }} />
-      </span>
-    </span>
   )
 }
 
@@ -64,41 +77,54 @@ export default function Lineup({ state, dispatch }) {
   }
 
   return (
-    <div className="stack">
-      <div className="card">
-        <h2>Starting Lineup: {teamName}</h2>
-        <p className="hint">
-          Click a player to start them in their role. Subs are listed below starters.
+    <div className="team-stack">
+      {state.lastEventLog && <p className="opt-hint">{state.lastEventLog}</p>}
+      <Card
+        className="lu-card"
+        title={
+          <span className="lu-title">
+            <TeamCrest teamId={state.teamId} name={teamName} size={32} />
+            Starting lineup · {teamName}
+          </span>
+        }
+      >
+        <p className="lu-hint">
+          Choose a player to start them in their role. Subs are listed beside starters.
           {showOutlook
             ? ' Growth outlook reflects Career off-season development bands — exact potential is on Squad.'
             : state.mode === 'season'
               ? ' Season mode has no annual player growth between splits.'
               : ''}
         </p>
-        {ROLES.map((role) => {
-          const inRole = players.filter((p) => p.role === role)
-          const starterId = state.lineup[role]
-          return (
-            <div className="role-block" key={role}>
-              <div className="role-head">
-                <span className="role-label">{ROLE_LABEL[role]}</span>
-              </div>
-              <div className="plrows">
-                {inRole.map((p) => (
-                  <PlayerRow
-                    key={p.id}
-                    player={p}
-                    form={form}
-                    isStarter={p.id === starterId}
-                    onSelect={() => setStarter(role, p.id)}
-                    showOutlook={showOutlook}
-                  />
-                ))}
-              </div>
-            </div>
-          )
-        })}
-      </div>
+        <div className="lu-roles">
+          {ROLES.map((role) => {
+            const inRole = players.filter((p) => p.role === role)
+            const starterId = state.lineup[role]
+            const starter = inRole.find((p) => p.id === starterId)
+            return (
+              <section className="lu-role" key={role} aria-label={ROLE_LABEL[role]}>
+                <h3 className="lu-role-h">
+                  <RoleIcon role={role} size={22} />
+                  <span>{ROLE_LABEL[role]}</span>
+                  {starter && <span className="lu-role-now">{starter.name} starts</span>}
+                </h3>
+                <div className="lu-rows">
+                  {inRole.map((p) => (
+                    <PlayerRow
+                      key={p.id}
+                      player={p}
+                      form={form}
+                      isStarter={p.id === starterId}
+                      onSelect={() => setStarter(role, p.id)}
+                      showOutlook={showOutlook}
+                    />
+                  ))}
+                </div>
+              </section>
+            )
+          })}
+        </div>
+      </Card>
     </div>
   )
 }

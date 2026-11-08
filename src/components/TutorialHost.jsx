@@ -19,6 +19,7 @@ export default function TutorialHost({
   activeTab,
   setTab,
   onNewGameScreen,
+  matchOptionsVisible = false,
   tutorial,
   persistTutorial,
   skipTutorial,
@@ -111,11 +112,18 @@ export default function TutorialHost({
   const hubSteps = useMemo(() => (hubMode ? hubStepsForMode(hubMode) : []), [hubMode])
   const hubStepIndex = Math.min(tutorial.mainStep, Math.max(hubSteps.length - 1, 0))
 
+  // The match-options tip anchors MatchOptions, which renders on New Game step 3.
+  // Wait for that step (a missing anchor would mark the tip seen unshown), and
+  // put it away, unseen, if the player steps back.
   useEffect(() => {
-    if (!allowsAutoTips(tutorial) || tutorial.seen.matchOptions || !onNewGameScreen) return
+    if (!onNewGameScreen || !matchOptionsVisible) {
+      setContextual((c) => (c?.id === 'matchOptions' ? null : c))
+      return
+    }
+    if (!allowsAutoTips(tutorial) || tutorial.seen.matchOptions) return
     if (tutorial.status !== 'pending') return
     setContextual(contextualTipDef('matchOptions'))
-  }, [onNewGameScreen, tutorial])
+  }, [onNewGameScreen, matchOptionsVisible, tutorial])
 
   useEffect(() => {
     if (!allowsAutoTips(tutorial) || tutorial.seen.tactics || hubActive || showEndCard) return

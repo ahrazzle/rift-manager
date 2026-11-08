@@ -1,48 +1,61 @@
-import { ROLE_LABEL } from '../data/lck.js'
-import { canAfford, fmtMoney, fmtMoneyExact, playerWage, signingFee } from '../game/economy.js'
+import { useState } from 'react'
+import { ROLES, ROLE_LABEL } from '../data/lck.js'
+import { canAfford, fmtMoney, fmtMoneyExact, signingFee } from '../game/economy.js'
+import { Card, EmptyState, Seg, Button } from './ui/index.js'
+import PlayerList from './team/PlayerList.jsx'
+import ManagedRoster from './team/ManagedRoster.jsx'
 
 export default function Market({ state, dispatch }) {
   const budget = state.finance?.budget
+  const [role, setRole] = useState('ALL')
+  // Season mode has no Squad screen; its roster (with Release) rides here.
+  const seasonRoster = (state.mode ?? 'season') === 'season' && state.teamId
+    ? <ManagedRoster state={state} dispatch={dispatch} />
+    : null
+  const wrap = (card) => (seasonRoster ? <div className="team-stack">{card}{seasonRoster}</div> : card)
   if (state.faPool.length === 0) {
-    return (
-      <div className="card">
-        <h2>Transfer Market</h2>
-        <p className="hint">No free agents available right now.</p>
-      </div>
+    return wrap(
+      <Card title="Transfer market">
+        <p className="opt-hint">No free agents available right now.</p>
+      </Card>,
     )
   }
-  return (
-    <div className="card">
-      <h2>Transfer Market: Free Agents</h2>
-      <p className="hint">
+  const shown = role === 'ALL' ? state.faPool : state.faPool.filter((p) => p.role === role)
+  const affordable = (p) => budget == null || canAfford(budget, signingFee(p))
+  const roleItems = [{ id: 'ALL', label: 'All' }, ...ROLES.map((r) => ({ id: r, label: ROLE_LABEL[r] }))]
+
+  return wrap(
+    <Card
+      title="Transfer market: free agents"
+      action={budget != null ? <p className="mk-budget">Transfer budget: <strong className="num">{fmtMoney(budget)}</strong></p> : null}
+    >
+      <p className="opt-lede">
         Sign a free agent to add them to your roster (they become the starter in their role).
+        A signing arrives pleased to join; the starter they displace loses some morale.
       </p>
-      {budget != null && <p>Transfer budget: {fmtMoney(budget)}</p>}
-      <div className="market-grid">
-        {state.faPool.map((p) => (
-          <div className="fa-card" key={p.id}>
-            <div className="fa-top">
-              <span className="fa-name">{p.name}</span>
-              <span className="fa-role">{ROLE_LABEL[p.role]}</span>
-            </div>
-            <div className="fa-stats">
-              <span title="Overall">OVR {p.ovr}</span>
-              <span title="Age">Age {p.age ?? 21}</span>
-              <span title="Fixed rating cap (unchanged each off-season)">Pot {p.potential ?? Math.min(99, p.ovr + 5)}</span>
-              <span title="Mechanics">MEC {p.mech}</span>
-              <span title="Macro">MAC {p.macro}</span>
-              <span title="Consistency">CON {p.consist}</span>
-            </div>
-            <p className="hint">Signing fee: {fmtMoneyExact(signingFee(p))} · Annual wage: {fmtMoneyExact(playerWage(p))}</p>
-            {budget != null && !canAfford(budget, signingFee(p)) && (
-              <p className="hint">Short by {fmtMoneyExact(signingFee(p) - budget)}</p>
-            )}
-            <button className="primary" disabled={budget != null && !canAfford(budget, signingFee(p))} onClick={() => dispatch({ type: 'SIGN', playerId: p.id })}>
-              {budget != null && !canAfford(budget, signingFee(p)) ? 'Insufficient budget' : 'Sign'}
-            </button>
-          </div>
-        ))}
+      <div className="mk-filter">
+        <Seg name="market-role" label="Filter by role" items={roleItems} value={role} onChange={setRole} className="team-seg" />
       </div>
-    </div>
+      {shown.length === 0 ? (
+        <EmptyState action={<Button onClick={() => setRole('ALL')}>Show all roles</Button>}>
+          No free agent plays {ROLE_LABEL[role]}.
+        </EmptyState>
+      ) : (
+        <PlayerList
+          label="Free agents"
+          players={shown}
+          money
+          actionsHeader="Sign"
+          getActions={(p) => [
+            { id: 'sign', label: 'Sign', variant: 'secondary', disabled: !affordable(p), onClick: () => dispatch({ type: 'SIGN', playerId: p.id }) },
+          ]}
+          getNote={(p) =>
+            affordable(p)
+              ? undefined
+              : `Insufficient budget. Short by ${fmtMoneyExact(signingFee(p) - budget)}.`
+          }
+        />
+      )}
+    </Card>,
   )
 }

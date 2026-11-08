@@ -1,28 +1,26 @@
-import { useEffect, useId, useRef } from 'react'
+import { useRef } from 'react'
+import { Button, Dialog } from './ui/index.js'
 
-export default function ConfirmDialog({ title, children, confirmLabel, onConfirm, onCancel }) {
-  const ref = useRef(null)
-  const titleId = useId()
-  const descriptionId = useId()
-  useEffect(() => {
-    const dialog = ref.current
-    const trigger = document.activeElement
-    dialog.showModal()
-    return () => {
-      dialog.close()
-      if (trigger?.isConnected) trigger.focus()
-    }
-  }, [])
+// Two-choice confirmation on the shared Dialog (focus trap, Esc, aria-modal).
+// "Keep playing" is the safe choice, so it takes initial focus.
+export default function ConfirmDialog({ title, children, confirmLabel, confirmDisabled = false, onConfirm, onCancel }) {
+  const keepRef = useRef(null)
   return (
-    <dialog ref={ref} className="card" aria-labelledby={titleId} aria-describedby={descriptionId}
-      style={{ width: 'min(460px, calc(100vw - 32px))', color: 'var(--text)', background: 'var(--s1)' }}
-      onCancel={(event) => { event.preventDefault(); onCancel() }}>
-      <h2 id={titleId}>{title}</h2>
-      <p id={descriptionId}>{children}</p>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-        <button type="button" className="ghost" autoFocus onClick={onCancel}>Keep playing</button>
-        <button type="button" className="primary" onClick={onConfirm}>{confirmLabel}</button>
-      </div>
-    </dialog>
+    <Dialog
+      title={title}
+      size="sm"
+      sheet="never"
+      description={typeof children === 'string' ? children : undefined}
+      onClose={onCancel}
+      initialFocusRef={keepRef}
+      actions={
+        <>
+          <Button ref={keepRef} variant="quiet" onClick={onCancel}>Keep playing</Button>
+          <Button variant="primary" disabled={confirmDisabled} onClick={onConfirm}>{confirmLabel}</Button>
+        </>
+      }
+    >
+      {typeof children === 'string' ? null : children}
+    </Dialog>
   )
 }

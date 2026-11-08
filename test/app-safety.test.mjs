@@ -21,14 +21,19 @@ try {
   assert.equal(state.tournament.kind, 'playoffs')
   globalThis.localStorage = { getItem: (key) => key === SAVE_KEY ? JSON.stringify(state) : null }
   const markup = renderToString(React.createElement(App))
-  assert.match(markup, />Playoffs<\/button>/)
-  assert.doesNotMatch(markup, />MSI\/Worlds<\/button>/)
-  assert.match(markup, />New Game<\/button>/)
+  // Shell: the phase track marks Playoffs as current; the bracket lives under Compete.
+  assert.match(markup, /<li class="is-now" aria-current="step">[^<]*<span class="dot"[^>]*><\/span>Playoffs/)
+  assert.match(markup, /<li class="is-done">[^<]*<span class="dot"[^>]*><\/span>Regional/)
+  assert.match(markup, /aria-label="Main"/)
+  for (const label of ['Hub', 'Team', 'Compete', 'Club', 'Guide']) assert.match(markup, new RegExp(`<span>${label}</span></button>`))
+  assert.doesNotMatch(markup, /Week 9 of 9|Week 10/, 'no clamped week label after the regular season')
   const dialog = renderToString(React.createElement(ConfirmDialog, {
     title: 'Start a new game?', confirmLabel: 'Start new game', onConfirm() {}, onCancel() {},
   }, 'Your progress will be lost.'))
-  assert.match(dialog, /<dialog[^>]*aria-labelledby="[^"]+"[^>]*aria-describedby="[^"]+"/)
-  assert.match(dialog, /autofocus=""[^>]*>Keep playing<\/button>/)
+  // The shared Dialog primitive replaced the native <dialog>: same name/description wiring,
+  // plus aria-modal; focus (Keep playing first) and Esc are exercised in the Dialog's own effect.
+  assert.match(dialog, /role="dialog"[^>]*aria-modal="true"[^>]*aria-labelledby="[^"]+"[^>]*aria-describedby="[^"]+"/)
+  assert.match(dialog, />Keep playing<\/button>/)
   assert.match(dialog, />Start new game<\/button>/)
   globalThis.localStorage = { getItem: () => '{broken' }
   const recovery = renderToString(React.createElement(App))

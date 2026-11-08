@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { reducer, load } from '../src/game/useGameState.js'
+import { reducer, rosterBackend, load } from '../src/game/useGameState.js'
 import { SAVE_KEY, STAGING_SAVE_KEY, saveKey, writeSave } from '../src/game/persistence.js'
 
 const data = new Map()
@@ -25,7 +25,9 @@ function roundTrip(state) {
 for (const mode of ['season', 'draft', 'igl', 'gauntlet']) {
   roundTrip(reducer(undefined, { type: 'NEW_GAME', teamId: 'T1', mode }))
 }
-roundTrip(reducer(undefined, { type: 'START_CAREER', teamId: 'T1' }))
+// Careers are created through the production (backend-wrapped) reducer, so
+// the save already carries joinedSeason and round-trips exactly.
+roundTrip(rosterBackend.reducer(undefined, { type: 'START_CAREER', teamId: 'T1' }))
 let replay = reducer(undefined, { type: 'START_CAMPAIGN', campaignId: 'hist-2013-summer' })
 roundTrip(replay)
 replay = reducer(replay, { type: 'COMPLETE_SEASON_REPLAY' })

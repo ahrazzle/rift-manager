@@ -1,7 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useGameState } from './game/useGameState.js'
 import NewGame from './components/NewGame.jsx'
-import MatchIcon from './components/MatchIcon.jsx'
 import Campaign from './components/Campaign.jsx'
 import Dashboard from './components/Dashboard.jsx'
 import Gauntlet from './components/Gauntlet.jsx'
@@ -14,29 +13,25 @@ import Standings from './components/Standings.jsx'
 import Results from './components/Results.jsx'
 import Market from './components/Market.jsx'
 import Squad from './components/Squad.jsx'
-import Guide from './components/Guide.jsx'
+import Guide, { GuideSections } from './components/Guide.jsx'
 import { exportPng } from './utils/exportPng.js'
 import { scrollContentToTop } from './utils/scrollToTop.js'
-import { streakOf } from './game/hype.js'
 import { EventModal, PromotionModal } from './components/CareerModals.jsx'
-import PressModal from './components/PressModal.jsx'
-import { fmtMoney } from './game/economy.js'
 import ConfirmDialog from './components/ConfirmDialog.jsx'
 import SiteFooter from './components/SiteFooter.jsx'
 import AboutCommunity from './components/AboutCommunity.jsx'
 import TutorialHost, { TutorialIglTip } from './components/TutorialHost.jsx'
 import { normalizeTutorial, readTutorial, writeTutorial } from './game/tutorial.js'
-
-function Brand({ compact = false }) {
-  return <div className={`broadcast-brand${compact ? ' broadcast-brand-compact' : ''}`}>
-    <img
-      src={`${(import.meta.env?.BASE_URL ?? '/')}brand/${compact ? 'rift-mark.svg' : 'rift-manager.svg'}`}
-      width={compact ? 40 : 140}
-      height={compact ? 40 : 50}
-      alt="Rift Manager"
-    />
-  </div>
-}
+import AppShell from './components/shell/AppShell.jsx'
+import PageHeader from './components/shell/PageHeader.jsx'
+import ClubPage from './components/shell/ClubPage.jsx'
+import SettingsPanel from './components/shell/SettingsPanel.jsx'
+import { ModeBarProvider } from './components/shell/modeBar.jsx'
+import { navFor, resolveRoute, seasonContext, SEG_TOUR, shellKind, TAB_LABELS } from './components/shell/nav.js'
+import { applyUiPrefs, readUiPrefs, writeUiPrefs } from './components/shell/uiPrefs.js'
+import { segTabId } from './components/ui/Seg.jsx'
+import { campaignById } from './game/useGameState.js'
+import { teamName } from './game/hype.js'
 
 function SaveError({ error, retrySave, loadError, retryLoad, replaceSave }) {
   const [replacementPending, setReplacementPending] = useState(false)
@@ -117,14 +112,42 @@ function CareerEpitaph({ state, dispatch }) {
     </div>
   )
 }
+/** Page title + context line for each destination. */
+function pageMeta(dest, state, seasonRounds) {
+  const kind = shellKind(state)
+  const club = state.teamId ? teamName(state, state.teamId) : ''
+  if (dest === 'team') return { title: 'Team', sub: club ? `${club} · roster, game plan and transfers` : 'Roster and game plan' }
+  if (dest === 'compete') {
+    if (kind === 'campaign' || kind === 'replay') {
+      const c = state.campaign ? campaignById(state.campaign.campaignId) : null
+      return { title: 'Compete', sub: c?.title ?? 'Scenario results' }
+    }
+    if (kind === 'gauntlet') return { title: 'Compete', sub: 'Gauntlet · standings and results' }
+    const ctx = seasonContext(state, seasonRounds)
+    const played = Math.max(0, Math.min((state.round ?? 1) - 1, seasonRounds))
+    const sub = !state.finished
+      ? played === 0
+        ? `${state.league ?? 'LCK'} Regional Split · week 1 of ${seasonRounds} up next`
+        : `${state.league ?? 'LCK'} Regional Split · after week ${played} of ${seasonRounds}`
+      : `${ctx.primary} ${ctx.secondary}`.trim()
+    return { title: 'Compete', sub }
+  }
+  if (dest === 'club') return { title: 'Club', sub: club ? `${club} · board, money, honours` : 'Save and honours' }
+  if (dest === 'guide') return { title: 'Guide', sub: 'How Rift Manager plays, and your settings' }
+  return { title: 'Hub', sub: '' }
+}
+
 export default function App() {
   const { state, dispatch: gameDispatch, TOTAL_ROUNDS, storageError, retrySave, loadError, retryLoad, replaceSave } = useGameState()
   const [tab, setTabRaw] = useState('dashboard')
+  const [lastTabs, setLastTabs] = useState({})
   const [guideOpen, setGuideOpen] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
   const [resetPending, setResetPending] = useState(false)
   const [tutorial, setTutorial] = useState(() => readTutorial())
   const [hubTourRequest, setHubTourRequest] = useState(0)
+  const [newGameStep, setNewGameStep] = useState(0)
+  const [uiPrefs, setUiPrefs] = useState(() => readUiPrefs())
   const persistTutorial = useCallback((next) => {
     const base = typeof next === 'function' ? next(readTutorial()) : next
     const normalized = normalizeTutorial(base)
@@ -134,6 +157,13 @@ export default function App() {
   const skipTutorial = useCallback(() => {
     persistTutorial({ ...readTutorial(), status: 'skipped' })
   }, [persistTutorial])
+  const changeUiPrefs = useCallback((next) => {
+    writeUiPrefs(next)
+    setUiPrefs(next)
+  }, [])
+  useEffect(() => {
+    applyUiPrefs(uiPrefs)
+  }, [uiPrefs])
   const prevActiveTab = useRef(null)
   const setTab = useCallback((id) => {
     setTabRaw(id)
@@ -155,6 +185,7 @@ export default function App() {
     if (action.type === 'RESET') setTab('dashboard')
     gameDispatch(action)
   }
+  const requestNewGame = () => dispatch({ type: 'RESET' })
 
   // Season-replay campaigns carry no managed team — they still get the shell.
   const isSeasonReplay = state.mode === 'campaign' && !state.teamId
@@ -162,50 +193,25 @@ export default function App() {
   const isCampaign = state.mode === 'campaign'
   const isCareer = state.mode === 'career'
   const isRetired = isCareer && state.career?.status === 'retired'
-  const TAB_TOUR = {
-    lineup: 'tour-lineup-tab',
-    market: 'tour-market-tab',
-    squad: 'tour-squad-tab',
-    tactics: 'tour-tactics-tab',
-    strategy: 'tour-strategy-tab',
-  }
-  const nav = onNewGameScreen
-    ? [['dashboard', 'Dashboard']]
-    : isSeasonReplay
-    ? [
-        ['campaign', 'Scenario'],
-        ['results', 'Results'],
-      ]
-    : isCampaign
-    ? [
-        ['campaign', 'Scenario Mode'],
-        ['lineup', 'Lineup'],
-        ['tactics', 'Tactics'],
-        ['results', 'Results'],
-      ]
-    : isCareer
-      ? [
-          ['dashboard', 'Dashboard'],
-          ['lineup', 'Lineup'],
-          ['tactics', 'Tactics'],
-          ['strategy', 'Strategy'],
-          ['standings', 'Standings'],
-          ['results', 'Results'],
-          ['squad', 'Squad'],
-        ]
-      : [
-          ['dashboard', 'Dashboard'],
-          ['lineup', 'Lineup'],
-          ['tactics', 'Tactics'],
-          ['strategy', 'Strategy'],
-          ['standings', 'Standings'],
-          ['results', 'Results'],
-          ['market', 'Market'],
-        ]
-  if (!onNewGameScreen && !isCampaign && state.tournament) {
-    nav.push(['tournament', state.tournament.kind === 'playoffs' ? 'Playoffs' : 'MSI/Worlds'])
-  }
-  const activeTab = nav.some(([id]) => id === tab) ? tab : nav[0][0]
+
+  // Five destinations; flat tab ids map onto them (see components/shell/nav.js).
+  const nav = navFor(state)
+  const route = resolveRoute(nav, tab)
+  const activeTab = route.tab
+  const activeDest = route.destination?.id ?? 'hub'
+
+  // Clicking a destination reopens its last segment; a flat id goes straight there.
+  const navigate = useCallback(
+    (id) => {
+      const byDest = nav.find((d) => d.id === id)
+      setTab(byDest ? (lastTabs[id] && byDest.tabs.includes(lastTabs[id]) ? lastTabs[id] : byDest.tabs[0]) : id)
+    },
+    [nav, lastTabs, setTab],
+  )
+  useEffect(() => {
+    if (!route.destination) return
+    setLastTabs((prev) => (prev[route.destination.id] === activeTab ? prev : { ...prev, [route.destination.id]: activeTab }))
+  }, [route.destination, activeTab])
 
   useEffect(() => {
     scrollContentToTop()
@@ -218,25 +224,15 @@ export default function App() {
     prevActiveTab.current = activeTab
   }, [activeTab])
 
+  const footer = <SiteFooter onOpenAbout={openAbout} />
+
   if (onNewGameScreen) {
     return (
-      <div className="app broadcast-shell">
-        <a className="skip" href="#main-content">Skip to main content</a>
-        <header className="topbar">
-          <Brand compact />
-          <div className="topbar-spacer" />
-          <button className="ghost" onClick={openGuide}>
-            How to Play
-          </button>
-        </header>
-
-        <SaveError error={storageError} retrySave={retrySave} loadError={loadError} retryLoad={retryLoad} replaceSave={replaceSave} />
-        <main id="main-content" className="content">
-          <NewGame state={state} dispatch={dispatch} onOpenAbout={openAbout} />
-
-        </main>
-
-        <SiteFooter onOpenAbout={openAbout} />
+      <>
+        <AppShell variant="bare" state={state} dispatch={dispatch} onOpenGuide={openGuide} footer={footer}>
+          <SaveError error={storageError} retrySave={retrySave} loadError={loadError} retryLoad={retryLoad} replaceSave={replaceSave} />
+          <NewGame state={state} dispatch={dispatch} onOpenAbout={openAbout} onStepChange={setNewGameStep} />
+        </AppShell>
         {guideOpen && (
           <Guide
             onClose={() => setGuideOpen(false)}
@@ -249,105 +245,79 @@ export default function App() {
           activeTab="dashboard"
           setTab={() => {}}
           onNewGameScreen
+          matchOptionsVisible={newGameStep === 2}
           tutorial={tutorial}
           persistTutorial={persistTutorial}
           skipTutorial={skipTutorial}
           hubTourRequest={hubTourRequest}
           onHubTourRequestHandled={() => {}}
         />
-      </div>
+      </>
     )
   }
 
   const seasonRounds = state.totalRounds ?? TOTAL_ROUNDS
-  const st = !isCampaign && state.teamId ? streakOf(state, state.teamId) : null
-  const progress = !isCampaign && seasonRounds > 0
-    ? Math.min(100, Math.max(0, ((Math.min(state.round, seasonRounds) - 1) / seasonRounds) * 100))
-    : 0
+  const meta = pageMeta(activeDest, state, seasonRounds)
+  const segTabs = route.destination?.tabs ?? []
+  const panelId = `${activeDest}-panel`
+  const seg = segTabs.length > 1
+    ? {
+        name: activeDest,
+        label: `${meta.title} pages`,
+        items: segTabs.map((id) => ({ id, label: TAB_LABELS[id] ?? id, tour: SEG_TOUR[id] })),
+        value: activeTab,
+        onChange: setTab,
+        panelId,
+      }
+    : null
+  const panelProps = seg
+    ? { role: 'tabpanel', id: panelId, 'aria-labelledby': segTabId(activeDest, activeTab) }
+    : {}
+
+  const screen = isRetired ? (
+    <CareerEpitaph state={state} dispatch={dispatch} />
+  ) : (
+    <>
+      {activeTab === 'campaign' && isCampaign && (
+        <Campaign state={state} dispatch={dispatch} />
+      )}
+      {activeTab === 'dashboard' && !isCampaign && (
+        state.mode === 'gauntlet'
+          ? <Gauntlet state={state} dispatch={dispatch} />
+          : <Dashboard
+              state={state}
+              dispatch={dispatch}
+              setTab={setTab}
+              totalRounds={seasonRounds}
+            />
+      )}
+      {activeTab === 'lineup' && <Lineup state={state} dispatch={dispatch} />}
+      {activeTab === 'tactics' && <Tactics state={state} dispatch={dispatch} />}
+      {activeTab === 'strategy' && !isCampaign && <Strategy state={state} dispatch={dispatch} />}
+      {activeTab === 'standings' && !isCampaign && <Standings state={state} />}
+      {activeTab === 'results' && <Results state={state} />}
+      {activeTab === 'market' && !isCampaign && !isCareer && <Market state={state} dispatch={dispatch} />}
+      {activeTab === 'squad' && isCareer && <Squad state={state} dispatch={dispatch} />}
+      {activeTab === 'tournament' && !isCampaign && state.tournament && (
+        <Tournament state={state} dispatch={dispatch} />
+      )}
+      {activeTab === 'club' && <ClubPage state={state} onNewGame={requestNewGame} />}
+      {activeTab === 'guide' && (
+        <div className="guide-page">
+          <GuideSections variant="page" onReplayWalkthrough={() => setHubTourRequest((n) => n + 1)} />
+        </div>
+      )}
+      {activeTab === 'settings' && (
+        <SettingsPanel state={state} dispatch={dispatch} uiPrefs={uiPrefs} onUiPrefsChange={changeUiPrefs} />
+      )}
+    </>
+  )
 
   return (
-    <div className={`app broadcast-shell${state.matchSession ? ' arena-shell' : ''}`}>
-      <a className="skip" href="#main-content">Skip to main content</a>
-      <header className="topbar">
-        <Brand />
-        {st && st.n >= 2 && (
-          <span className={`streak-pill ${st.dir === 'L' ? 'cold' : ''}`} title={st.dir === 'W' ? 'Win streak' : 'Losing streak'}>
-            <MatchIcon name={st.dir === 'W' ? 'flame' : 'snow'} size={14} /> {st.dir}{st.n}
-          </span>
-        )}
-        <div className="who">
-          {isSeasonReplay ? (
-            <><strong>{state.managerName || 'Coach'}</strong> · Season replay: history, unchangeable</>
-          ) : (
-            <>
-              <strong>{state.managerName}</strong> · managing{' '}
-              <span>{state.teamId}</span>
-              {state.league ? <> · {state.league}</> : null}
-              {isCampaign ? (
-                <> · Scenario Mode</>
-              ) : isCareer ? (
-                <> · Season {state.career?.seasonIndex ?? 1} · Week {Math.min(state.round, seasonRounds)}/{seasonRounds}</>
-              ) : (
-                <> · Week {Math.min(state.round, seasonRounds)}/{seasonRounds}</>
-              )}
-            </>
-          )}
-        </div>
-        <label className="sr-only" htmlFor="sim-speed-select">Simulation speed</label>
-        <select
-          id="sim-speed-select"
-          className="year-select"
-          value={state.simSpeed ?? 'normal'}
-          onChange={(e) => dispatch({ type: 'SET_SIM_SPEED', speed: e.target.value })}
-          title="Sim speed — how fast games reveal"
-          style={{ fontSize: 12, padding: '6px 10px' }}
-        >
-          <option value="slow">Slow</option>
-          <option value="normal">Normal</option>
-          <option value="fast">Fast</option>
-          <option value="instant">Instant</option>
-        </select>
-        <button className="ghost" onClick={openGuide}>
-          How to Play
-        </button>
-        <button className="ghost" onClick={() => dispatch({ type: 'RESET' })}>
-          New Game
-        </button>
-      </header>
-      <main id="main-content" className="content">
-        <SaveError error={storageError} retrySave={retrySave} loadError={loadError} retryLoad={retryLoad} replaceSave={replaceSave} />
-        {!state.matchSession && !isCampaign && state.teamId && (
-          <div className="top-progress" aria-hidden>
-            <span style={{ width: `${progress}%` }} />
-          </div>
-        )}
-        {!state.matchSession && !isCampaign && !isSeasonReplay && state.board && (
-          <div className="manager-strip" data-tour="tour-board">
-            <span><MatchIcon name="target" size={16} /> <strong>{state.board.expectation}</strong></span>
-            {/* Warn below 40 matches BoardCard pressure band; sack at ≤0 in useGameState ADVANCE_SEASON */}
-            <span className={state.board.confidence < 40 ? 'board-trust-warn' : 'board-trust'}>
-              Board {state.board.confidence}
-            </span>
-            {state.finance && <span><MatchIcon name="gold" size={16} /> {fmtMoney(state.finance.budget)}</span>}
-            {state.sacked && <span className="bad">SACKED</span>}
-          </div>
-        )}
-
-        {!state.matchSession && <nav className="tabs" aria-label="Season navigation">
-          {nav.map(([id, label]) => (
-            <button
-              key={id}
-              className={activeTab === id ? 'tab active' : 'tab'}
-              aria-current={activeTab === id ? 'page' : undefined}
-              onClick={() => setTab(id)}
-              {...(TAB_TOUR[id] ? { 'data-tour': TAB_TOUR[id] } : {})}
-            >
-              <MatchIcon name={id} size={15} />{label}
-            </button>
-          ))}
-        </nav>}
-
-        {state.matchSession ? (
+    <ModeBarProvider>
+      {state.matchSession ? (
+        <AppShell variant="mode" state={state} dispatch={dispatch} footer={footer}>
+          <SaveError error={storageError} retrySave={retrySave} loadError={loadError} retryLoad={retryLoad} replaceSave={replaceSave} />
           <MatchExperience
             state={state}
             dispatch={dispatch}
@@ -355,49 +325,37 @@ export default function App() {
             persistTutorial={persistTutorial}
             skipTutorial={skipTutorial}
           />
-        ) : isRetired ? (
-          <CareerEpitaph state={state} dispatch={dispatch} />
-        ) : (
-          <>
-            {activeTab === 'campaign' && isCampaign && (
-              <Campaign state={state} dispatch={dispatch} />
-            )}
-            {activeTab === 'dashboard' && !isCampaign && (
-              state.mode === 'gauntlet'
-                ? <Gauntlet state={state} dispatch={dispatch} />
-                : <Dashboard
-                    state={state}
-                    dispatch={dispatch}
-                    setTab={setTab}
-                    totalRounds={seasonRounds}
-                    tutorial={tutorial}
-                    persistTutorial={persistTutorial}
-                    skipTutorial={skipTutorial}
-                  />
-            )}
-            {activeTab === 'lineup' && <Lineup state={state} dispatch={dispatch} />}
-            {activeTab === 'tactics' && <Tactics state={state} dispatch={dispatch} />}
-            {activeTab === 'strategy' && !isCampaign && <Strategy state={state} dispatch={dispatch} />}
-            {activeTab === 'standings' && !isCampaign && <Standings state={state} />}
-            {activeTab === 'results' && <Results state={state} />}
-            {activeTab === 'market' && !isCampaign && !isCareer && <Market state={state} dispatch={dispatch} />}
-            {activeTab === 'squad' && isCareer && <Squad state={state} dispatch={dispatch} />}
-            {activeTab === 'tournament' && !isCampaign && state.tournament && (
-              <Tournament state={state} dispatch={dispatch} />
-            )}
-          </>
-        )}
-      </main>
+        </AppShell>
+      ) : (
+        <AppShell
+          variant="game"
+          state={state}
+          dispatch={dispatch}
+          nav={nav}
+          activeDest={activeDest}
+          onNavigate={navigate}
+          totalRounds={seasonRounds}
+          onNewGame={requestNewGame}
+          footer={footer}
+        >
+          <SaveError error={storageError} retrySave={retrySave} loadError={loadError} retryLoad={retryLoad} replaceSave={replaceSave} />
+          <PageHeader
+            title={isSeasonReplay && activeDest === 'hub' ? 'Scenario' : meta.title}
+            sub={meta.sub}
+            seg={seg}
+            hidden={activeDest === 'hub'}
+          />
+          <div className={`shell-panel shell-panel--${activeDest}`} {...panelProps}>
+            {screen}
+          </div>
+        </AppShell>
+      )}
 
       {/* Career modals render globally — a pending dilemma/promotion blocks
           ADVANCE_SEASON, and that button lives on the Dashboard. */}
       {!state.matchSession && state.pendingEvent && <EventModal state={state} dispatch={dispatch} />}
-      {!state.matchSession && state.pendingPromotion && <PromotionModal state={state} dispatch={dispatch} />}
-      {!state.matchSession && state.press?.pending && !isSeasonReplay && (
-        <PressModal state={state} dispatch={dispatch} onClose={() => dispatch({ type: 'PRESS_SKIP' })} />
-      )}
+      {!state.matchSession && state.pendingPromotion && !state.pendingEvent && <PromotionModal state={state} dispatch={dispatch} />}
 
-      <SiteFooter onOpenAbout={openAbout} />
       {resetPending && <ConfirmDialog title="Start a new game?" confirmLabel="Start new game"
         onCancel={() => setResetPending(false)}
         onConfirm={() => {
@@ -422,6 +380,6 @@ export default function App() {
         hubTourRequest={hubTourRequest}
         onHubTourRequestHandled={() => {}}
       />
-    </div>
+    </ModeBarProvider>
   )
 }

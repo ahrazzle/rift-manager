@@ -8,6 +8,8 @@ import { bestLineup, userLineup, estimateSeriesWinProb, explainWinProb, matchupS
 import { managedCoachBonus } from '../game/useGameState.js'
 import { TRAIT_BY_ID } from '../data/traits.js'
 import { preparationBonus } from '../game/preparation.js'
+import { Card, Chip, Delta, Meter, OddsWhy } from './ui/index.js'
+import OptionGroup from './team/OptionGroup.jsx'
 
 const FALLBACK_SCHEDULE = buildLCKSchedule()
 
@@ -29,22 +31,15 @@ const WINCON_OPTS = [
   { v: 'EARLY', label: 'Early', blurb: '+1.0 (LATE phase: +0.25)' },
 ]
 
-function OptRow({ opts, cur, onPick }) {
-  return (
-    <div className="tac-grid">
-      {opts.map((o) => (
-        <button
-          key={String(o.v)}
-          className={cur === o.v ? 'tac active' : 'tac'}
-          onClick={() => onPick(o.v)}
-        >
-          <span className="tac-name">{o.label}</span>
-          <span className="tac-blurb">{o.blurb}</span>
-        </button>
-      ))}
-    </div>
-  )
-}
+
+const SWAP_OPTS = [
+  { v: false, label: 'No swap', blurb: 'Play standard lanes' },
+  { v: true, label: 'Swap', blurb: 'MID/LATE phase +1.0 · EARLY phase −1.0' },
+]
+const FEARLESS_OPTS = [
+  { v: true, label: 'Fearless ON', blurb: 'Champions locked in during earlier games of a series cannot be picked again. Bans reset each game.' },
+  { v: false, label: 'Fearless OFF', blurb: 'Standard draft every game — the full pool comes back.' },
+]
 
 export default function Strategy({ state, dispatch }) {
   const strat = state.strategy ?? { comp: null, roam: null, swap: false, wincon: null }
@@ -70,125 +65,79 @@ export default function Strategy({ state, dispatch }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.teamId, state.round, state.finished, state.schedule, state.teams, state.lineup, state.form, state.tactic, state.strategy, state.seriesOptions, state.results, state.career, state.preparation])
 
+  const set = (patch) => dispatch({ type: 'SET_STRATEGY', ...patch })
+  const baseP = preview ? Math.round(preview.base * 100) : 0
+  const withP = preview ? Math.round(preview.withStrat * 100) : 0
+  const traitChips = (state.teams[state.teamId] || [])
+    .filter((p) => Array.isArray(p.traits) && p.traits.some((t) => t.revealed))
+    .flatMap((p) => p.traits.filter((t) => t.revealed).map((t) => ({ p, t })))
+
   return (
-    <div className="stack">
-      <div className="card">
-        <h2>Strategy: Week {state.round} Gameplan</h2>
-        <p className="hint">
+    <div className="team-stack strat">
+      <Card
+        className="strat-main"
+        title={`Strategy: Week ${state.round} gameplan`}
+        action={
+          <Chip>
+            {strat.comp ?? 'Balanced'} · {strat.roam ?? 'Default'} · {strat.swap ? 'Swap' : 'No swap'} · {strat.wincon ?? 'No wincon'}
+          </Chip>
+        }
+      >
+        <p className="opt-lede">
           Set before you play the week. Applies to your side only, every week until you change it.
           Stacked choices clamp at +2.5 strength.
         </p>
+        <OptionGroup name="strat-comp" label="Draft bias" options={COMP_OPTS} value={strat.comp} onPick={(v) => set({ comp: v })} />
+        <OptionGroup name="strat-roam" label="Support roam vs stay" options={ROAM_OPTS} value={strat.roam} onPick={(v) => set({ roam: v })} />
+        <OptionGroup name="strat-swap" label="Lane swap" options={SWAP_OPTS} value={!!strat.swap} onPick={(v) => set({ swap: v })} />
+        <OptionGroup name="strat-wincon" label="Win condition" options={WINCON_OPTS} value={strat.wincon} onPick={(v) => set({ wincon: v })} />
+        <OptionGroup
+          name="strat-fearless"
+          label="Fearless draft"
+          options={FEARLESS_OPTS}
+          value={!!state.seriesOptions?.fearless}
+          onPick={(v) => dispatch({ type: 'SET_SERIES_OPTION', key: 'fearless', value: v })}
+          hint="Applies to every series in this save. Active Coach draft must be on, or it has no effect."
+        />
+        <p className="opt-current">
+          Gameplan: <strong>{strat.comp ?? 'Balanced'}</strong> · <strong>{strat.roam ?? 'Default'}</strong> ·{' '}
+          <strong>{strat.swap ? 'Swap' : 'No swap'}</strong> · <strong>{strat.wincon ?? 'No wincon'}</strong>
+        </p>
+      </Card>
 
-        <div className="tac-section">
-          <h3>Draft Bias</h3>
-          <OptRow opts={COMP_OPTS} cur={strat.comp} onPick={(v) => dispatch({ type: 'SET_STRATEGY', comp: v })} />
-        </div>
+      <div className="strat-side">
+        <Card title="Live win estimate">
+          {preview ? (
+            <>
+              <p className="strat-vs">
+                vs <strong>{preview.oppId}</strong>: base <strong>{baseP}%</strong> → with gameplan <strong>{withP}%</strong>{' '}
+                <Delta value={withP - baseP} unit="points" suffix=" pts" />
+              </p>
+              <Meter label="Base" value={baseP} valueText={`${baseP}%`} />
+              <Meter label="With gameplan" value={withP} valueText={`${withP}%`} />
+            </>
+          ) : (
+            <p className="opt-hint">No upcoming match (season finished).</p>
+          )}
+          {preview?.why && <OddsWhy why={preview.why} />}
+        </Card>
 
-        <div className="tac-section">
-          <h3>Support Roam vs Stay</h3>
-          <OptRow opts={ROAM_OPTS} cur={strat.roam} onPick={(v) => dispatch({ type: 'SET_STRATEGY', roam: v })} />
-        </div>
-
-        <div className="tac-section">
-          <h3>Lane Swap</h3>
-          <div className="tac-grid">
-            <button
-              className={!strat.swap ? 'tac active' : 'tac'}
-              onClick={() => dispatch({ type: 'SET_STRATEGY', swap: false })}
-            >
-              <span className="tac-name">No Swap</span>
-              <span className="tac-blurb">Play standard lanes</span>
-            </button>
-            <button
-              className={strat.swap ? 'tac active' : 'tac'}
-              onClick={() => dispatch({ type: 'SET_STRATEGY', swap: true })}
-            >
-              <span className="tac-name">Swap</span>
-              <span className="tac-blurb">MID/LATE phase +1.0 · EARLY phase −1.0</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="tac-section">
-          <h3>Win Condition</h3>
-          <OptRow opts={WINCON_OPTS} cur={strat.wincon} onPick={(v) => dispatch({ type: 'SET_STRATEGY', wincon: v })} />
-        </div>
-
-        <div className="tac-section">
-          <h3>Fearless Draft</h3>
-          <div className="tac-grid">
-            <button
-              className={state.seriesOptions?.fearless ? 'tac active' : 'tac'}
-              onClick={() => dispatch({ type: 'SET_SERIES_OPTION', key: 'fearless', value: true })}
-            >
-              <span className="tac-name">Fearless ON</span>
-              <span className="tac-blurb">Champions locked in during earlier games of a series cannot be picked again. Bans reset each game.</span>
-            </button>
-            <button
-              className={!state.seriesOptions?.fearless ? 'tac active' : 'tac'}
-              onClick={() => dispatch({ type: 'SET_SERIES_OPTION', key: 'fearless', value: false })}
-            >
-              <span className="tac-name">Fearless OFF</span>
-              <span className="tac-blurb">Standard draft every game — the full pool comes back.</span>
-            </button>
-          </div>
-          <p className="hint">Applies to every series in this save. Active Coach draft must be on, or it has no effect.</p>
-        </div>
-
-        <div className="tac-current">
-          Gameplan: <strong>{strat.comp ?? 'Balanced'}</strong> ·{' '}
-          <strong>{strat.roam ?? 'Default'}</strong> ·{' '}
-          <strong>{strat.swap ? 'Swap' : 'No swap'}</strong> ·{' '}
-          <strong>{strat.wincon ?? 'No wincon'}</strong>
-        </div>
-      </div>
-
-      <div className="card">
-        <h3>Live Win Estimate</h3>
-        {preview ? (
-          <p>
-            vs <strong>{preview.oppId}</strong>: base{' '}
-            <strong>{Math.round(preview.base * 100)}%</strong> → with gameplan{' '}
-            <strong>{Math.round(preview.withStrat * 100)}%</strong>
-          </p>
-        ) : (
-          <p className="hint">No upcoming match (season finished).</p>
-        )}
-        {preview && preview.why ? (
-          <details className="why">
-            <summary>Why {Math.round((preview.why.prob ?? 0.5) * 100)}%? : top factors</summary>
-            <ul>
-              {preview.why.factors.map((f) => (
-                <li key={f.label}>
-                  {f.label}:{' '}
-                  {f.contribution > 0 ? '+' : ''}
-                  {f.contribution.toFixed(1)}pp
-                </li>
-              ))}
-            </ul>
-          </details>
-        ) : null}
-        {preview?.why.preparation > 0 && <p className="hint">Includes +{preview.why.preparation.toFixed(1)} match preparation from this week’s coaching session.</p>}
-      </div>
-
-      <div className="card">
-        <h3>Your Lineup Traits</h3>
-        {(() => {
-          const chips = (state.teams[state.teamId] || [])
-            .filter((p) => Array.isArray(p.traits) && p.traits.some((t) => t.revealed))
-            .flatMap((p) => p.traits.filter((t) => t.revealed).map((t) => ({ p, t })))
-          if (!chips.length) return <p className="hint">No traits revealed yet. Some players may carry hidden traits that surface when they fire.</p>
-          return (
-            <ul className="trait-chips">
-              {chips.map(({ p, t }, i) => (
+        <Card title="Your lineup traits">
+          {!traitChips.length ? (
+            <p className="opt-hint">No traits revealed yet. Some players may carry hidden traits that surface when they fire.</p>
+          ) : (
+            <ul className="trait-list">
+              {traitChips.map(({ p, t }, i) => (
                 <li key={i}>
-                  <span className="trait-badge">⚡ {TRAIT_BY_ID[t.id]?.name ?? t.id}</span>{' '}
-                  {p.name} — {TRAIT_BY_ID[t.id]?.desc ?? ''}
+                  <Chip icon="star">{TRAIT_BY_ID[t.id]?.name ?? t.id}</Chip>
+                  <span>
+                    <strong>{p.name}</strong> — {TRAIT_BY_ID[t.id]?.desc ?? ''}
+                  </span>
                 </li>
               ))}
             </ul>
-          )
-        })()}
+          )}
+        </Card>
       </div>
     </div>
   )

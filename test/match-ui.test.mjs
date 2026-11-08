@@ -24,6 +24,10 @@ try {
   const entries = []
   await act(async () => { tree = create(React.createElement(NewGame, { state: {}, dispatch: a => entries.push(a) })) })
   assert.equal(tree.root.findAll(n => n.props.className?.includes('mode-card') && text(n).includes('Live pick/ban')).length, 0)
+  // The match options live on the wizard's last step (Mode, Team, Options).
+  assert.equal(tree.root.findAllByProps({ role: 'switch' }).length, 0, 'no switches before the Options step')
+  await click('Next: Team →')
+  await click('Next: Options →')
   const switches = () => tree.root.findAllByProps({ role: 'switch' })
   assert.equal(switches().length, 4, 'Draft, IGL, Show simulation, Fearless draft')
   await act(async () => switches()[0].props.onChange({ target: { checked: true } }))
@@ -49,7 +53,7 @@ try {
   }
   await act(async () => { tree = create(React.createElement(Host)) })
   await click('Enter the Rift →')
-  await click('Jump to call')
+  await click('Skip to call')
   assert.equal(state.matchSession.stage, 'decision')
   assert.equal(byText('Finish game'), undefined)
   assert.ok(tree.root.findAllByType('svg').length > 0)
@@ -61,17 +65,25 @@ try {
   assert.equal(state.matchSession.stage, 'between')
   assert.equal(state.round, 1)
   await click('Enter game 2 →')
-  await click('Jump to call')
-  await act(async () => tree.root.findAllByType('button').find(b => b.props.className === 'igl-call-option').props.onClick())
+  await click('Skip to call')
+  // Escape hatch: the team picks a call from this game's seed.
+  const seed = state.matchSession.current.seed
+  await click('Let the team decide')
+  assert.equal(state.matchSession.current.callId, state.matchSession.current.prompt.options[(seed >>> 0) % 7].id)
+  assert.ok(tree.root.findAll(n => n.props.className === 'feed-item feed-blue feed-pin' || n.props.className === 'feed-item feed-red feed-pin').length === 1, 'the call is posted to the play-by-play')
   await click('Finish game')
   if (state.matchSession.stage === 'between') {
-    await click('Enter game 3 →'); await click('Jump to call')
+    await click('Enter game 3 →'); await click('Skip to call')
     await act(async () => tree.root.findAllByType('button').find(b => b.props.className === 'igl-call-option').props.onClick())
     await click('Finish game')
   }
   assert.equal(state.matchSession.stage, 'result')
   assert.equal(state.round, 2)
-  assert.ok(byText('Return to season →'))
+  // Broadcast Night Phase 3: the result stage is ResultStage. "Continue" (MATCH_CLOSE)
+  // replaces the old "Return to season →", and the IGL calls show in the games list.
+  assert.ok(byText('Continue'))
+  assert.ok(byText('Review the series'))
+  assert.ok(text(tree.root).includes('Your call: '), 'games list credits the IGL call')
   await act(async () => tree.unmount())
 
   // Timer-driven instant playback must still stop for IGL; it cannot bypass a call.
@@ -92,7 +104,9 @@ try {
     state = reducer(state, currentStep(d).side !== d.userSide ? { type: 'MATCH_DRAFT_AI' } : { ...move, type: move.type === 'ban' ? 'MATCH_DRAFT_BAN' : 'MATCH_DRAFT_PICK' })
   }
   await act(async () => { tree = create(React.createElement(Host)) })
-  await click('Play this game →')
+  // The draft board's done state carries the lock CTA as "Start game N" (Broadcast Night SPEC §3.3);
+  // it dispatches the same MATCH_DRAFT_LOCK the old "Play this game →" button did.
+  await click('Start game 1')
   assert.equal(state.matchSession.stage, 'between', 'the game-stage effect finishes a draft-only game')
   await act(async () => tree.unmount())
   console.log('React toggles, map controls, IGL checkpoint/timers and draft-only lifecycle pass')

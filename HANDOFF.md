@@ -81,7 +81,7 @@ historical proposals rather than promises of delivered functionality.
 - `src/game/persistence.js`: environment-aware save keys and storage access.
 - `src/game/preparation.js`: deterministic training, scouting and match bonus.
 - `src/game/matchReview.js`: descriptive analysis of generated match events.
-- `src/components/`: game screens; `src/styles.css` and `src/management.css` style them.
+- `src/components/`: game screens. `src/styles/tokens.css`, `primitives.css` and `ui.css` are the design system; each screen family has its own sheet in `src/styles/`; `src/styles.css` holds the global base rules.
 - `src/utils/exportPng.js`: lazy-loads html2canvas only for a requested export.
 
 ## Conventions and limits
