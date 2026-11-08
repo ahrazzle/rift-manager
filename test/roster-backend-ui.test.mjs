@@ -87,6 +87,34 @@ try {
   assert.equal(career.transferHistory.at(-1)?.type, 'PLAYER_SOLD')
   await act(async () => tree.unmount()); tree = null
 
+  // If a sale becomes illegal while its confirmation is open, the confirm
+  // button disables and the dialog shows the new reason (no dismiss-as-noop).
+  let stale = { ...career }
+  const staleStarterIds = new Set(Object.values(stale.lineup))
+  const staleStarter = stale.teams.T1.find((p) => staleStarterIds.has(p.id)
+    && stale.teams.T1.some((q) => q.id !== p.id && q.role === p.role && !staleStarterIds.has(q.id)))
+  assert.ok(staleStarter, 'a starter with a bench replacement exists')
+  await render(React.createElement(ManagedRoster, {
+    state: stale,
+    dispatch: (a) => { stale = rosterBackend.reducer(stale, a) },
+  }))
+  await act(async () => byAria(`Sell ${staleStarter.name}`).props.onClick())
+  assert.ok(!byLabel('Sell player').props.disabled, 'confirm starts enabled')
+  const noReplacement = {
+    ...stale,
+    teams: {
+      ...stale.teams,
+      T1: stale.teams.T1.filter((p) => p.id === staleStarter.id || p.role !== staleStarter.role),
+    },
+  }
+  await render(React.createElement(ManagedRoster, {
+    state: noReplacement,
+    dispatch: (a) => { stale = rosterBackend.reducer(stale, a) },
+  }))
+  assert.equal(byLabel('Sell player').props.disabled, true, 'stale preview disables confirm')
+  assert.ok(textOf(tree.root).includes('Keep at least one'), 'dialog shows the new refusal reason')
+  await act(async () => tree.unmount()); tree = null
+
   // ---- Season roster rows: Release only, no Sell ----
   let season = rosterBackend.reducer(undefined, { type: 'NEW_GAME', teamId: 'T1' })
   await render(React.createElement(ManagedRoster, {

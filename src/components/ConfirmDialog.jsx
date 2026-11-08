@@ -3,7 +3,7 @@ import { Button, Dialog } from './ui/index.js'
 
 // Two-choice confirmation on the shared Dialog (focus trap, Esc, aria-modal).
 // "Keep playing" is the safe choice, so it takes initial focus.
-export default function ConfirmDialog({ title, children, confirmLabel, onConfirm, onCancel }) {
+export default function ConfirmDialog({ title, children, confirmLabel, confirmDisabled = false, onConfirm, onCancel }) {
   const keepRef = useRef(null)
   return (
     <Dialog
@@ -16,7 +16,7 @@ export default function ConfirmDialog({ title, children, confirmLabel, onConfirm
       actions={
         <>
           <Button ref={keepRef} variant="quiet" onClick={onCancel}>Keep playing</Button>
-          <Button variant="primary" onClick={onConfirm}>{confirmLabel}</Button>
+          <Button variant="primary" disabled={confirmDisabled} onClick={onConfirm}>{confirmLabel}</Button>
         </>
       }
     >

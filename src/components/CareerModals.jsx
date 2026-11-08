@@ -71,8 +71,8 @@ export function PromotionModal({ state, dispatch }) {
 
   const selectedProspect = prospects.find((p) => p.id === prospectId) ?? prospects[0]
   const description = prospects.length === 1
-    ? `${selectedProspect.name} (${selectedProspect.role}, ${selectedProspect.ovr} OVR, age ${selectedProspect.age ?? 21}, Pot ${selectedProspect.potential ?? Math.min(99, selectedProspect.ovr + 8)}) has caught the eye. Promote them to the ${teamName(state, state.teamId)} main roster, or keep them developing in the academy.`
-    : `${prospects.length} academy prospects are ready for a look. Choose one to promote to the ${teamName(state, state.teamId)} main roster and the bench player who makes room — or keep them all developing in the academy.`
+    ? `${selectedProspect.name} (${selectedProspect.role}, ${selectedProspect.ovr} OVR, age ${selectedProspect.age ?? 21}, Pot ${selectedProspect.potential ?? Math.min(99, selectedProspect.ovr + 8)}) has caught the eye. Promote them to the ${teamName(state, state.teamId)} main roster, or keep them in the academy for next off-season.`
+    : `${prospects.length} academy prospects are ready for a look. Choose one to promote to the ${teamName(state, state.teamId)} main roster and the bench player who makes room — or keep them all in the academy for next off-season.`
 
   if (!bench.length) {
     return (

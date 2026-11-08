@@ -74,6 +74,7 @@ export default function ManagedRoster({ state, dispatch }) {
         <ConfirmDialog
           title={`${pending.type === 'SELL_PLAYER' ? 'Sell' : 'Release'} ${pendingPlayer.name}?`}
           confirmLabel={pending.type === 'SELL_PLAYER' ? 'Sell player' : 'Release player'}
+          confirmDisabled={!pendingPreview?.ok}
           onCancel={() => setPending(null)}
           onConfirm={() => {
             const fresh = previewTransfer(state, { type: pending.type, playerId: pending.playerId })
