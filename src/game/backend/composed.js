@@ -1,5 +1,5 @@
-// Concrete assembly of the three independent backend leaves. Importing this
-// module does not activate it in the game; the caller supplies the public reducer.
+// Concrete assembly of the three independent backend leaves. useGameState.js
+// composes it with the public reducer for production dispatch.
 import { createBackendAdapter } from './adapter.js'
 import { migrateAcademy, resolveAcademy, afterAcademyAdvance, offerAcademy, selectAcademy } from './academy.js'
 

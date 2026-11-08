@@ -1,6 +1,6 @@
-# Draft transfer backend
+# Transfer backend
 
-Issue #43's pure Sell/Release behavior is implemented in `src/game/backend/transfers.js`. This module is opt-in: the active application reducer and UI do not import it. No new action changes the shipped game until a later integration patch.
+Sell/Release behavior is implemented in `src/game/backend/transfers.js` and wired into the shipped game through the roster backend (`docs/backend/architecture.md`). The leaf itself stays pure: no reducer, React, or RNG dependency.
 
 ## Public contract
 

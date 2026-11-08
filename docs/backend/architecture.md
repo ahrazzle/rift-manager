@@ -1,6 +1,8 @@
-# Portable roster backend draft
+# Roster backend: transfers, morale, academy
 
-These modules are additive development work against main `ec498a2`. The live game does not import them. They are not a complete implementation of issues #43–45: confirmations, player cards, disabled reasons, modal choices and rendered report lines remain design-overhaul work. No production rollout is implied.
+These modules are production code. `src/game/useGameState.js` composes them with the public reducer (`const rosterBackend = createRosterBackend(reducer)`, after the `reducer` definition); the game hook dispatches through `rosterBackend.reducer` and `load()` returns `rosterBackend.migrate(...)` after every legacy backfill. UI lives in `src/components/team/ManagedRoster.jsx` (Sell/Release via `PlayerActions`, confirmations, disabled reasons from `previewTransfer`), the academy dialog in `src/components/CareerModals.jsx` (explicit prospect + bench-cut via `selectAcademy`), and the report sections in `src/components/hub/OffseasonReport.jsx`. Player-facing rules are in `docs/GUIDE.md`.
+
+History: built as quarantined drafts #48–#51 against frozen base `ec498a2`, then transplanted leaf-by-leaf and wired in the Broadcast Night launch (PR #61, closing issue #60). The frozen-base quarantine test (`backend-boundary.test.mjs`) was retired at integration, as planned; the behavior and lifecycle suites remain.
 
 ## Ownership and composition
 
@@ -11,27 +13,27 @@ These modules are additive development work against main `ec498a2`. The live gam
 | academy.js | Persistent candidates, selected bench replacement, legacy offer migration | Main-roster development, simulation |
 | adapter.js / composed.js | Public-reducer delegation, concrete leaf bindings and lifecycle order | React, UI, RNG generation, duplicated season logic |
 
-Leaves have independent feature commits and do not depend on the adapter. The assembly branch includes those commits and adds integration tests. Cherry-pick the leaves once, then the assembly-only commits; do not apply an assembly diff that duplicates already-transplanted leaf changes.
+Leaves do not depend on the adapter and stay portable (no React, no `useGameState` import). The exported `reducer` in `useGameState.js` remains the unwrapped public reducer on purpose: the backend composes it, and `test/backend-integration.test.mjs` uses it as the legacy parity reference. Production code must dispatch through `rosterBackend`, never the bare `reducer`.
 
 `createRosterBackend(legacyReducer)` from `composed.js` binds the concrete leaves and exposes `selectAcademy` alongside `previewTransfer`. The lower-level `createBackendAdapter(legacyReducer, academyPorts)` receives the existing exported **public** reducer. Its `transition` returns `{state, ok, reason, effects}`; `reducer` exposes only the next state for a reducer consumer. Keep the envelope for confirmations and same-settle diagnostics. Rejected leaf actions preserve the original state reference and carry a human-readable reason. `migrate` performs additive save migration; it must be called after the existing save loader, without renaming save keys.
 
 ## Exact integration seams
 
-Line numbers refer to frozen `src/game/useGameState.js`; locate the named cases when transplanting into the design branch.
+Line numbers refer to `src/game/useGameState.js` at integration; locate by the named case if they drift.
 
-| Existing hook | Optional adapter behavior |
+| Existing hook | Adapter behavior |
 | --- | --- |
-| Public reducer matchSession guard, lines 2064–2084 | New sell/release/promotion commands refuse until MATCH_CLOSE, including result-stage sessions |
-| START_CAREER, line 603 | Initialize managed joinedSeason without consuming randomness |
-| SET_LINEUP, line 642 | Let legacy validate/change slot, then apply exactly -4/+3 once if slot truly changed |
-| SIGN, line 691 | Let legacy charge fee and install starter, then set incoming 74 and previous starter -6 |
-| TRADE_PLAYER, line 1735 | Let legacy enforce same role/OVR acceptance; incoming +3, no lineup-pair tick |
-| ADVANCE_SEASON guard, line 1222 | Backfill before advancing; return caller's original state if legacy refuses |
-| Placement tick, lines 1278–1285 | Tenure is logically after placement. Adapter can apply it after legacy returns because there is no later managed-roster morale change |
-| defaultLineup reset, line 1363 | Tenure classifies **old lineup**, never the newly auto-selected starters |
-| Academy roll, lines 1439–1443 | Preserve this one legacy roll and its generated candidate; ingest its result, never roll again |
-| RESOLVE_PROMOTION, line 1482 | Replace legacy weakest-bench behavior with selected prospect/cut backend transition |
-| load, line 2134 | Run additive backend migration after existing migration; persist ordinary JSON |
+| Public reducer matchSession guard (`reducer`, line 2038) | Sell/release/promotion commands refuse until MATCH_CLOSE, including result-stage sessions |
+| START_CAREER, line 607 | Initialize managed joinedSeason without consuming randomness |
+| SET_LINEUP, line 646 | Let legacy change the slot, then apply exactly -4/+3 once if the slot truly changed (a refused hook returns the caller's state, so no-op clicks do nothing) |
+| SIGN, line 695 | Let legacy charge the fee and install the starter, then set incoming morale 74 and the previous starter -6 |
+| TRADE_PLAYER, line 1739 | Let legacy enforce same-role/OVR acceptance; incoming +3, no lineup-pair tick |
+| ADVANCE_SEASON, line 1226 | Backfill before advancing; return the caller's original state if legacy refuses |
+| Placement morale tick (inside ADVANCE_SEASON) | Tenure runs after placement. The adapter applies it after legacy returns because no later managed-roster morale change exists |
+| defaultLineup reset (inside ADVANCE_SEASON) | Tenure classifies the **old lineup**, never the newly auto-selected starters |
+| Academy roll (inside ADVANCE_SEASON) | Preserve this one legacy roll and its generated candidate; ingest its result, never roll again |
+| RESOLVE_PROMOTION, line 1486 | Intercepted by the academy transition (selected prospect/cut). The legacy weakest-bench case remains only as the unwrapped reducer's frozen behavior for parity tests |
+| load, line 2146 | Backend migration runs after existing migration (`rosterBackend.migrate(...)` at the return); ordinary JSON, no renamed save keys |
 
 Tenure counts completed time at the boundary into the next season: `(completedSeasonIndex + 1) - joinedSeason >= 2`. A player joining season 1 receives no tenure tick after the first advance and receives one after the second. This resolves the issue's prose/formula ambiguity in favor of its explicit two-Advances acceptance requirement. Players missing the field are backfilled at the pre-advance current season, so they are not treated as veterans. Released players are not ticked. Retirement/refused advances are not ticked. Renewal and placement retain their existing clamp order before tenure.
 
@@ -39,27 +41,17 @@ Accepted legacy SIGN/SET_LINEUP actions receive their office deltas in all modes
 
 The academy port contract is `migrate(state)`, `resolve(state, action)`, and `afterAdvance(state, {before, rollAlreadyConsumed: true})`, each returning the same result envelope. `composed.js` adapts the leaf migration (which returns state) to this envelope and adds the `offerAcademy` port after successful locker-event resolution. The last port consumes `state.pendingPromotion`, which already contains this year's generated prospect or null. Persisted candidates must survive event precedence. Extra shortlist generation, if needed, must use an independent deterministic generator after a real offer; no global RNG draws may be inserted into the no-offer path.
 
-## Transplant recipe and remaining work
+## How it is wired
 
-1. Import the leaf modules and compose the tested adapter with the current public reducer. Keep production imports behind the integration review until the redesigned UI is ready.
-2. Call migration when loading saves and initializing a Career. Accept old singular pendingPromotion objects. Serialize new fields normally.
-3. Read previews before confirmations. Show player, role, fee, replacement and refusal reason. Use transition effects for immediate explanations rather than inferring events from changed numbers.
-4. Add explicit academy prospect and cut selections. A no-bench offer must preserve candidates and support decline/dismiss with an honest reason.
-5. Render `offseasonReport.transfers` and `.morale`, plus academy promotion notes. Transfer income is already in the budget; report it without paying it twice.
-6. Run the backend integration suite and existing full tests/build against the combined design branch. Verify real UI controls and old saves in staging before claiming the issues complete.
-
-No UI files, active reducer, package manifest, test runner, workflows, GUIDE or CHANGELOG are changed in this backend draft. The existing test runner discovers `test/backend-*.test.mjs` automatically.
-
-## Draft landing policy
-
-The transfer draft #48 and morale draft #49, academy draft and cumulative assembly draft target the frozen `gpt-forge/backend-base-20261106` branch at `ec498a2`. Assembly is a combined review vehicle, not a fourth independent feature. Native draft status prevents ordinary merging while `isDraft=true`; the non-main target also isolates the release route if readiness changes. These controls are not a permanent administrative lock.
-
-Do not retarget or merge these drafts directly into main. Transplant each leaf once into the final design branch, add the assembly-only adapter/tests, then open a separate integration/release PR. Intentionally remove `backend-boundary.test.mjs` at that point: its frozen-base additive-only assertion is a quarantine check, and production integration necessarily changes existing files. Keep the behavior and lifecycle tests. Review and staging of the actual combined UI remain required before any release decision.
+1. `useGameState.js` composes the adapter with the public reducer once (`rosterBackend`). The hook's recovery reducer dispatches every action through `rosterBackend.reducer`; match-session actions pass through to the legacy reducer unchanged.
+2. Migration runs when loading saves (last step of `load()`) and when a Career starts (`START_CAREER` through the adapter). Old singular `pendingPromotion` offers are accepted and become the persisted list. New fields (`joinedSeason`, `academyByTeam`, `academyOfferSeasonByTeam`, `transferHistory`) serialize as ordinary JSON; no save keys were renamed.
+3. UI reads previews before confirming. `ManagedRoster` shows player, role, exact fee, the named replacement starter, and the refusal reason on disabled buttons; confirmations use the shared `ConfirmDialog`. Immediate explanations come from the transitions (`lastEventLog`, transaction messages), never inferred from changed numbers.
+4. The academy dialog requires an explicit prospect and bench cut (`prospectId` + `cutId`). A no-bench offer preserves candidates and shows the honest reason with a decline control; declining keeps the prospects for next off-season.
+5. The Hub off-season report renders `offseasonReport.transfers` (with sale income marked as already in the budget), `.morale` tenure lines, and `academyPromotions` notes.
+6. Season mode exposes Release on the Market screen's roster card; Sell stays Career-only, enforced by the same preview the reducer applies.
 
 ## Validation evidence
 
-The cumulative assembly passes all 41 discovered test suites (36 existing suites plus five backend suites) and `npm run build`. The integration suite executes the real public reducer through a continuous sell → sign → advance → academy decline → JSON save roundtrip → next advance/reoffer → chosen promotion path. It also verifies two actual annual tenure boundaries, placement clamping before tenure, locker-event deferral, role/identity invariants, transaction reporting without repeat income, and unchanged seeded play/global RNG consumption.
+`npm test` runs the leaf suites (`backend-transfers`, `backend-morale`, `backend-academy`), the real-reducer integration suite (`backend-integration`: sell → sign → advance → academy decline → JSON save roundtrip → next advance/reoffer → chosen promotion, two tenure boundaries, placement clamping before tenure, locker-event deferral, no repeat income, unchanged seeded play/RNG), and `roster-backend-ui` (production-reducer stamps, one-time `load()` migration of an old career save, Sell/Release controls with confirmation and refusals, report rendering). Hosted Checks (`test` + build) gate `main`; merging publishes the Pages site, which re-runs tests and build before deploying.
 
-Independent baseline/assembly production builds produced the same 24 output files with equal SHA-256 hashes. That establishes that these unimported backend modules do not change the current production artifact. It does not establish UI integration or deployment readiness. Existing Vite large-chunk advisory remains unchanged. Hosted CI is separate evidence and these quarantine-base drafts do not target the main-only workflow.
-
-Feature review records: transfer draft #48, morale draft #49, academy draft #50. Architecture and leaf cross-reviews found no outstanding blocking defect at this assembly checkpoint.
+Historical note: as unimported drafts, these modules once produced byte-identical production builds (24 files, equal SHA-256). That quarantine evidence no longer applies — the modules are imported and change the game exactly as documented above. The Vite large-chunk advisory is pre-existing and unchanged.

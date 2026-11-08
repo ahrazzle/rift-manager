@@ -1,11 +1,11 @@
 import { Button, Card, Chip } from '../ui/index.js'
 import { ROLE_LABEL } from '../../data/lck.js'
-import { fmtMoney } from '../../game/economy.js'
+import { fmtMoney, fmtMoneyExact } from '../../game/economy.js'
 
-/** Career off-season report: development, contracts, churn, money. Dismissible. */
+/** Career off-season report: development, contracts, transfers, morale, academy, churn, money. Dismissible. */
 export default function OffseasonReport({ report, dispatch }) {
   if (!report) return null
-  const { seasonIndexCompleted, roster, lineupChanges, released, aiChurn, newFreeAgents, finance } = report
+  const { seasonIndexCompleted, roster, lineupChanges, released, aiChurn, newFreeAgents, finance, transfers, morale, academyPromotions } = report
   return (
     <Card
       id="offseason-report"
@@ -59,6 +59,39 @@ export default function OffseasonReport({ report, dispatch }) {
               <li key={p.id}>
                 {p.name} ({ROLE_LABEL[p.role] ?? p.role}, OVR {p.ovr})
               </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {transfers?.transactions?.length > 0 && (
+        <>
+          <h3>Your transfers this split</h3>
+          <ul className="hub-os-list">
+            {transfers.transactions.map((t, i) => (
+              <li key={i}>{t.message}</li>
+            ))}
+            {transfers.saleIncome > 0 && (
+              <li>Sale income {fmtMoneyExact(transfers.saleIncome)} — already included in your budget.</li>
+            )}
+          </ul>
+        </>
+      )}
+      {morale?.length > 0 && (
+        <>
+          <h3>Long-service morale</h3>
+          <ul className="hub-os-list">
+            {morale.map((e, i) => (
+              <li key={i}>{e.message}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      {academyPromotions?.length > 0 && (
+        <>
+          <h3>Academy</h3>
+          <ul className="hub-os-list">
+            {academyPromotions.map((e, i) => (
+              <li key={i}>{e.message}</li>
             ))}
           </ul>
         </>

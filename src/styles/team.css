@@ -626,6 +626,22 @@
   gap: var(--sp-2);
   width: 100%;
 }
+.dlg-step {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-14);
+  font-weight: 600;
+}
+.academy-options {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.academy-options .btn {
+  width: 100%;
+  justify-content: flex-start;
+}
 
 /* ---------- New game wizard ---------- */
 .ng {

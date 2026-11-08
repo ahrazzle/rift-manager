@@ -1,6 +1,6 @@
-# Draft academy backend
+# Academy backend
 
-Issue #45 is implemented as an opt-in pure module. The shipped reducer and modal remain unchanged until integration with the visual overhaul.
+The persistent academy lifecycle in `src/game/backend/academy.js` runs in production through the roster backend, with the choice dialog in `src/components/CareerModals.jsx` (see `docs/backend/architecture.md`). The leaf itself stays pure.
 
 ## Ports
 

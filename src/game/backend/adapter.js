@@ -1,4 +1,4 @@
-// Optional draft adapter. The production reducer does not import this module.
+// Roster-backend adapter. Composed with the public reducer in useGameState.js.
 import { applyTransfer, previewTransfer, selectTransferReport } from './transfers.js'
 import { applyOfficeMorale, applyTenureMorale, backfillJoinedSeason } from './morale.js'
 

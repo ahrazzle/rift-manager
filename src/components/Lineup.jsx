@@ -78,6 +78,7 @@ export default function Lineup({ state, dispatch }) {
 
   return (
     <div className="team-stack">
+      {state.lastEventLog && <p className="opt-hint">{state.lastEventLog}</p>}
       <Card
         className="lu-card"
         title={

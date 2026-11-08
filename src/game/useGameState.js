@@ -22,6 +22,7 @@ import { bestLineup, userLineup, styledPlayer, clampForm } from './logic.js'
 import { aiTactic } from './ai.js'
 import { prepareWeek, preparationBonus, upcomingOpponent } from './preparation.js'
 import { readSave, writeSave } from './persistence.js'
+import { createRosterBackend } from './backend/composed.js'
 
 // Deterministic per-series RNG so the Match Detail view can recompute identical
 // games[] on demand without persisting full timelines. Each series stores its
@@ -236,7 +237,10 @@ function freshState(seasonYear = 'present') {
     playoffFinalist: null,
     playoffChampionId: null, // P1 item 11: playoff winner (top-level, survives bracket replace)
     seriesOptions: { fearless: false }, // P1 item 10: global series toggles
-    pendingPromotion: null, // P1 item 8: { player, teamId } | null (academy offer)
+    pendingPromotion: null, // Academy offer: { teamId, prospectIds } | null (old saves: { player, teamId }, migrated on load)
+    academyByTeam: {}, // Persisted academy prospects by team id; declining keeps them for next off-season
+    academyOfferSeasonByTeam: {}, // Last season each team's academy offer was resolved (no repeat offers)
+    transferHistory: [], // Completed PLAYER_SOLD / PLAYER_RELEASED records (report context; fees already in budget)
     teamMeta,
     schedule,
     totalRounds: schedule.length,
@@ -2089,6 +2093,14 @@ function reducer(state, action) {
   return baseReducer(state, publicAction)
 }
 
+// Production dispatch wraps the public reducer above with the roster backend
+// (sell/release transfers, office morale and tenure, persistent academy).
+// The exported `reducer` stays the unwrapped public reducer: the backend
+// composes it, and the backend parity tests compare against it. The hook
+// below dispatches through `rosterBackend.reducer`; `load()` runs its
+// additive migration. See docs/backend/architecture.md for the seams.
+const rosterBackend = createRosterBackend(reducer)
+
 function migrateMatchExperience(parsed) {
   parsed.matchOptions = matchOptions(parsed.matchOptions)
   if (!('matchSession' in parsed)) parsed.matchSession = null
@@ -2238,8 +2250,12 @@ export function load({ strict = false } = {}) {
     if (!('pendingPromotion' in parsed)) parsed.pendingPromotion = null
     if (!('playoffChampionId' in parsed)) parsed.playoffChampionId = null
     if (!('offseasonReport' in parsed)) parsed.offseasonReport = null
+    if (!Array.isArray(parsed.transferHistory)) parsed.transferHistory = []
     if (typeof parsed.playoffFinalist !== 'boolean') parsed.playoffFinalist = regionalFinalist(parsed)
-    return migrateMatchExperience(parsed)
+    // Roster-backend migration runs last, after every legacy backfill:
+    // joinedSeason for tenure and the persistent academy list (accepts the
+    // old singular pendingPromotion offer). No save keys are renamed.
+    return rosterBackend.migrate(migrateMatchExperience(parsed)).state
   } catch (error) {
     if (strict) throw error
     return freshState()
@@ -2257,7 +2273,7 @@ function recoveryReducer(snapshot, action) {
   if (action.type === '__RESTORE_SAVE') return { state: action.state, loadError: null }
   if (action.type === '__LOAD_FAILED') return { ...snapshot, loadError: LOAD_ERROR }
   if (snapshot.loadError) return snapshot
-  return { ...snapshot, state: reducer(snapshot.state, action) }
+  return { ...snapshot, state: rosterBackend.reducer(snapshot.state, action) }
 }
 
 export function useGameState() {
@@ -2292,4 +2308,4 @@ export function useGameState() {
   return { state, dispatch, TOTAL_ROUNDS, storageError, retrySave, loadError, retryLoad, replaceSave }
 }
 
-export { TOTAL_ROUNDS, reducer }
+export { TOTAL_ROUNDS, reducer, rosterBackend }

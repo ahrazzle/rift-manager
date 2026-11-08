@@ -10,7 +10,7 @@ Player ratings are fictional values tuned for the sim, not real player stats.
 
 **Career.** Ten seasons, one club. Start with the year and roster you chose, then build an alternate timeline. Rosters age and develop, contracts expire, and the board judges you every year. League and international formats are simplified; foreign tournament teams use the starting-year rosters and tier-based qualification.
 
-In **Career only**, players gain or lose OVR when you **Advance Season** (not during weekly play). **Age** and **potential (Pot)** on Squad and Market show how much runway remains — potential is a fixed rating cap in the data, not something you unlock with training, and it does not shrink with age. **Lineup** shows a short growth **outlook** (rising / steady / declining / at ceiling) so starter picks respect ceiling vs rising kids; exact Pot stays on deeper screens. After Advance, a dismissible **off-season report** on the Hub lists ±OVR, ages, lineup reshuffles, releases, and league churn. **Season mode** does not run that annual growth tick.
+In **Career only**, players gain or lose OVR when you **Advance Season** (not during weekly play). **Age** and **potential (Pot)** on Squad and Market show how much runway remains — potential is a fixed rating cap in the data, not something you unlock with training, and it does not shrink with age. **Lineup** shows a short growth **outlook** (rising / steady / declining / at ceiling) so starter picks respect ceiling vs rising kids; exact Pot stays on deeper screens. After Advance, a dismissible **off-season report** on the Hub lists ±OVR, ages, lineup reshuffles, contract releases, your transfers from the split, long-service morale, academy promotions, and league churn. **Season mode** does not run that annual growth tick.
 
 **Gauntlet.** Five escalating series against increasingly stronger opponents. One loss ends the run. Win all five to clear it. Check the scouting report before each round: tier and key players.
 
@@ -72,21 +72,23 @@ The top bar shows what the board expects of you (from "Avoid last place" to "Win
 
 **Money.** Signing a free agent costs a fee from your budget. Every player also earns an annual wage, deducted each offseason. Star players cost more. If you can't afford a signing, the deal dies. Each offseason brings sponsorship (scaled to your tier) plus prize money for a title, a final, or a playoff finish, so a Career budget is topped up every year instead of only draining.
 
-**Contracts and morale.** Every player has a contract length and morale. Contracts tick down each season. Expired players must be re-signed (cheaper than a new signing) or they walk to free agency. Starters are never released. Morale rises with wins and titles, falls with losses and bench time, and feeds slightly into form.
+**Contracts and morale.** Every player has a contract length and morale. Contracts tick down each season. Expired players must be re-signed (cheaper than a new signing) or they walk to free agency. Morale rises with wins and titles, falls with losses and bench time, and feeds slightly into form. Your office moves move it too: a new signing arrives pleased (morale 74) while the starter they displace drops 6; benching a starter costs them 4 and gives the new starter 3; a player traded in gains 3. In **Career**, long service settles in after two completed seasons at the club: long-serving starters gain 2 morale each off-season, long-serving bench players lose 3. The roster screens and the off-season report always show the reason and the exact change.
 
 Miss the board's expectation and confidence drops. Beat it and confidence rises. Hit zero and **you're sacked**. In Career mode that ends the run.
 
-## Transfers, trades, coaches, and academy (Career)
+## Transfers, trades, coaches, and academy
 
-Career mode adds a front office. Season mode has the Market but no trades, coach moves, or academy offers.
+Career mode adds a front office. Season mode has the Market and roster releases, but no sales, trades, coach moves, or academy offers. Roster changes are closed while a match is open — finish and close the series first.
 
 **Free agents (Market).** Sign any free agent for a one-time fee of four times their annual wage. A signed player joins on a two-year deal and becomes the starter for their role. Each offseason, five new prospects — one per role, ages 17–19 — enter free agency, and the pool is capped at 20, so the Market keeps turning over instead of going stale. The off-season report on the Hub lists the new faces and the money in and out.
+
+**Selling and releasing (Squad in Career; Market in Season).** Every roster row carries its transfer controls. **Sell** (Career only) lists the player to free agency — no buyer club is invented — and the club receives half their signing fee (twice their annual wage). **Release** sends a bench player to free agency for no fee. Starters cannot be released; selling a starter needs a same-role bench replacement, and the confirmation names who takes over before you commit. You can never move the last player of a role. A departing player joins the free-agent pool at morale 60, where anyone — including you, later — can sign them. Disabled buttons always say why. Your sales and releases are listed in the off-season report for the record; sale income is already in your budget when it lands, never paid twice.
 
 **Player trades (Squad).** Swap one of your players for a player on another club, one for one. Both players must play the same role. The other club refuses a deal that loses it more than 3 OVR. If the player you trade away is a starter, the player you get takes their lineup spot.
 
 **Coaches (Squad).** Your head coach adds a flat bonus to match strength: (rating − 75) × 0.15, so a 90-rated coach is worth +2.25 and a 60-rated coach costs −2.25. Hire any coach from the free-agent pool for free; your old coach joins the pool. You can also trade coaches one for one with another club, but the other club refuses if your coach is 6 or more rating points below theirs.
 
-**Academy.** After Advance Season there is a roughly 30% chance an academy prospect is offered. Prospects are 17–19 with potential 8 above their OVR. Promoting one cuts your weakest bench player to make room; starters are never cut. Declining leaves the prospect in the academy for another split.
+**Academy (Career).** After Advance Season there is a roughly 30% chance an academy standout is found; a real find grows the shortlist to up to three named prospects, ages 17–19 with potential 8 above their OVR. Prospects persist: declining keeps the same players in the academy, offered again next off-season (a locker-room event is always settled first). To promote, you choose the prospect **and** the bench player who makes room — starters are never cut, and a cut cannot strand a role unless the prospect fills it. If your bench is empty, nobody is silently lost: the offer explains itself and the prospects wait. A promoted player arrives at morale 74 on their existing deal; the player released joins free agency at morale 60, no fee either way.
 
 ## The screens
 
@@ -114,7 +116,7 @@ Early beats Late and Late beats Early, so phase is a guessing game against the e
 
 **Results.** Every played series, newest first, with the score and a short match log. Your games carry a WIN or LOSS tag.
 
-**Market.** A pool of free agents across all roles. Each listing shows the exact signing fee and annual wage. Sign only when your transfer budget covers the fee — unaffordable deals stay disabled, and the card shows exactly how much you are short. Signed players join your roster as starters in their role. The pool only shrinks, so sign early if a role needs help.
+**Market.** A pool of free agents across all roles. Each listing shows the exact signing fee and annual wage. Sign only when your transfer budget covers the fee — unaffordable deals stay disabled, and the card shows exactly how much you are short. Signed players join your roster as starters in their role. Players you sell or release join this pool, and each Career off-season adds five new prospects, so check back when a role needs help. In Season mode your own roster sits under the market, with Release on every bench row.
 
 ## How a match simulates
 

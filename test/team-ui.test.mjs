@@ -6,6 +6,7 @@ import { build } from 'esbuild'
 import React from 'react'
 import { create, act } from 'react-test-renderer'
 import { reducer, mulberry32 } from '../src/game/useGameState.js'
+import { selectAcademy } from '../src/game/backend/academy.js'
 import { buildAcademyPlayer } from '../src/data/academy.js'
 import { DILEMMA_EVENTS } from '../src/data/events.js'
 
@@ -105,7 +106,9 @@ try {
   assert.ok(buttons().filter((b) => textOf(b) === 'Sign').every((b) => b.props.disabled), 'no budget disables every Sign')
   assert.ok(textOf(tree.root).includes('Insufficient budget'))
   await click('Top')
-  const roleRows = tree.root.findAll((n) => n.type === 'tr').length - 1
+  // Season Market also carries the managed-roster table; scope to free agents.
+  const faRegion = tree.root.find((n) => n.props['aria-label'] === 'Free agents table')
+  const roleRows = faRegion.findAll((n) => n.type === 'tr').length - 1
   assert.equal(roleRows, m.faPool.filter((p) => p.role === 'TOP').length, 'role filter narrows the table')
   await act(async () => tree.unmount()); tree = null
 
@@ -137,10 +140,22 @@ try {
   assert.deepEqual(resolved, { type: 'RESOLVE_EVENT', optionIndex: 1 })
   assert.equal(buttons().filter((b) => b.props['aria-label'] === 'Close').length, 0, 'a decision has no dismiss control')
   const prospect = buildAcademyPlayer('T1', 80)
-  await render(React.createElement(PromotionModal, { state: { ...q, pendingPromotion: { player: prospect, teamId: 'T1' } }, dispatch: (a) => { resolved = a } }))
+  const promoState = { ...q, pendingPromotion: { player: prospect, teamId: 'T1' } }
+  await render(React.createElement(PromotionModal, { state: promoState, dispatch: (a) => { resolved = a } }))
+  // Promotion is an explicit choice now: a prospect and the bench player who
+  // makes room. The old single-player offer still opens through migration.
+  assert.equal(byLabel('Promote →').props.disabled, true, 'promote waits for a bench choice')
+  const { prospects: offeredProspects, bench: offeredBench } = selectAcademy(promoState)
+  const releaseButtons = buttons().filter((b) => String(b.props['aria-label'] || '').startsWith('Release '))
+  const cutIndex = releaseButtons.findIndex((b) => !b.props.disabled)
+  assert.ok(cutIndex >= 0, 'a releasable bench player is offered')
+  await act(async () => releaseButtons[cutIndex].props.onClick())
   await click('Promote →')
-  assert.deepEqual(resolved, { type: 'RESOLVE_PROMOTION', promote: true })
-  await click('Keep →')
+  assert.deepEqual(resolved, {
+    type: 'RESOLVE_PROMOTION', promote: true,
+    prospectId: offeredProspects[0].id, cutId: offeredBench[cutIndex].id,
+  })
+  await click('Keep in academy')
   assert.deepEqual(resolved, { type: 'RESOLVE_PROMOTION', promote: false })
   console.log('team-ui: all passed')
 } finally {

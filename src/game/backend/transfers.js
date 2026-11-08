@@ -1,4 +1,4 @@
-// Opt-in transfer backend. No production reducer dependency or random draws.
+// Transfer backend (sell/release). Pure: no reducer dependency or random draws.
 import { signingFee, fmtMoneyExact } from '../economy.js'
 
 const refuse = (code, reason) => ({ ok: false, code, reason })

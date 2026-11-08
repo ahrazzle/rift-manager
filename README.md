@@ -33,6 +33,13 @@ Features include:
   labels and role icons, player initials, or drafted champion portraits.
 - **Preparation and reviews:** coach players each week and use post-match reviews
   to plan the next matchup.
+- **Broadcast Night presentation:** a five-destination shell (Hub, Team, Compete,
+  Club, Guide), a broadcast draft board and matchday screen, and an original
+  crest for every club.
+- **Front office:** sell or release players with the replacement named before
+  you commit, morale that answers to your signings, lineup calls, trades and
+  long service, and an academy shortlist that persists until you promote from
+  it. Season mode keeps releases; the full office is Career's.
 
 Player ratings are fictional, balanced game values. Historical rosters have
 uncertainty and league formats are simplified. Map movement illustrates simulated

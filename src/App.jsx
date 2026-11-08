@@ -354,7 +354,7 @@ export default function App() {
       {/* Career modals render globally — a pending dilemma/promotion blocks
           ADVANCE_SEASON, and that button lives on the Dashboard. */}
       {!state.matchSession && state.pendingEvent && <EventModal state={state} dispatch={dispatch} />}
-      {!state.matchSession && state.pendingPromotion && <PromotionModal state={state} dispatch={dispatch} />}
+      {!state.matchSession && state.pendingPromotion && !state.pendingEvent && <PromotionModal state={state} dispatch={dispatch} />}
 
       {resetPending && <ConfirmDialog title="Start a new game?" confirmLabel="Start new game"
         onCancel={() => setResetPending(false)}

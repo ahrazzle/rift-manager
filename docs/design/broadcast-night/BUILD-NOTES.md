@@ -122,7 +122,7 @@ Shared rules that hold for every capability below:
 
 **Implementation.** `Lineup.jsx`, `Tactics.jsx`, `Strategy.jsx`, `Squad.jsx`, `Market.jsx`, `NewGame.jsx`, `CareerModals.jsx`, `ConfirmDialog.jsx`, `PlayerTags.jsx`, `src/components/team/*`, `src/styles/team.css`. Tests: `test/team-ui.test.mjs`, `test/market-ui.test.mjs`, `test/development-visibility-ui.test.mjs`.
 
-**Contracts.** `PlayerActions({ player, actions, note, showMorale })`, where `actions` is up to three `{ id, label, onClick, variant?, disabled?, icon?, ariaLabel? }`. Today: Sign (Market), Offer and Want (trade board). This is the slot for the pending backend work (sell and release transfers, morale, academy promotion): each new control is one more entry in `actions` from the screen that owns the row, with no layout change. A fourth action belongs in a dialog, not the row. `PlayerList` passes `getActions(player)` and `getNote(player)`.
+**Contracts.** `PlayerActions({ player, actions, note, showMorale })`, where `actions` is up to three `{ id, label, onClick, variant?, disabled?, icon?, ariaLabel? }`. Today: Sign (Market), Offer and Want (trade board), Sell and Release (managed roster). The transfer controls arrived through this slot with no layout change, as planned: `team/ManagedRoster.jsx` owns the roster card on Squad (Career: Sell + Release) and under the Market in Season (Release only), reads refusals and fees from the backend `previewTransfer`, and confirms through `ConfirmDialog`. The academy choice (prospect + bench cut) is a dialog, not a row action. A fourth action belongs in a dialog, not the row. `PlayerList` passes `getActions(player)` and `getNote(player)`. Backend rules and seams: `docs/backend/architecture.md`.
 
 ## BN-CREST: club crests
 
@@ -130,7 +130,7 @@ Shared rules that hold for every capability below:
 
 **Must keep holding.** One shield-and-monogram family for every club, the current LCK ten included (curated colours, no motif); other clubs take their colour from team data or a stable hash and a motif from their id. White monogram at 3.6:1 or better; the rim lightens on dark clubs. Monogram length fits the size (2 characters at 28 px and below, 3 up to 40 px, up to 4 above).
 
-**Implementation.** `src/components/TeamCrest.jsx`, `src/components/teamCrestModel.js`, club-marks section of `docs/BRAND.md`, `scripts/crest-sheet.mjs` (contact sheet at 24/48/96 px). Tests: `test/crests.test.mjs`. Ships as its own pull request.
+**Implementation.** `src/components/TeamCrest.jsx`, `src/components/teamCrestModel.js`, club-marks section of `docs/BRAND.md`, `scripts/crest-sheet.mjs` (contact sheet at 24/48/96 px). Tests: `test/crests.test.mjs`. Ships with the combined Broadcast Night launch.
 
 **Contracts.** `<TeamCrest teamId name size className [short color label] />`. Decorative unless `label` is passed (only when the crest is the sole identifier). Screens never draw team marks any other way.
 
@@ -148,7 +148,8 @@ Checked on the composition of every phase plus the crest system: `npm test` and 
 
 ## Next actions
 
-1. Land the backend transfers, morale and academy controls through `PlayerActions` (BN-TEAM).
-2. Retire the remaining legacy class names (`.card`, `.primary`, `.ghost`, `.table`) by moving MatchDetail, the review room, the walkthrough card and the Guide/About modals onto kit components; then `src/styles.css` holds only base rules.
-3. Move `MatchDetail` and the review room fully onto kit Cards and Buttons (they render through the legacy classes today).
-4. Re-run `scripts/crest-sheet.mjs` whenever a dataset adds clubs; check 4-character monograms (for example NORD, 5P1T) at 48 px.
+1. Retire the remaining legacy class names (`.card`, `.primary`, `.ghost`, `.table`) by moving MatchDetail, the review room, the walkthrough card and the Guide/About modals onto kit components; then `src/styles.css` holds only base rules.
+2. Move `MatchDetail` and the review room fully onto kit Cards and Buttons (they render through the legacy classes today).
+3. Re-run `scripts/crest-sheet.mjs` whenever a dataset adds clubs; check 4-character monograms (for example NORD, 5P1T) at 48 px.
+
+Done since the first draft of these notes: the backend transfers, morale and academy controls landed through `PlayerActions` (BN-TEAM) in the combined launch — see `docs/backend/architecture.md`.

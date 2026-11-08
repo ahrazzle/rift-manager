@@ -1,4 +1,4 @@
-// Opt-in academy lifecycle. Never rolls for a standout or consumes global RNG.
+// Academy lifecycle. Never rolls for a standout or consumes global RNG.
 import { buildAcademyPlayer } from '../../data/academy.js'
 import { mulberry32 } from '../random.js'
 

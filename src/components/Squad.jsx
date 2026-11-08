@@ -9,6 +9,7 @@ import { ROLE_LABEL } from '../data/lck.js'
 import { Button, Card, Chip, Icon } from './ui/index.js'
 import TeamCrest from './TeamCrest.jsx'
 import PlayerList from './team/PlayerList.jsx'
+import ManagedRoster from './team/ManagedRoster.jsx'
 
 function teamName(state, teamId) {
   return state.teamMeta?.[teamId]?.name ?? teamId
@@ -48,11 +49,7 @@ export default function Squad({ state, dispatch }) {
 
   return (
     <div className="team-stack">
-      {state.lastEventLog && <p className="opt-hint">{state.lastEventLog}</p>}
-      <Card title="My roster">
-        <p className="opt-lede">Age and potential (Pot) — fixed cap in data; growth happens on Career Advance Season only.</p>
-        <PlayerList label="My roster" players={myRoster} starterIds={starterIds} showMorale actionsHeader="Morale" />
-      </Card>
+      <ManagedRoster state={state} dispatch={dispatch} />
 
       {/* ---- 1. My Staff ---- */}
       <Card title="My staff: head coach">

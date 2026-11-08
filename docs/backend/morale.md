@@ -1,8 +1,8 @@
-# Portable morale and tenure hooks (draft)
+# Morale and tenure hooks
 
-This module is dormant until a future reducer integration calls it. It imports no
-React, simulation, persistence or sibling backend module, consumes no randomness,
-and changes no production UI. It does not implement chemistry or a second rating.
+These hooks run in production through the roster backend (`docs/backend/architecture.md`).
+The leaf imports no React, simulation, persistence or sibling backend module and
+consumes no randomness. It does not implement chemistry or a second rating.
 
 All exports return `{ state, ok, reason, effects }`. Success has `reason: null`;
 refusal has a readable reason, no effects, and the exact original state reference.

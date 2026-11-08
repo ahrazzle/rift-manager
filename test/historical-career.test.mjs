@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { reducer, load, mulberry32, qualifiersForTournament, tournamentSeasonForLeague } from '../src/game/useGameState.js'
+import { reducer, rosterBackend, load, mulberry32, qualifiersForTournament, tournamentSeasonForLeague } from '../src/game/useGameState.js'
 import { getSeason, LEAGUES, seasonsForLeague } from '../src/data/seasons.js'
 import { writeSave } from '../src/game/persistence.js'
 
@@ -35,7 +35,9 @@ try {
   }
   for (const [seasonYear, teamId] of [['2025-lck', 'T1'], ['2025-lpl', 'BLG']]) {
     const dataset = getSeason(seasonYear)
-    let state = reducer(undefined, { type: 'START_CAREER', seasonYear, teamId })
+    // Production-shaped career (backend stamps joinedSeason at creation),
+    // so the exact save round-trip below stays strict.
+    let state = rosterBackend.reducer(undefined, { type: 'START_CAREER', seasonYear, teamId })
     assert.equal(state.teamId, teamId)
     assert.equal(state.career.seasonYear, seasonYear)
     assert.deepEqual(state.teams[teamId].map((p) => p.id), dataset.teams.find((t) => t.id === teamId).players.map((p) => p.id))
